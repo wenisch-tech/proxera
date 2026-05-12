@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.0.7 - 2026-05-12
+
+### [0.0.7](https://github.com/wenisch-tech/proxera/compare/v0.0.6...v0.0.7) (2026-05-12)
+
+
+### Build Systems
+
+* **deps:** bump actions/download-artifact from 4 to 8 ([318b184](https://github.com/wenisch-tech/proxera/commit/318b18405f00426e1749a16e9172cf1964c6b2ea))
+* **deps:** bump actions/download-artifact from 4 to 8 ([9c79978](https://github.com/wenisch-tech/proxera/commit/9c79978d8850fade620191f3d0d036a3c4775a69))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.7
+
+
 ## v0.0.6 - 2026-05-12
 
 ### [0.0.6](https://github.com/wenisch-tech/proxera/compare/v0.0.5...v0.0.6) (2026-05-12)
