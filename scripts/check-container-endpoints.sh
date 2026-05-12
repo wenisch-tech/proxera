@@ -3,15 +3,14 @@
 # Starts the Proxera container, waits for it to be healthy, checks both ports,
 # and writes a markdown report.
 #
-# Usage: check-container-endpoints.sh <image> <proxy-port> <admin-port> <report-file> <report-title>
+# Usage: check-container-endpoints.sh <image> <proxy-port> <report-file> <report-title>
 
 set -euo pipefail
 
 IMAGE="${1:?First argument must be the Docker image name}"
 PROXY_PORT="${2:-18080}"
-ADMIN_PORT="${3:-18081}"
-REPORT_FILE="${4:-container-endpoint-check.md}"
-REPORT_TITLE="${5:-Container Endpoint Check}"
+REPORT_FILE="${3:-container-endpoint-check.md}"
+REPORT_TITLE="${4:-Container Endpoint Check}"
 
 STARTUP_WAIT=30
 CONTAINER_ID=""
@@ -27,9 +26,7 @@ trap cleanup EXIT
 echo "Starting container: $IMAGE"
 CONTAINER_ID=$(docker run -d \
   -p "${PROXY_PORT}:8080" \
-  -p "${ADMIN_PORT}:8081" \
   -e SPRING_PROFILES_ACTIVE=dev \
-  -e PROXERA_ADMIN_PORT=8081 \
   "$IMAGE")
 
 echo "Container ID: $CONTAINER_ID — waiting ${STARTUP_WAIT}s for startup..."
@@ -49,9 +46,9 @@ check_endpoint() {
 }
 
 PROXY_HEALTH=$(check_endpoint "Proxy Health"    "http://localhost:${PROXY_PORT}/actuator/health")
-ADMIN_HEALTH=$(check_endpoint "Admin Health"    "http://localhost:${ADMIN_PORT}/actuator/health")
-ADMIN_LOGIN=$(check_endpoint  "Admin Login"     "http://localhost:${ADMIN_PORT}/login")
-ADMIN_UI=$(check_endpoint     "Admin Dashboard" "http://localhost:${ADMIN_PORT}/admin/")
+ADMIN_HEALTH=$(check_endpoint "Admin Health"    "http://localhost:${PROXY_PORT}/actuator/health")
+ADMIN_LOGIN=$(check_endpoint  "Admin Login"     "http://localhost:${PROXY_PORT}/login")
+ADMIN_UI=$(check_endpoint     "Admin Dashboard" "http://localhost:${PROXY_PORT}/admin/")
 
 ALL_RESULTS="$PROXY_HEALTH
 $ADMIN_HEALTH

@@ -24,8 +24,7 @@ ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 \
 
 COPY target/proxera.jar /app/app.jar
 
-# 8080 — proxy port (public-facing)
-# 8081 — admin UI / API port
-EXPOSE 8080 8081
+# 8080 — proxy + admin UI / API port
+EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

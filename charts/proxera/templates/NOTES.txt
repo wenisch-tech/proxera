@@ -20,8 +20,8 @@ Admin URL:
 {{- end }}
 {{- else }}
 Access the Admin UI via port-forward:
-  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "proxera.fullname" . }} 8081:{{ .Values.service.admin.port }}
-  Open: http://localhost:8081/admin
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "proxera.fullname" . }} 8080:{{ .Values.service.admin.port }}
+  Open: http://localhost:8080/admin
 {{- end }}
 
 Default credentials: admin@proxera.local / admin

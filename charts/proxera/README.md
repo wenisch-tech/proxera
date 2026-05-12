@@ -4,7 +4,7 @@ Proxera is a self-hosted reverse tunnel that lets HTTP services running in a pri
 
 This Helm chart deploys the Proxera Server to a Kubernetes cluster. The server exposes two ports:
 - **8080** — proxy port (public-facing, receives HTTP/WebSocket traffic)
-- **8081** — admin UI and REST API port
+- **8080** — admin UI and REST API port
 
 ## Prerequisites
 

@@ -73,7 +73,7 @@ jobs:
         run: |
           set -euo pipefail
           image="${{ inputs.image }}:${{ inputs.version }}"
-          ./scripts/check-container-endpoints.sh "$image" 18080 18081 container-endpoint-check.md "Container Endpoint Check"
+          ./scripts/check-container-endpoints.sh "$image" 18080 container-endpoint-check.md "Container Endpoint Check"
 
       - name: Upload container endpoint check report
         if: always()

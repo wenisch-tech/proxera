@@ -37,8 +37,8 @@ service:
     port: 8080
     targetPort: 8080
   admin:
-    port: 8081
-    targetPort: 8081
+    port: 8080
+    targetPort: 8080
 
 ingress:
   proxy:
@@ -113,7 +113,6 @@ redis:
 # PostgreSQL: set DB_HOST (and optionally DB_PORT, DB_NAME, DB_USER) to switch from H2.
 # H2 file path is controlled by H2_DATA_PATH (auto-set from persistence.mountPath when persistence.enabled=true).
 env:
-  PROXERA_ADMIN_PORT: "8081"
   PROXERA_LOG_RETENTION_DAYS: "7"
   # DB_HOST: ""
   # DB_PORT: "5432"

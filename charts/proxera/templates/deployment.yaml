@@ -44,9 +44,7 @@ spec:
             - name: proxy
               containerPort: 8080
               protocol: TCP
-            - name: admin
-              containerPort: 8081
-              protocol: TCP
+
           envFrom:
             - configMapRef:
                 name: {{ include "proxera.fullname" . }}

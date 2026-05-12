@@ -23,7 +23,7 @@ No inbound ports need to be opened in the LAN. All connectivity is client-initia
 - **Live request logs** — per-route scrolling access log streamed in real time
 - **GitLab runner-style registration** — admin creates a named client slot and generates a one-time token
 - **Horizontal scaling** — optional Redis Pub/Sub message bus for multi-pod deployments; in-memory fallback for single-pod (no Redis required)
-- **Admin UI + REST API** — Bootstrap 5 admin panel on a separate port (8081) with Swagger UI
+- **Admin UI + REST API** — Bootstrap 5 admin panel on port 8080 (same as proxy) with Swagger UI
 - **Prometheus metrics** — at `/actuator/prometheus`
 - **Helm chart** — production-ready Kubernetes deployment with separate ingress objects for proxy and admin
 

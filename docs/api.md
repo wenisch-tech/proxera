@@ -1,8 +1,8 @@
 # REST API
 
-The Proxera REST API is available on the Admin port (8081) at `/admin/api`.
+The Proxera REST API is available on the Admin port (8080) at `/admin/api`.
 
-An interactive Swagger UI is served at [http://localhost:8081/api](http://localhost:8081/api).
+An interactive Swagger UI is served at [http://localhost:8080/api](http://localhost:8080/api).
 
 The raw OpenAPI JSON spec is at `/v3/api-docs`.
 
@@ -11,7 +11,7 @@ The raw OpenAPI JSON spec is at `/v3/api-docs`.
 All API endpoints require authentication. Pass a named API key via the `X-API-KEY` header:
 
 ```bash
-curl -H "X-API-KEY: your-api-key" http://localhost:8081/admin/api/clients
+curl -H "X-API-KEY: your-api-key" http://localhost:8080/admin/api/clients
 ```
 
 API keys can be generated in the Admin UI under **API Keys**.
@@ -64,14 +64,14 @@ API keys can be generated in the Admin UI under **API Keys**.
 
 | Path | Port | Description |
 |------|------|-------------|
-| `GET /admin/sse/topology` | 8081 | Live topology events (`CLIENT_CONNECTED`, `CLIENT_DISCONNECTED`, `REQUEST_IN_FLIGHT`, ...) |
-| `GET /admin/sse/routes/{id}/log` | 8081 | Live access log entries for a specific route |
+| `GET /admin/sse/topology` | 8080 | Live topology events (`CLIENT_CONNECTED`, `CLIENT_DISCONNECTED`, `REQUEST_IN_FLIGHT`, ...) |
+| `GET /admin/sse/routes/{id}/log` | 8080 | Live access log entries for a specific route |
 
 ## Example: Create a Client and Generate a Token
 
 ```bash
 # Create client slot
-CLIENT=$(curl -s -X POST http://localhost:8081/admin/api/clients \
+CLIENT=$(curl -s -X POST http://localhost:8080/admin/api/clients \
   -H "X-API-KEY: your-key" \
   -H "Content-Type: application/json" \
   -d '{"name": "home-lab"}')
@@ -79,7 +79,7 @@ CLIENT=$(curl -s -X POST http://localhost:8081/admin/api/clients \
 CLIENT_ID=$(echo $CLIENT | jq -r '.id')
 
 # Generate registration token
-TOKEN=$(curl -s -X POST http://localhost:8081/admin/api/clients/$CLIENT_ID/token \
+TOKEN=$(curl -s -X POST http://localhost:8080/admin/api/clients/$CLIENT_ID/token \
   -H "X-API-KEY: your-key")
 
 echo "Registration token: $(echo $TOKEN | jq -r '.token')"

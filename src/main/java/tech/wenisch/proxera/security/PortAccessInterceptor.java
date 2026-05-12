@@ -1,14 +1,15 @@
 package tech.wenisch.proxera.security;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.HandlerInterceptor;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 // @Component removed — port-based access control replaced by path-based security chains.
 public class PortAccessInterceptor implements HandlerInterceptor {
 
-    @Value("${proxera.admin.port:8081}")
+    @Value("${proxera.admin.port:8080}")
     private int adminPort;
 
     @Override

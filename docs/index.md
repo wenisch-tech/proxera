@@ -14,13 +14,12 @@ Proxera is a self-hosted reverse tunnel that lets HTTP services running in a pri
 docker run -d \
   --name proxera \
   -p 8080:8080 \
-  -p 8081:8081 \
   -e SPRING_PROFILES_ACTIVE=dev \
   ghcr.io/wenisch-tech/proxera:latest
 ```
 
 - Proxy port: [http://localhost:8080](http://localhost:8080)
-- Admin UI: [http://localhost:8081/admin](http://localhost:8081/admin)
+- Admin UI: [http://localhost:8080/admin](http://localhost:8080/admin)
 
 Default credentials (created on first start):
 

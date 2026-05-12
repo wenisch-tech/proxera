@@ -36,7 +36,7 @@ The server never dials into the LAN. All connectivity is initiated by the client
   .com (port 443)         │    │  └────────┬────────┘  │                 │
          │                │    │           │            │                 │
          │                │    │  ┌────────▼────────┐  │                 │
-         └────────────────┼──► │  │ Admin UI / API  │  │  :8081          │
+         └────────────────┼──► │  │ Admin UI / API  │  │  :8080          │
                           │    │  │ (Thymeleaf +    │  │                 │
                           │    │  │  Bootstrap 5)   │  │                 │
                           │    │  └─────────────────┘  │                 │
@@ -70,9 +70,9 @@ The server is a **single Spring Boot application** (Spring MVC on embedded Tomca
 | Port | Purpose |
 |------|---------|
 | **8080** | **Proxy Port** — Receives public HTTP requests. Matches routes and forwards frames through the WebSocket tunnel. Also hosts the client tunnel endpoint `/tunnel`. |
-| **8081** | **Admin Port** — Admin UI (Thymeleaf + Bootstrap 5) and REST API. Intended to be behind an internal network policy or separate ingress with authentication. |
+| **8080** | **Admin Port** — Admin UI (Thymeleaf + Bootstrap 5) and REST API. Intended to be behind an internal network policy or separate ingress with authentication. |
 
-The secondary port is added as an additional Tomcat connector via a `WebServerFactoryCustomizer` bean. A `OncePerRequestFilter` enforces port-level access control (admin paths only on 8081, proxy paths only on 8080).
+The secondary port is added as an additional Tomcat connector via a `WebServerFactoryCustomizer` bean. A `OncePerRequestFilter` enforces port-level access control (admin paths only on 8080, proxy paths only on 8080).
 
 ### 3.1 Internal Modules
 
@@ -82,7 +82,7 @@ The secondary port is added as an additional Tomcat connector via a `WebServerFa
 | **Proxy Engine** | `proxy` | Receives HTTP requests on port 8080, resolves routes, serialises requests as frames, dispatches via the Pub/Sub layer, writes HTTP responses. Uses Spring MVC async (`DeferredResult`). |
 | **Pub/Sub Layer** | `bus` | Abstracted `MessageBus` interface. Two implementations: `InMemoryMessageBus` (default, single-pod) and `RedisMessageBus` (multi-pod). Activated when `REDIS_HOST` is configured. |
 | **Route Manager** | `service` | CRUD for routes and domains. Validates domain uniqueness. Maintains an in-memory route cache (invalidated on change). |
-| **Auth & Security** | `config` | Spring Security: form login on port 8081, `X-API-KEY` filter for REST, registration token validation for WebSocket handshake. |
+| **Auth & Security** | `config` | Spring Security: form login on port 8080, `X-API-KEY` filter for REST, registration token validation for WebSocket handshake. |
 | **Access Log** | `service` | Persists `AccessLog` rows after each proxied request. Publishes SSE events to open admin log streams. Runs a daily cleanup job respecting the configured retention period. |
 | **Admin SSE** | `sse` | `SseEmitter` endpoints for live topology events (`/admin/sse/topology`) and per-route request logs (`/admin/sse/routes/{id}/log`). |
 
@@ -92,7 +92,7 @@ The secondary port is added as an additional Tomcat connector via a `WebServerFa
   port 8080 ──► PortRoutingFilter ──► ProxyController (catch-all /**)
                                   └──► /tunnel ──► TunnelWebSocketHandler
 
-  port 8081 ──► PortRoutingFilter ──► Spring Security form login
+  port 8080 ──► PortRoutingFilter ──► Spring Security form login
                                   └──► AdminControllers (/admin/**)
                                   └──► /login, /webjars/**, /css/**, /js/**
 ```
@@ -260,7 +260,7 @@ A single route may serve multiple domains (e.g. `api.example.com` and `api.examp
 
 ### 8.1 Admin Authentication
 
-- **Form login** (Spring Security) on port 8081. Session-cookie based.
+- **Form login** (Spring Security) on port 8080. Session-cookie based.
 - **OIDC / OAuth2** (optional): any OpenID Connect provider (Keycloak, Auth0, etc.) configured via environment variables `OIDC_ENABLED`, `OIDC_ISSUER_URI`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`.
 - **API Keys**: named keys for machine-to-machine REST API access, passed as `X-API-KEY: <key>` header. A `OncePerRequestFilter` validates the key (hashed comparison) before the Spring Security filter chain.
 
@@ -300,7 +300,7 @@ A single route may serve multiple domains (e.g. `api.example.com` and `api.examp
 | Port | Internet-facing | Spring Security |
 |------|----------------|----------------|
 | 8080 | Yes (proxy domain) | No auth on proxied requests; `/tunnel` WebSocket validated by registration token in handshake |
-| 8081 | Ideally restricted (admin domain) | Form login / OIDC required for all `/admin/**` paths |
+| 8080 | Ideally restricted (admin domain) | Form login / OIDC required for all `/admin/**` paths |
 
 ---
 
@@ -333,9 +333,9 @@ A single route may serve multiple domains (e.g. `api.example.com` and `api.examp
 
 | Endpoint | Port | Payload events | Used by |
 |----------|------|---------------|---------|
-| `GET /admin/sse/topology` | 8081 | `CLIENT_CONNECTED`, `CLIENT_DISCONNECTED`, `ROUTE_UPDATED`, `REQUEST_IN_FLIGHT`, `REQUEST_COMPLETED` | Topology page |
-| `GET /admin/sse/routes/{id}/log` | 8081 | `AccessLogEntry` JSON objects | Route Detail page |
-| `GET /admin/api/topology` | 8081 | Full topology snapshot (REST, used on initial page load) | Topology page |
+| `GET /admin/sse/topology` | 8080 | `CLIENT_CONNECTED`, `CLIENT_DISCONNECTED`, `ROUTE_UPDATED`, `REQUEST_IN_FLIGHT`, `REQUEST_COMPLETED` | Topology page |
+| `GET /admin/sse/routes/{id}/log` | 8080 | `AccessLogEntry` JSON objects | Route Detail page |
+| `GET /admin/api/topology` | 8080 | Full topology snapshot (REST, used on initial page load) | Topology page |
 
 ### 9.4 Topology Graph Design
 
@@ -455,19 +455,19 @@ Kubernetes Namespace: proxera
 ├── Deployment: proxera
 │     └── Container: proxera
 │           ├── containerPort: 8080 (proxy)
-│           ├── containerPort: 8081 (admin)
+│           ├── containerPort: 8080 (admin)
 │           ├── Liveness probe:   GET /actuator/health        (port 8080)
 │           └── Readiness probe:  GET /actuator/health/readiness (port 8080)
 │
 ├── Service: proxera
 │     ├── port 8080 → containerPort 8080 (proxy)
-│     └── port 8081 → containerPort 8081 (admin)
+│     └── port 8080 → containerPort 8080 (admin)
 │
 ├── Ingress: proxera-proxy
 │     └── host: proxy.example.com → Service:8080
 │
 ├── Ingress: proxera-admin
-│     └── host: admin.proxera.example.com → Service:8081
+│     └── host: admin.proxera.example.com → Service:8080
 │
 ├── ConfigMap: proxera   (non-sensitive env vars)
 ├── Secret: proxera      (sensitive env vars, e.g. DB password)
@@ -486,7 +486,7 @@ service:
   proxy:
     port: 8080
   admin:
-    port: 8081
+    port: 8080
 
 ingress:
   proxy:
@@ -558,7 +558,7 @@ ci.yml (orchestrator, triggers on push/PR/workflow_dispatch)
   │
   ├── _docker.yml (reusable, on PR + main push)
   │     ├── Build JAR
-  │     ├── Build Docker image (both ports 8080+8081)
+  │     ├── Build Docker image (both ports 8080+8080)
   │     ├── Container endpoint check (proxy health + admin health)
   │     ├── Trivy vulnerability scan
   │     ├── Push to ghcr.io/wenisch-tech/proxera (on main push)
