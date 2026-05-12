@@ -1,50 +1,107 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Login – Proxera</title>
+    <script>
+        (function() {
+            var t = localStorage.getItem('proxera-theme');
+            if (t) document.documentElement.setAttribute('data-bs-theme', t);
+        })();
+    </script>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}"/>
     <link rel="stylesheet" th:href="@{/css/proxera.css}"/>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        [data-bs-theme="dark"] body {
+            background:
+                radial-gradient(1000px 420px at 12% -12%, rgba(13, 202, 240, 0.15), transparent 60%),
+                radial-gradient(900px 360px at 90% 0%, rgba(25, 135, 84, 0.12), transparent 64%),
+                #0c1117;
+        }
+        [data-bs-theme="light"] body { background-color: #eef1f6; }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--px-border);
+            border-radius: 1.25rem;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 2.25rem 2rem 2rem;
+            animation: fadeInUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        [data-bs-theme="light"] .login-card {
+            background: rgba(255,255,255,0.92);
+            border-color: rgba(27,43,59,0.12);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.1);
+        }
+
+        .login-logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: rgba(13, 202, 240, 0.14);
+            border: 1px solid rgba(13, 202, 240, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #0dcaf0;
+            box-shadow: 0 0 24px rgba(13, 202, 240, 0.2);
+        }
+    </style>
 </head>
-<body class="bg-dark d-flex align-items-center justify-content-center min-vh-100">
-<div class="card shadow-lg" style="width:380px;">
-    <div class="card-header bg-dark text-white text-center py-4">
-        <i class="bi bi-hdd-network fs-2"></i>
-        <h4 class="mt-2 mb-0">Proxera</h4>
-        <small class="text-white-50">Admin Console</small>
-    </div>
-    <div class="card-body p-4">
-        <div th:if="${param.error}" class="alert alert-danger py-2">
-            Invalid username or password.
+<body>
+
+<div class="login-card">
+    <div class="text-center mb-4">
+        <div class="login-logo mx-auto mb-3">
+            <i class="bi bi-hdd-network"></i>
         </div>
-        <div th:if="${param.logout}" class="alert alert-info py-2">
-            You have been logged out.
-        </div>
-        <form th:action="@{/login}" method="post">
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-person"></i></span>
-                    <input type="text" id="username" name="username"
-                           class="form-control" autocomplete="username" required autofocus/>
-                </div>
-            </div>
-            <div class="mb-4">
-                <label for="password" class="form-label">Password</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                    <input type="password" id="password" name="password"
-                           class="form-control" autocomplete="current-password" required/>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">
-                <i class="bi bi-box-arrow-in-right me-1"></i> Sign in
-            </button>
-        </form>
+        <h4 class="fw-700 mb-0" style="letter-spacing:-0.02em;">Proxera</h4>
+        <p class="text-muted small mt-1 mb-0">Admin Console</p>
     </div>
+
+    <div th:if="${param.error}" class="alert alert-danger py-2 mb-3">
+        <i class="bi bi-exclamation-circle me-2"></i>Invalid username or password.
+    </div>
+    <div th:if="${param.logout}" class="alert alert-info py-2 mb-3">
+        <i class="bi bi-check-circle me-2"></i>You have been logged out.
+    </div>
+
+    <form th:action="@{/login}" method="post">
+        <div class="mb-3">
+            <label for="username" class="form-label small fw-semibold text-muted" style="text-transform:uppercase;letter-spacing:.07em;font-size:.7rem;">Username</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input type="text" id="username" name="username"
+                       class="form-control" autocomplete="username" required autofocus/>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="password" class="form-label small fw-semibold text-muted" style="text-transform:uppercase;letter-spacing:.07em;font-size:.7rem;">Password</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                <input type="password" id="password" name="password"
+                       class="form-control" autocomplete="current-password" required/>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 fw-semibold">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign in
+        </button>
+    </form>
 </div>
+
 <script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>
+

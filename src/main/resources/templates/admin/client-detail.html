@@ -7,7 +7,7 @@
         <a th:href="@{/admin/clients}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left"></i>
         </a>
-        <h2 class="mb-0" th:text="${client.name}">Client</h2>
+        <h2 class="mb-0 fw-bold" style="font-size:1.45rem;" th:text="${client.name}">Client</h2>
         <span class="badge ms-2"
               th:classappend="${client.status.name() == 'CONNECTED' ? 'bg-success' : (client.status.name() == 'REGISTERED' ? 'bg-info' : 'bg-secondary')}"
               th:text="${client.status}"></span>
@@ -25,8 +25,8 @@
     <div class="row g-4">
         <!-- Client info -->
         <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white fw-semibold">Client Info</div>
+            <div class="card">
+                <div class="card-header"><i class="bi bi-info-circle me-1"></i>Client Info</div>
                 <div class="card-body">
                     <dl class="row mb-0">
                         <dt class="col-sm-4">ID</dt>
@@ -40,7 +40,7 @@
                             th:text="${client.lastSeenAt != null ? #temporals.format(client.lastSeenAt, 'yyyy-MM-dd HH:mm') : '—'}"></dd>
                     </dl>
                 </div>
-                <div class="card-footer bg-white">
+                <div class="card-footer">
                     <form th:action="@{/admin/clients/{id}/token(id=${client.id})}" method="post">
                         <button type="submit" class="btn btn-warning btn-sm">
                             <i class="bi bi-key me-1"></i> Generate New Registration Token
@@ -52,11 +52,11 @@
 
         <!-- Routes -->
         <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white fw-semibold">Routes</div>
+            <div class="card">
+                <div class="card-header"><i class="bi bi-signpost-split me-1"></i>Routes</div>
                 <div class="card-body p-0">
                     <table class="table table-sm mb-0">
-                        <thead class="table-light">
+                        <thead>
                         <tr>
                             <th>Name</th>
                             <th>Target</th>

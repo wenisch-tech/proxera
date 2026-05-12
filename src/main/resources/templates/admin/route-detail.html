@@ -14,15 +14,15 @@
         <a th:href="@{/admin/routes}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left"></i>
         </a>
-        <h2 class="mb-0" th:text="${route.name}">Route</h2>
+        <h2 class="mb-0 fw-bold" style="font-size:1.45rem;" th:text="${route.name}">Route</h2>
         <span th:if="${route.enabled}" class="badge bg-success ms-2">Enabled</span>
         <span th:unless="${route.enabled}" class="badge bg-secondary ms-2">Disabled</span>
     </div>
 
     <div class="row g-4 mb-4">
         <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white fw-semibold">Configuration</div>
+            <div class="card">
+                <div class="card-header"><i class="bi bi-sliders me-1"></i>Configuration</div>
                 <div class="card-body">
                     <dl class="row mb-0">
                         <dt class="col-sm-4">Client</dt>
@@ -35,7 +35,7 @@
                         <dd class="col-sm-8" th:text="${route.stripPrefix ? 'Yes' : 'No'}"></dd>
                         <dt class="col-sm-4">Domains</dt>
                         <dd class="col-sm-8">
-                            <span th:each="d : ${route.domains}" class="badge bg-light text-dark border me-1" th:text="${d.domain}"></span>
+                            <span th:each="d : ${route.domains}" class="badge bg-secondary me-1" th:text="${d.domain}"></span>
                         </dd>
                     </dl>
                 </div>
@@ -44,14 +44,14 @@
     </div>
 
     <!-- Live access log -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <span class="fw-semibold"><i class="bi bi-list-ul me-1"></i>Live Access Log</span>
-            <span class="badge bg-success" id="log-sse-status">Live</span>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list-ul me-1"></i>Live Access Log</span>
+            <span class="px-live-badge" id="log-sse-status"><span class="px-live-dot"></span> Live</span>
         </div>
         <div class="card-body p-0" style="max-height:450px; overflow-y:auto;">
             <table class="table table-sm mb-0" id="log-table">
-                <thead class="table-light">
+                <thead>
                 <tr>
                     <th>Time</th>
                     <th>Method</th>

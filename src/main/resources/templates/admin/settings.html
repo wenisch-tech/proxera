@@ -4,11 +4,11 @@
 <body>
 <th:block th:fragment="content">
     <div class="d-flex align-items-center mb-4">
-        <h2 class="mb-0"><i class="bi bi-gear me-2"></i>Settings</h2>
+        <h2 class="mb-0 fw-bold" style="font-size:1.45rem;"><i class="bi bi-gear me-2" style="color:var(--px-accent);"></i>Settings</h2>
     </div>
 
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white fw-semibold">Server Info</div>
+    <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-server me-1"></i>Server Info</div>
         <div class="card-body">
             <dl class="row mb-0">
                 <dt class="col-sm-3">Pod / Hostname</dt>
@@ -23,8 +23,8 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white fw-semibold">Quick Links</div>
+    <div class="card">
+        <div class="card-header"><i class="bi bi-link-45deg me-1"></i>Quick Links</div>
         <div class="card-body d-flex gap-3 flex-wrap">
             <a th:href="@{/actuator/health}" target="_blank" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-heart-pulse me-1"></i> Health

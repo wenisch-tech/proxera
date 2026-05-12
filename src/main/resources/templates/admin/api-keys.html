@@ -4,7 +4,7 @@
 <body>
 <th:block th:fragment="content">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0"><i class="bi bi-key me-2"></i>API Keys</h2>
+        <h2 class="mb-0 fw-bold" style="font-size:1.45rem;"><i class="bi bi-key me-2" style="color:var(--px-accent);"></i>API Keys</h2>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newKeyModal">
             <i class="bi bi-plus-lg me-1"></i> Generate Key
         </button>
@@ -19,10 +19,10 @@
         <small class="text-muted">Include as <code>X-API-KEY: &lt;key&gt;</code> header.</small>
     </div>
 
-    <div class="card border-0 shadow-sm">
+    <div class="card">
         <div class="card-body p-0">
             <table class="table table-hover mb-0">
-                <thead class="table-light">
+                <thead>
                 <tr>
                     <th>Name</th>
                     <th>Created</th>
