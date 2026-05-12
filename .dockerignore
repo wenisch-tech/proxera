@@ -1,4 +1,5 @@
 target/
+!target/proxera.jar
 *.class
 *.jar
 *.war
