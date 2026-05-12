@@ -29,7 +29,7 @@ public class RouteService {
     }
 
     public List<Route> findAll() {
-        return routeRepository.findAll();
+        return routeRepository.findAllWithClient();
     }
 
     public Optional<Route> findById(UUID id) {
