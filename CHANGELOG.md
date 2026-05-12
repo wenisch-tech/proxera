@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.0.6 - 2026-05-12
+
+### [0.0.6](https://github.com/wenisch-tech/proxera/compare/v0.0.5...v0.0.6) (2026-05-12)
+
+
+### Bug Fixes
+
+* update charts repo ([74e2149](https://github.com/wenisch-tech/proxera/commit/74e2149077978dd79d7967e52a6312e831ff5997))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.6
+
+
 ## v0.0.5 - 2026-05-12
 
 ### [0.0.5](https://github.com/wenisch-tech/proxera/compare/v0.0.4...v0.0.5) (2026-05-12)
