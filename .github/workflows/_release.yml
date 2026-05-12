@@ -139,7 +139,7 @@ jobs:
 
       - name: Publish Helm chart to charts repository
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUBTOKEN }}
         run: |
           git clone https://$GH_TOKEN@github.com/wenisch-tech/charts.git charts-repo
           mkdir -p charts-repo/proxera
