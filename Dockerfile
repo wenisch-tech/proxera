@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM cgr.dev/chainguard/jre:openjdk-17
+FROM cgr.dev/chainguard/jre:latest
 
 WORKDIR /app
 
