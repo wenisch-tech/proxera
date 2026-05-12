@@ -1,12 +1,13 @@
 package tech.wenisch.proxera.admin;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.ui.Model;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
+
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @ControllerAdvice(basePackageClasses = AdminExceptionHandler.class)
 public class AdminExceptionHandler {
