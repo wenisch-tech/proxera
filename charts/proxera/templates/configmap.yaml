@@ -12,4 +12,7 @@ data:
   REDIS_HOST: {{ .Values.redis.host | quote }}
   REDIS_PORT: {{ .Values.redis.port | quote }}
   {{- end }}
+  {{- if .Values.persistence.enabled }}
+  H2_DATA_PATH: {{ .Values.persistence.mountPath | quote }}
+  {{- end }}
   PROXERA_POD_ID: "$(POD_NAME)"

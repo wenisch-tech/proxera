@@ -33,6 +33,9 @@ public class DatabaseConfig {
     @Value("${DB_PASSWORD:}")
     private String dbPassword;
 
+    @Value("${H2_DATA_PATH:./data}")
+    private String h2DataPath;
+
     @Bean
     public DataSource dataSource() {
         if (dbHost != null && !dbHost.isBlank()) {
@@ -46,9 +49,10 @@ public class DatabaseConfig {
                     .build();
         }
 
-        log.info("DB_HOST not set — using embedded H2 datasource (development mode)");
+        String h2Url = "jdbc:h2:file:" + h2DataPath + "/proxera;MODE=PostgreSQL;DATABASE_TO_UPPER=false;NON_KEYWORDS=value";
+        log.info("DB_HOST not set — using embedded H2 datasource (development mode): {}", h2Url);
         return DataSourceBuilder.create()
-                .url("jdbc:h2:mem:proxera;MODE=PostgreSQL;DATABASE_TO_UPPER=false;NON_KEYWORDS=value")
+                .url(h2Url)
                 .username("sa")
                 .password("")
                 .driverClassName("org.h2.Driver")

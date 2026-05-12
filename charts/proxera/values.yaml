@@ -110,15 +110,19 @@ redis:
   port: 6379
 
 # Non-sensitive environment variables (mounted as ConfigMap)
+# PostgreSQL: set DB_HOST (and optionally DB_PORT, DB_NAME, DB_USER) to switch from H2.
+# H2 file path is controlled by H2_DATA_PATH (auto-set from persistence.mountPath when persistence.enabled=true).
 env:
-  SPRING_DATASOURCE_URL: "jdbc:h2:file:/app/data/proxera"
-  SPRING_DATASOURCE_USERNAME: "sa"
   PROXERA_ADMIN_PORT: "8081"
   PROXERA_LOG_RETENTION_DAYS: "7"
+  # DB_HOST: ""
+  # DB_PORT: "5432"
+  # DB_NAME: "proxera"
+  # DB_USER: "proxera"
 
 # Sensitive environment variables (mounted as Kubernetes Secret)
 secrets:
-  SPRING_DATASOURCE_PASSWORD: ""
+  DB_PASSWORD: ""
   OIDC_CLIENT_SECRET: ""
   REDIS_PASSWORD: ""
 
