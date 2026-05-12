@@ -1,12 +1,14 @@
 package tech.wenisch.proxera.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.StringRedisTemplate;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import tech.wenisch.proxera.bus.InMemoryMessageBus;
 import tech.wenisch.proxera.bus.MessageBus;
 import tech.wenisch.proxera.bus.RedisMessageBus;

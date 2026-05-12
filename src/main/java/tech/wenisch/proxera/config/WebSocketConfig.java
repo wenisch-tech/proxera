@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+
 import tech.wenisch.proxera.tunnel.TunnelHandshakeInterceptor;
 import tech.wenisch.proxera.tunnel.TunnelWebSocketHandler;
 
