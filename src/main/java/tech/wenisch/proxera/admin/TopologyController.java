@@ -1,28 +1,23 @@
 package tech.wenisch.proxera.admin;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
 import tech.wenisch.proxera.domain.Client;
-import tech.wenisch.proxera.domain.ClientStatus;
 import tech.wenisch.proxera.domain.Route;
 import tech.wenisch.proxera.service.ClientService;
 import tech.wenisch.proxera.service.RouteService;
 import tech.wenisch.proxera.tunnel.TunnelManager;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 @Controller
 @RequestMapping("/admin/topology")
-@Slf4j
 public class TopologyController {
 
     private final ClientService clientService;
@@ -38,8 +33,8 @@ public class TopologyController {
     }
 
     @GetMapping
-    public String topology(Model model) {
-        return "admin/topology";
+    public String topology() {
+        return "redirect:/admin/";
     }
 
     /**
@@ -75,6 +70,7 @@ public class TopologyController {
                 routeNode.put("type", "route");
                 routeNode.put("name", route.getName());
                 routeNode.put("enabled", route.isEnabled());
+                routeNode.put("target", route.getLocalHost() + ":" + route.getLocalPort());
                 nodes.add(routeNode);
                 links.add(Map.of("source", client.getId().toString(), "target", route.getId().toString(), "type", "route"));
             }
