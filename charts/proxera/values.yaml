@@ -1,36 +1,29 @@
 # Default values for Proxera.
-
+# 
 replicaCount: 1
-
 image:
   registry: ghcr.io
   repository: wenisch-tech/proxera
-  tag: latest
+  tag: 0.0.3
   pullPolicy: IfNotPresent
-
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
-
 serviceAccount:
   create: false
   name: ""
-
 podAnnotations: {}
 podLabels: {}
-
 podSecurityContext:
   runAsNonRoot: true
   runAsUser: 65532
   fsGroup: 65532
-
 securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: false
   capabilities:
     drop:
       - ALL
-
 service:
   type: ClusterIP
   proxy:
@@ -39,7 +32,6 @@ service:
   admin:
     port: 8080
     targetPort: 8080
-
 ingress:
   proxy:
     enabled: false
@@ -61,7 +53,6 @@ ingress:
           - path: /
             pathType: Prefix
     tls: []
-
 resources:
   requests:
     cpu: 100m
@@ -69,7 +60,6 @@ resources:
   limits:
     cpu: 500m
     memory: 512Mi
-
 livenessProbe:
   enabled: true
   httpGet:
@@ -79,7 +69,6 @@ livenessProbe:
   periodSeconds: 30
   timeoutSeconds: 5
   failureThreshold: 3
-
 readinessProbe:
   enabled: true
   httpGet:
@@ -89,42 +78,42 @@ readinessProbe:
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
-
 autoscaling:
   enabled: false
   minReplicas: 1
   maxReplicas: 5
   targetCPUUtilizationPercentage: 80
-
 persistence:
   enabled: false
   storageClassName: ""
   size: 1Gi
   mountPath: /app/data
-
 # Redis (optional — enables multi-pod scaling via Pub/Sub)
+
 # When host is empty, in-memory message bus is used (single-pod default).
 redis:
   enabled: false
   host: ""
   port: 6379
-
 # Non-sensitive environment variables (mounted as ConfigMap)
+
 # PostgreSQL: set DB_HOST (and optionally DB_PORT, DB_NAME, DB_USER) to switch from H2.
+
 # H2 file path is controlled by H2_DATA_PATH (auto-set from persistence.mountPath when persistence.enabled=true).
 env:
   PROXERA_LOG_RETENTION_DAYS: "7"
   # DB_HOST: ""
-  # DB_PORT: "5432"
-  # DB_NAME: "proxera"
-  # DB_USER: "proxera"
+# DB_PORT: "5432"
+
+# DB_NAME: "proxera"
+
+# DB_USER: "proxera"
 
 # Sensitive environment variables (mounted as Kubernetes Secret)
 secrets:
   DB_PASSWORD: ""
   OIDC_CLIENT_SECRET: ""
   REDIS_PASSWORD: ""
-
 nodeSelector: {}
 tolerations: []
 affinity: {}
