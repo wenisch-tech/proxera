@@ -141,7 +141,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUBTOKEN }}
         run: |
-          git clone https://$GH_TOKEN@github.com/wenisch-tech/charts.git charts-repo
+          git clone https://$GH_TOKEN@github.com/jfwenisch/charts.git charts-repo
           mkdir -p charts-repo/proxera
           cp ./release/*.tgz charts-repo/proxera/
           cp ./release/*.cosign.bundle charts-repo/proxera/ 2>/dev/null || true
