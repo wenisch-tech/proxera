@@ -1,0 +1,28 @@
+Proxera {{ .Chart.AppVersion }} has been deployed.
+
+Proxy port:  {{ .Values.service.proxy.port }}
+Admin port:  {{ .Values.service.admin.port }}
+
+{{- if .Values.ingress.proxy.enabled }}
+Proxy URL:
+{{- range .Values.ingress.proxy.hosts }}
+  http{{ if $.Values.ingress.proxy.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+Access the proxy port via port-forward:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "proxera.fullname" . }} 8080:{{ .Values.service.proxy.port }}
+{{- end }}
+
+{{- if .Values.ingress.admin.enabled }}
+Admin URL:
+{{- range .Values.ingress.admin.hosts }}
+  http{{ if $.Values.ingress.admin.tls }}s{{ end }}://{{ .host }}/admin
+{{- end }}
+{{- else }}
+Access the Admin UI via port-forward:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "proxera.fullname" . }} 8081:{{ .Values.service.admin.port }}
+  Open: http://localhost:8081/admin
+{{- end }}
+
+Default credentials: admin@proxera.local / admin
+WARNING: Change the default password immediately after first login.

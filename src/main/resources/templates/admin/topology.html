@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(activePage='topology', pageTitle='Topology', content=~{::content}, extraHead=~{::extraHead}, extraScripts=~{::extraScripts})}">
+<body>
+
+<th:block th:fragment="extraHead">
+    <style>
+        #topology-canvas { width: 100%; height: 600px; border: 1px solid #dee2e6; border-radius: 8px; background: #0d1117; }
+    </style>
+</th:block>
+
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Topology</h2>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success" id="sse-status">Live</span>
+            <button class="btn btn-sm btn-outline-secondary" onclick="refreshTopology()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+    <div id="topology-canvas"></div>
+
+    <!-- Legend -->
+    <div class="d-flex gap-4 mt-3 small">
+        <span><span class="legend-dot bg-primary"></span> Server Pod</span>
+        <span><span class="legend-dot bg-success"></span> Connected Client</span>
+        <span><span class="legend-dot bg-secondary"></span> Disconnected Client</span>
+        <span><span class="legend-dot" style="background:#ffc107"></span> Route</span>
+    </div>
+</th:block>
+
+<th:block th:fragment="extraScripts">
+    <script th:src="@{/webjars/d3/d3.min.js}"></script>
+    <script th:src="@{/js/topology.js}"></script>
+    <script>
+        // Load initial data, then subscribe to SSE updates
+        refreshTopology();
+
+        const sse = new EventSource('/admin/sse/topology');
+        sse.addEventListener('CLIENT_CONNECTED', () => refreshTopology());
+        sse.addEventListener('CLIENT_DISCONNECTED', () => refreshTopology());
+        sse.addEventListener('ROUTE_UPDATED', () => refreshTopology());
+        sse.addEventListener('REQUEST_IN_FLIGHT', (e) => pulseLink(JSON.parse(e.data)));
+        sse.addEventListener('REQUEST_COMPLETED', (e) => clearPulse(JSON.parse(e.data)));
+        sse.onerror = () => {
+            document.getElementById('sse-status').textContent = 'Reconnecting…';
+            document.getElementById('sse-status').className = 'badge bg-warning text-dark';
+        };
+        sse.onopen = () => {
+            document.getElementById('sse-status').textContent = 'Live';
+            document.getElementById('sse-status').className = 'badge bg-success';
+        };
+    </script>
+</th:block>
+
+</body>
+</html>

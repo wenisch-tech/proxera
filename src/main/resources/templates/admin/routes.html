@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(activePage='routes', pageTitle='Routes', content=~{::content}, extraHead=~{}, extraScripts=~{})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-signpost-split me-2"></i>Routes</h2>
+        <a th:href="@{/admin/routes/new}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> New Route
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Client</th>
+                    <th>Target</th>
+                    <th>Domains</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="route : ${routes}">
+                    <td>
+                        <a th:href="@{/admin/routes/{id}(id=${route.id})}" th:text="${route.name}"
+                           class="text-decoration-none fw-semibold"></a>
+                    </td>
+                    <td th:text="${route.client?.name}"></td>
+                    <td class="small text-muted" th:text="${route.localHost + ':' + route.localPort}"></td>
+                    <td>
+                        <span th:each="d,i : ${route.domains}">
+                            <span class="badge bg-light text-dark border" th:text="${d.domain}"></span>
+                        </span>
+                    </td>
+                    <td>
+                        <span th:if="${route.enabled}" class="badge bg-success">Enabled</span>
+                        <span th:unless="${route.enabled}" class="badge bg-secondary">Disabled</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/admin/routes/{id}(id=${route.id})}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form th:action="@{/admin/routes/{id}/delete(id=${route.id})}" method="post" class="d-inline"
+                              onsubmit="return confirm('Delete route?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(routes)}">
+                    <td colspan="6" class="text-center text-muted py-4">No routes configured.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

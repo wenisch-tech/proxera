@@ -1,0 +1,30 @@
+MAVEN_OPTS
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.vscode/mcp.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Spring Boot
+*.log
+application-local.properties
+
+# H2 database files
+*.db
+*.mv.db
+*.trace.db
+
+# Release artifacts
+release/
+
+# Test reports
+surefire-reports/

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(activePage='routes', pageTitle='New Route', content=~{::content}, extraHead=~{}, extraScripts=~{})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a th:href="@{/admin/routes}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="mb-0">New Route</h2>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="max-width:600px;">
+        <div class="card-body">
+            <form th:action="@{/admin/routes}" method="post">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Route Name</label>
+                    <input type="text" id="name" name="name" class="form-control" required
+                           placeholder="my-service"/>
+                </div>
+
+                <div class="mb-3">
+                    <label for="clientId" class="form-label">Client</label>
+                    <select id="clientId" name="clientId" class="form-select" required>
+                        <option value="">— select a client —</option>
+                        <option th:each="client : ${clients}"
+                                th:value="${client.id}"
+                                th:text="${client.name}"></option>
+                    </select>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-8">
+                        <label for="localHost" class="form-label">LAN Host</label>
+                        <input type="text" id="localHost" name="localHost" class="form-control" required
+                               placeholder="192.168.1.100"/>
+                    </div>
+                    <div class="col-4">
+                        <label for="localPort" class="form-label">Port</label>
+                        <input type="number" id="localPort" name="localPort" class="form-control" required
+                               value="80" min="1" max="65535"/>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="pathPrefix" class="form-label">Path Prefix <span class="text-muted">(optional)</span></label>
+                    <input type="text" id="pathPrefix" name="pathPrefix" class="form-control"
+                           placeholder="/api"/>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" id="stripPrefix" name="stripPrefix" class="form-check-input" value="true"/>
+                    <label for="stripPrefix" class="form-check-label">Strip path prefix before forwarding</label>
+                </div>
+
+                <div class="mb-4 form-check">
+                    <input type="checkbox" id="enabled" name="enabled" class="form-check-input" value="true" checked/>
+                    <label for="enabled" class="form-check-label">Enabled</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i> Create Route
+                    </button>
+                    <a th:href="@{/admin/routes}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

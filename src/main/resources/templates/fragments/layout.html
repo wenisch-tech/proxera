@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:fragment="layout(activePage, pageTitle, content, extraHead, extraScripts)">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle != null ? pageTitle + ' – Proxera' : 'Proxera'}">Proxera</title>
+
+    <!-- Bootstrap CSS via WebJars -->
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" />
+    <!-- Bootstrap Icons via WebJars -->
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}" />
+    <!-- Custom styles -->
+    <link rel="stylesheet" th:href="@{/css/proxera.css}" />
+
+    <th:block th:replace="${extraHead}"></th:block>
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark px-3">
+    <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/admin/}">
+        <i class="bi bi-hdd-network"></i>
+        <span>Proxera</span>
+    </a>
+    <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="text-secondary small" id="pod-id" th:text="${podId}"></span>
+        <a class="text-light text-decoration-none small" th:href="@{/logout}">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
+</nav>
+
+<div class="container-fluid flex-grow-1">
+    <div class="row h-100">
+
+        <!-- Sidebar -->
+        <nav class="col-auto sidebar bg-dark d-flex flex-column py-3 px-0" style="min-width:220px;">
+            <ul class="nav flex-column px-2 gap-1">
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 d-flex align-items-center gap-2" th:href="@{/admin/}"
+                       th:classappend="${activePage == 'dashboard'} ? 'active text-white' : ''">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 d-flex align-items-center gap-2" th:href="@{/admin/topology}"
+                       th:classappend="${activePage == 'topology'} ? 'active text-white' : ''">
+                        <i class="bi bi-diagram-3"></i> Topology
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 d-flex align-items-center gap-2" th:href="@{/admin/clients}"
+                       th:classappend="${activePage == 'clients'} ? 'active text-white' : ''">
+                        <i class="bi bi-hdd-rack"></i> Clients
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 d-flex align-items-center gap-2" th:href="@{/admin/routes}"
+                       th:classappend="${activePage == 'routes'} ? 'active text-white' : ''">
+                        <i class="bi bi-signpost-split"></i> Routes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 d-flex align-items-center gap-2" th:href="@{/admin/api-keys}"
+                       th:classappend="${activePage == 'api-keys'} ? 'active text-white' : ''">
+                        <i class="bi bi-key"></i> API Keys
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 d-flex align-items-center gap-2" th:href="@{/admin/users}"
+                       th:classappend="${activePage == 'users'} ? 'active text-white' : ''">
+                        <i class="bi bi-people"></i> Users
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50 d-flex align-items-center gap-2" th:href="@{/admin/settings}"
+                       th:classappend="${activePage == 'settings'} ? 'active text-white' : ''">
+                        <i class="bi bi-gear"></i> Settings
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col p-4">
+            <!-- Flash messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <th:block th:replace="${content}"></th:block>
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<th:block th:replace="${extraScripts}"></th:block>
+</body>
+</html>

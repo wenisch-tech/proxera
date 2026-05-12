@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(activePage='routes', pageTitle='Route Detail', content=~{::content}, extraHead=~{::extraHead}, extraScripts=~{::extraScripts})}">
+<body>
+
+<th:block th:fragment="extraHead">
+    <style>
+        #log-table tbody { font-family: monospace; font-size: 0.8rem; }
+    </style>
+</th:block>
+
+<th:block th:fragment="content">
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a th:href="@{/admin/routes}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="mb-0" th:text="${route.name}">Route</h2>
+        <span th:if="${route.enabled}" class="badge bg-success ms-2">Enabled</span>
+        <span th:unless="${route.enabled}" class="badge bg-secondary ms-2">Disabled</span>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-semibold">Configuration</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Client</dt>
+                        <dd class="col-sm-8" th:text="${route.client?.name}"></dd>
+                        <dt class="col-sm-4">Target</dt>
+                        <dd class="col-sm-8 font-monospace" th:text="${route.localHost + ':' + route.localPort}"></dd>
+                        <dt class="col-sm-4">Path Prefix</dt>
+                        <dd class="col-sm-8 text-muted" th:text="${route.pathPrefix ?: '/'}"></dd>
+                        <dt class="col-sm-4">Strip Prefix</dt>
+                        <dd class="col-sm-8" th:text="${route.stripPrefix ? 'Yes' : 'No'}"></dd>
+                        <dt class="col-sm-4">Domains</dt>
+                        <dd class="col-sm-8">
+                            <span th:each="d : ${route.domains}" class="badge bg-light text-dark border me-1" th:text="${d.domain}"></span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live access log -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-semibold"><i class="bi bi-list-ul me-1"></i>Live Access Log</span>
+            <span class="badge bg-success" id="log-sse-status">Live</span>
+        </div>
+        <div class="card-body p-0" style="max-height:450px; overflow-y:auto;">
+            <table class="table table-sm mb-0" id="log-table">
+                <thead class="table-light">
+                <tr>
+                    <th>Time</th>
+                    <th>Method</th>
+                    <th>Path</th>
+                    <th>Status</th>
+                    <th>Latency</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="log : ${recentLogs}" th:id="'log-seed'">
+                    <td th:text="${#temporals.format(log.timestamp, 'HH:mm:ss')}"></td>
+                    <td><span class="badge bg-secondary" th:text="${log.method}"></span></td>
+                    <td th:text="${log.path}"></td>
+                    <td><span class="badge"
+                              th:classappend="${log.statusCode >= 500 ? 'bg-danger' : (log.statusCode >= 400 ? 'bg-warning text-dark' : 'bg-success')}"
+                              th:text="${log.statusCode}"></span></td>
+                    <td th:text="${log.latencyMs} + 'ms'"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="extraScripts">
+    <script th:inline="javascript">
+        const routeId = /*[[${route.id}]]*/ 'unknown';
+        const tbody = document.querySelector('#log-table tbody');
+
+        const sse = new EventSource(`/admin/sse/routes/${routeId}/log`);
+        sse.addEventListener('log', (e) => {
+            const log = JSON.parse(e.data);
+            const statusClass = log.statusCode >= 500 ? 'bg-danger' : (log.statusCode >= 400 ? 'bg-warning text-dark' : 'bg-success');
+            const row = `<tr>
+                <td>${new Date(log.timestamp).toLocaleTimeString()}</td>
+                <td><span class="badge bg-secondary">${log.method}</span></td>
+                <td>${log.path}</td>
+                <td><span class="badge ${statusClass}">${log.statusCode}</span></td>
+                <td>${log.latencyMs}ms</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('afterbegin', row);
+            // Keep max 200 rows
+            while (tbody.rows.length > 200) tbody.deleteRow(-1);
+        });
+    </script>
+</th:block>
+
+</body>
+</html>

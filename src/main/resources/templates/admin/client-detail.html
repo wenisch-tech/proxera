@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(activePage='clients', pageTitle='Client Detail', content=~{::content}, extraHead=~{}, extraScripts=~{})}">
+<body>
+<th:block th:fragment="content">
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a th:href="@{/admin/clients}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="mb-0" th:text="${client.name}">Client</h2>
+        <span class="badge ms-2"
+              th:classappend="${client.status.name() == 'CONNECTED' ? 'bg-success' : (client.status.name() == 'REGISTERED' ? 'bg-info' : 'bg-secondary')}"
+              th:text="${client.status}"></span>
+    </div>
+
+    <!-- Show new token once -->
+    <div th:if="${newToken}" class="alert alert-warning">
+        <strong><i class="bi bi-exclamation-triangle me-1"></i>New registration token (shown once):</strong>
+        <div class="mt-2">
+            <code class="user-select-all fs-6" th:text="${newToken}"></code>
+        </div>
+        <small class="text-muted">Use this token with the Proxera client: <code>proxera-client --token &lt;token&gt; --server wss://proxera.example.com/tunnel</code></small>
+    </div>
+
+    <div class="row g-4">
+        <!-- Client info -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-semibold">Client Info</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">ID</dt>
+                        <dd class="col-sm-8 text-muted font-monospace small" th:text="${client.id}"></dd>
+                        <dt class="col-sm-4">Name</dt>
+                        <dd class="col-sm-8" th:text="${client.name}"></dd>
+                        <dt class="col-sm-4">Created</dt>
+                        <dd class="col-sm-8 text-muted" th:text="${#temporals.format(client.createdAt, 'yyyy-MM-dd HH:mm')}"></dd>
+                        <dt class="col-sm-4">Last Seen</dt>
+                        <dd class="col-sm-8 text-muted"
+                            th:text="${client.lastSeenAt != null ? #temporals.format(client.lastSeenAt, 'yyyy-MM-dd HH:mm') : '—'}"></dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-white">
+                    <form th:action="@{/admin/clients/{id}/token(id=${client.id})}" method="post">
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            <i class="bi bi-key me-1"></i> Generate New Registration Token
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Routes -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white fw-semibold">Routes</div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Target</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="route : ${routes}">
+                            <td>
+                                <a th:href="@{/admin/routes/{id}(id=${route.id})}" th:text="${route.name}"
+                                   class="text-decoration-none"></a>
+                            </td>
+                            <td class="small text-muted" th:text="${route.localHost + ':' + route.localPort}"></td>
+                            <td>
+                                <span th:if="${route.enabled}" class="badge bg-success">Enabled</span>
+                                <span th:unless="${route.enabled}" class="badge bg-secondary">Disabled</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(routes)}">
+                            <td colspan="3" class="text-muted text-center py-3">No routes configured.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

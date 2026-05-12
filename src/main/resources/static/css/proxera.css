@@ -1,0 +1,58 @@
+/* ===========================
+   Proxera custom styles
+   =========================== */
+
+/* Sidebar */
+.sidebar {
+    min-height: calc(100vh - 56px);
+    background-color: #1a1d23;
+}
+
+.sidebar .nav-link {
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    transition: background-color 0.15s;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff !important;
+}
+
+/* Legend dots for topology page */
+.legend-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+/* Topology graph node labels */
+.topo-label {
+    fill: #e6edf3;
+    font-size: 11px;
+    pointer-events: none;
+}
+
+/* Pulse animation for in-flight requests */
+@keyframes link-pulse {
+    0%   { stroke-opacity: 1; stroke-width: 3px; }
+    50%  { stroke-opacity: 0.4; stroke-width: 5px; }
+    100% { stroke-opacity: 1; stroke-width: 3px; }
+}
+
+.link-pulsing {
+    animation: link-pulse 0.8s ease-in-out infinite;
+}
+
+/* Code display for tokens / API keys */
+code.user-select-all {
+    background: #f0f3f6;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: block;
+    word-break: break-all;
+}

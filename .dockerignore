@@ -1,0 +1,14 @@
+target/
+*.class
+*.jar
+*.war
+.git/
+.gitignore
+README.md
+CHANGELOG.md
+SECURITY.md
+docs/
+.github/
+scripts/
+src/test/
+*.md
