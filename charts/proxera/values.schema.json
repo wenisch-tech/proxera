@@ -330,27 +330,8 @@
         "service": {
             "type": "object",
             "properties": {
-                "admin": {
-                    "type": "object",
-                    "properties": {
-                        "port": {
-                            "type": "integer"
-                        },
-                        "targetPort": {
-                            "type": "integer"
-                        }
-                    }
-                },
-                "proxy": {
-                    "type": "object",
-                    "properties": {
-                        "port": {
-                            "type": "integer"
-                        },
-                        "targetPort": {
-                            "type": "integer"
-                        }
-                    }
+                "port": {
+                    "type": "integer"
                 },
                 "type": {
                     "type": "string"

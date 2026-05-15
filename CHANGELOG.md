@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.0.8 - 2026-05-15
+
+### [0.0.8](https://github.com/wenisch-tech/proxera/compare/v0.0.7...v0.0.8) (2026-05-15)
+
+
+### Bug Fixes
+
+* updated port usage in helm chart ([4c081ea](https://github.com/wenisch-tech/proxera/commit/4c081eaea3d5d62e6e5de021c3d598f0b240fd8a))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.8
+
+
 ## v0.0.7 - 2026-05-12
 
 ### [0.0.7](https://github.com/wenisch-tech/proxera/compare/v0.0.6...v0.0.7) (2026-05-12)
