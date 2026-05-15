@@ -29,7 +29,7 @@ spec:
               service:
                 name: {{ include "proxera.fullname" $ }}
                 port:
-                  number: {{ $.Values.service.proxy.port }}
+                  number: {{ $.Values.service.port }}
           {{- end }}
     {{- end }}
 {{- end }}

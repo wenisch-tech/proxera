@@ -7,13 +7,9 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - name: proxy
-      port: {{ .Values.service.proxy.port }}
-      targetPort: {{ .Values.service.proxy.targetPort }}
-      protocol: TCP
-    - name: admin
-      port: {{ .Values.service.admin.port }}
-      targetPort: {{ .Values.service.admin.targetPort }}
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
       protocol: TCP
   selector:
     {{- include "proxera.selectorLabels" . | nindent 4 }}

@@ -26,12 +26,7 @@ securityContext:
       - ALL
 service:
   type: ClusterIP
-  proxy:
-    port: 8080
-    targetPort: 8080
-  admin:
-    port: 8080
-    targetPort: 8080
+  port: 8080
 ingress:
   proxy:
     enabled: false
