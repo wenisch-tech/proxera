@@ -1,18 +1,20 @@
 package tech.wenisch.proxera.tunnel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.bus.MessageBus;
 import tech.wenisch.proxera.bus.TopologyEvent;
 import tech.wenisch.proxera.service.ClientService;
-
-import java.util.Map;
-import java.util.UUID;
 
 @Component
 @Slf4j

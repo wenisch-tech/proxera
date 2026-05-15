@@ -1,15 +1,15 @@
 package tech.wenisch.proxera.tunnel;
 
-import lombok.extern.slf4j.Slf4j;
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.PingMessage;
-import org.springframework.web.socket.WebSocketSession;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Sends WebSocket PING control frames to all connected tunnel clients and closes
