@@ -7,18 +7,18 @@ import java.util.UUID;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.PingMessage;
+import org.springframework.web.socket.PongMessage;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Sends WebSocket PING control frames to all connected tunnel clients and closes
- * sessions that have not responded within the stale timeout.
+ * Sends unsolicited WebSocket PONG control frames to all connected tunnel clients.
  *
- * The client (gorilla/websocket) resets its read deadline only when it receives
- * a WebSocket protocol-level PONG control frame — NOT application-level JSON frames.
- * Sending PingMessage causes gorilla's default PingHandler to reply with a PONG
- * control frame, which triggers the client's PongHandler to extend its read deadline.
+ * The client (gorilla/websocket) resets its read deadline only when it RECEIVES a
+ * WebSocket protocol-level PONG control frame (via its PongHandler). Sending a PING
+ * would cause the client to send a PONG back to the server — the client's own
+ * PongHandler would never fire. Sending an unsolicited PONG is explicitly allowed
+ * by RFC 6455 §5.5.3 as a unidirectional keepalive mechanism.
  */
 @Component
 @Slf4j
@@ -35,7 +35,7 @@ public class TunnelHeartbeat {
     }
 
     @Scheduled(fixedDelay = PING_INTERVAL_MS)
-    public void sendPings() {
+    public void sendHeartbeats() {
         long now = System.currentTimeMillis();
         Map<UUID, Long> lastPongAt = tunnelManager.getLastPongAt();
 
@@ -58,7 +58,7 @@ public class TunnelHeartbeat {
 
             try {
                 synchronized (session) {
-                    session.sendMessage(new PingMessage(ByteBuffer.allocate(0)));
+                    session.sendMessage(new PongMessage(ByteBuffer.allocate(0)));
                 }
             } catch (Exception e) {
                 log.debug("Failed to send WebSocket ping to client {}: {}", clientId, e.getMessage());
