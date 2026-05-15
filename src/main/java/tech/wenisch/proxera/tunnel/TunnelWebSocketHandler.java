@@ -45,6 +45,7 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
         }
 
         tunnelManager.register(clientId, session);
+        session.setTextMessageSizeLimit(64 * 1024 * 1024);
         clientService.markConnected(clientId);
         messageBus.publishTopology(new TopologyEvent("CLIENT_CONNECTED", clientId.toString(), clientName));
 
@@ -68,7 +69,9 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
             }
             case PING -> {
                 TunnelFrame pong = TunnelFrame.pong(frame.correlationId());
-                session.sendMessage(new TextMessage(objectMapper.writeValueAsString(pong)));
+                synchronized (session) {
+                    session.sendMessage(new TextMessage(objectMapper.writeValueAsString(pong)));
+                }
             }
             case PONG -> tunnelManager.recordPong(clientId);
             default -> log.warn("Unexpected frame type from client {}: {}", clientId, frame.type());
