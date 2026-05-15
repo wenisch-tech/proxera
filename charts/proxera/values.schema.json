@@ -60,7 +60,21 @@
                     "type": "object",
                     "properties": {
                         "annotations": {
-                            "type": "object"
+                            "type": "object",
+                            "properties": {
+                                "nginx.ingress.kubernetes.io/proxy-body-size": {
+                                    "type": "string"
+                                },
+                                "nginx.ingress.kubernetes.io/proxy-connect-timeout": {
+                                    "type": "string"
+                                },
+                                "nginx.ingress.kubernetes.io/proxy-read-timeout": {
+                                    "type": "string"
+                                },
+                                "nginx.ingress.kubernetes.io/proxy-send-timeout": {
+                                    "type": "string"
+                                }
+                            }
                         },
                         "className": {
                             "type": "string"
@@ -102,7 +116,27 @@
                     "type": "object",
                     "properties": {
                         "annotations": {
-                            "type": "object"
+                            "type": "object",
+                            "properties": {
+                                "nginx.ingress.kubernetes.io/proxy-body-size": {
+                                    "type": "string"
+                                },
+                                "nginx.ingress.kubernetes.io/proxy-buffering": {
+                                    "type": "string"
+                                },
+                                "nginx.ingress.kubernetes.io/proxy-connect-timeout": {
+                                    "type": "string"
+                                },
+                                "nginx.ingress.kubernetes.io/proxy-http-version": {
+                                    "type": "string"
+                                },
+                                "nginx.ingress.kubernetes.io/proxy-read-timeout": {
+                                    "type": "string"
+                                },
+                                "nginx.ingress.kubernetes.io/proxy-send-timeout": {
+                                    "type": "string"
+                                }
+                            }
                         },
                         "className": {
                             "type": "string"
@@ -348,6 +382,40 @@
                     "type": "string"
                 }
             }
+        },
+        "startupProbe": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "failureThreshold": {
+                    "type": "integer"
+                },
+                "httpGet": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string"
+                        },
+                        "port": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "initialDelaySeconds": {
+                    "type": "integer"
+                },
+                "periodSeconds": {
+                    "type": "integer"
+                },
+                "timeoutSeconds": {
+                    "type": "integer"
+                }
+            }
+        },
+        "terminationGracePeriodSeconds": {
+            "type": "integer"
         },
         "tolerations": {
             "type": "array"

@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.0.17 - 2026-05-15
+
+### [0.0.17](https://github.com/wenisch-tech/proxera/compare/v0.0.16...v0.0.17) (2026-05-15)
+
+
+### Bug Fixes
+
+* updated wsConfig to allow proper test class ([a7451e8](https://github.com/wenisch-tech/proxera/commit/a7451e8a776bda1f6d416ab27124fa3acb52755e))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.17
+
+
 ## v0.0.14 - 2026-05-15
 
 ### [0.0.14](https://github.com/wenisch-tech/proxera/compare/v0.0.13...v0.0.14) (2026-05-15)
