@@ -4,7 +4,7 @@ replicaCount: 1
 image:
   registry: ghcr.io
   repository: wenisch-tech/proxera
-  tag: 0.0.10
+  tag: 0.0.11
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 nameOverride: ""

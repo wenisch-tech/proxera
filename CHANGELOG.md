@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.0.11 - 2026-05-15
+
+### [0.0.11](https://github.com/wenisch-tech/proxera/compare/v0.0.10...v0.0.11) (2026-05-15)
+
+
+### Bug Fixes
+
+* Updated ping message on wss layer ([53741ad](https://github.com/wenisch-tech/proxera/commit/53741adb6b0c9b2cdda61824cfe7f9186c6672c4))
+* updated wss session keep alive mechanism ([0407139](https://github.com/wenisch-tech/proxera/commit/04071397e38e022868e785a1940d2d9a30c12e4c))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.11
+
+
 ## v0.0.10 - 2026-05-15
 
 ### [0.0.10](https://github.com/wenisch-tech/proxera/compare/v0.0.9...v0.0.10) (2026-05-15)
