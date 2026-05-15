@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.0.12 - 2026-05-15
+
+### [0.0.12](https://github.com/wenisch-tech/proxera/compare/v0.0.11...v0.0.12) (2026-05-15)
+
+
+### Bug Fixes
+
+* updated tunnel heartbeat ([c2b7926](https://github.com/wenisch-tech/proxera/commit/c2b7926e693ebbf1af60652ad5624b69c061af44))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.12
+
+
 ## v0.0.11 - 2026-05-15
 
 ### [0.0.11](https://github.com/wenisch-tech/proxera/compare/v0.0.10...v0.0.11) (2026-05-15)
