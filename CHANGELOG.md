@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.0.18 - 2026-05-15
+
+### [0.0.18](https://github.com/wenisch-tech/proxera/compare/v0.0.17...v0.0.18) (2026-05-15)
+
+
+### Bug Fixes
+
+* updated errorpage ([baf4ce8](https://github.com/wenisch-tech/proxera/commit/baf4ce8dfafeaa092c20199e246b8fe2893c6b2d))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.18
+
+
 ## v0.0.17 - 2026-05-15
 
 ### [0.0.17](https://github.com/wenisch-tech/proxera/compare/v0.0.16...v0.0.17) (2026-05-15)
