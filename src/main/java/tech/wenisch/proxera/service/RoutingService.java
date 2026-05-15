@@ -1,15 +1,16 @@
 package tech.wenisch.proxera.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import tech.wenisch.proxera.domain.Route;
-import tech.wenisch.proxera.repository.RouteRepository;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.stereotype.Service;
+
+import lombok.extern.slf4j.Slf4j;
+import tech.wenisch.proxera.domain.Route;
+import tech.wenisch.proxera.repository.RouteRepository;
 
 /**
  * Resolves an inbound HTTP request (host + path) to a Route.
