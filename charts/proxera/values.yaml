@@ -31,7 +31,11 @@ ingress:
   proxy:
     enabled: false
     className: nginx
-    annotations: {}
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+      nginx.ingress.kubernetes.io/proxy-buffering: "off"
     hosts:
       - host: proxy.example.com
         paths:
@@ -41,7 +45,10 @@ ingress:
   admin:
     enabled: false
     className: nginx
-    annotations: {}
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-body-size: "64m"
     hosts:
       - host: admin.proxera.example.com
         paths:
