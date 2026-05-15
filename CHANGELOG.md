@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.0.13 - 2026-05-15
+
+### [0.0.13](https://github.com/wenisch-tech/proxera/compare/v0.0.12...v0.0.13) (2026-05-15)
+
+
+### Bug Fixes
+
+* ensure dialogs are always on top ([8b448b8](https://github.com/wenisch-tech/proxera/commit/8b448b88ee70612fab7d364a530e4494819fde65))
+* fixed problem API Keys page not properly being displayed ([7851f21](https://github.com/wenisch-tech/proxera/commit/7851f212031a7396a22402b456c734c0c5e05dc1))
+* update route controller to display domains properly ([6b65187](https://github.com/wenisch-tech/proxera/commit/6b65187197e84b8a7052e1299a457ad7eb4a047a))
+* updated edit panel for routes ([816b9d3](https://github.com/wenisch-tech/proxera/commit/816b9d30998ddc662ba6d0d63bb67ea609c559df))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.13
+
+
 ## v0.0.12 - 2026-05-15
 
 ### [0.0.12](https://github.com/wenisch-tech/proxera/compare/v0.0.11...v0.0.12) (2026-05-15)

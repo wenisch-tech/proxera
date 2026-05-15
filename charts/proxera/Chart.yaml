@@ -2,8 +2,8 @@ apiVersion: v2
 name: proxera
 description: Self-hosted reverse tunnel — expose LAN services to the internet over a secure WebSocket tunnel
 type: application
-version: 0.0.12
-appVersion: "0.0.12"
+version: 0.0.13
+appVersion: "0.0.13"
 home: https://proxera.wenisch.tech
 sources:
   - https://github.com/wenisch-tech/proxera
