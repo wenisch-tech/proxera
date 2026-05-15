@@ -55,4 +55,8 @@ public class TunnelManager {
     public Map<UUID, WebSocketSession> getActiveSessions() {
         return Map.copyOf(sessions);
     }
+
+    public Map<UUID, Long> getLastPongAt() {
+        return Map.copyOf(lastPongAt);
+    }
 }

@@ -86,6 +86,14 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
+    protected void handlePongMessage(WebSocketSession session, org.springframework.web.socket.PongMessage message) {
+        UUID clientId = (UUID) session.getAttributes().get("clientId");
+        if (clientId != null) {
+            tunnelManager.recordPong(clientId);
+        }
+    }
+
+    @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         log.warn("Transport error for session {}: {}", session.getId(), exception.getMessage());
         session.close(CloseStatus.SERVER_ERROR);
