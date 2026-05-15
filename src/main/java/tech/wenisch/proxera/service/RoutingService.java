@@ -70,7 +70,7 @@ public class RoutingService {
 
     private Map<String, List<Route>> buildCache() {
         Map<String, List<Route>> newCache = new ConcurrentHashMap<>();
-        routeRepository.findAll().stream()
+        routeRepository.findAllWithClient().stream()
                 .filter(Route::isEnabled)
                 .forEach(route -> route.getDomains().forEach(d ->
                         newCache.computeIfAbsent(d.getDomain().toLowerCase(), k -> new java.util.ArrayList<>())
