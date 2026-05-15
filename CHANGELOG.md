@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.0.14 - 2026-05-15
+
+### [0.0.14](https://github.com/wenisch-tech/proxera/compare/v0.0.13...v0.0.14) (2026-05-15)
+
+
+### Bug Fixes
+
+* ErrorPage is displayed upon config problem ([46184b6](https://github.com/wenisch-tech/proxera/commit/46184b6f07f5698442fde865a218d308e864972b))
+* updated problem route update not being properly handled ([5476697](https://github.com/wenisch-tech/proxera/commit/547669777190fc5e0648614bd0994e5522945684))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.14
+
+
 ## v0.0.13 - 2026-05-15
 
 ### [0.0.13](https://github.com/wenisch-tech/proxera/compare/v0.0.12...v0.0.13) (2026-05-15)
