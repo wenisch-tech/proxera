@@ -1,6 +1,7 @@
 package tech.wenisch.proxera.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,9 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
 
     @Query("SELECT DISTINCT r FROM Route r LEFT JOIN FETCH r.client LEFT JOIN FETCH r.domains")
     List<Route> findAllWithClient();
+
+    @Query("SELECT r FROM Route r LEFT JOIN FETCH r.client LEFT JOIN FETCH r.domains WHERE r.id = :id")
+    Optional<Route> findByIdWithDetails(UUID id);
 
     List<Route> findByClientId(UUID clientId);
 

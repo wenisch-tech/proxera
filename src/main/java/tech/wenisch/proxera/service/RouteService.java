@@ -34,7 +34,7 @@ public class RouteService {
     }
 
     public Optional<Route> findById(UUID id) {
-        return routeRepository.findById(id);
+        return routeRepository.findByIdWithDetails(id);
     }
 
     public List<Route> findByClientId(UUID clientId) {

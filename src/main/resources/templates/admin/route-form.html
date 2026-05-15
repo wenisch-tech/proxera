@@ -53,6 +53,19 @@
                     <label for="stripPrefix" class="form-check-label">Strip path prefix before forwarding</label>
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label">Domains</label>
+                    <div id="domains-list">
+                        <div class="input-group mb-2">
+                            <input type="text" name="domains" class="form-control" placeholder="e.g. homeassistant.example.com"/>
+                            <button type="button" class="btn btn-outline-secondary" onclick="addDomain()">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <small class="text-muted">Each domain must point to this Proxera server via DNS.</small>
+                </div>
+
                 <div class="mb-4 form-check">
                     <input type="checkbox" id="enabled" name="enabled" class="form-check-input" value="true" checked/>
                     <label for="enabled" class="form-check-label">Enabled</label>
@@ -69,4 +82,16 @@
     </div>
 </th:block>
 </body>
+<script>
+function addDomain() {
+    const list = document.getElementById('domains-list');
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = `<input type="text" name="domains" class="form-control" placeholder="e.g. service.example.com"/>
+        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">
+            <i class="bi bi-trash"></i>
+        </button>`;
+    list.appendChild(div);
+}
+</script>
 </html>

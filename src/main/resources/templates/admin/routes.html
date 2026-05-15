@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: layout(activePage='routes', pageTitle='Routes', content=~{::content}, extraHead=~{}, extraScripts=~{})}">
+      th:replace="~{fragments/layout :: layout(activePage='routes', pageTitle='Routes', content=~{::content}, extraHead=~{}, extraScripts=~{::extraScripts})}">
 <body>
 <th:block th:fragment="content">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -26,13 +26,12 @@
                 <tbody>
                 <tr th:each="route : ${routes}">
                     <td>
-                        <a th:href="@{/admin/routes/{id}(id=${route.id})}" th:text="${route.name}"
-                           class="text-decoration-none fw-semibold"></a>
+                        <span th:text="${route.name}" class="fw-semibold"></span>
                     </td>
                     <td th:text="${route.client?.name}"></td>
                     <td class="small text-muted" th:text="${route.localHost + ':' + route.localPort}"></td>
                     <td>
-                        <span th:each="d,i : ${route.domains}">
+                        <span th:each="d : ${route.domains}">
                             <span class="badge bg-secondary" th:text="${d.domain}"></span>
                         </span>
                     </td>
@@ -41,12 +40,29 @@
                         <span th:unless="${route.enabled}" class="badge bg-secondary">Disabled</span>
                     </td>
                     <td>
-                        <a th:href="@{/admin/routes/{id}(id=${route.id})}" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-pencil"></i>
+                        <!-- View details -->
+                        <a th:href="@{/admin/routes/{id}(id=${route.id})}" class="btn btn-sm btn-outline-secondary" title="View details">
+                            <i class="bi bi-eye"></i>
                         </a>
+                        <!-- Edit (opens modal) -->
+                        <button type="button" class="btn btn-sm btn-outline-primary" title="Edit"
+                                data-bs-toggle="modal" data-bs-target="#editModal"
+                                th:attr="
+                                    data-id=${route.id},
+                                    data-name=${route.name},
+                                    data-client-id=${route.client?.id},
+                                    data-local-host=${route.localHost},
+                                    data-local-port=${route.localPort},
+                                    data-path-prefix=${route.pathPrefix},
+                                    data-strip-prefix=${route.stripPrefix},
+                                    data-enabled=${route.enabled},
+                                    data-domains=${#strings.listJoin(route.domains.![domain], ',')}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <!-- Delete -->
                         <form th:action="@{/admin/routes/{id}/delete(id=${route.id})}" method="post" class="d-inline"
-                              onsubmit="return confirm('Delete route?')">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                              onsubmit="return confirm('Delete this route?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
@@ -59,6 +75,123 @@
             </table>
         </div>
     </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Route</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editForm" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="edit-name" class="form-label">Route Name</label>
+                            <input type="text" id="edit-name" name="name" class="form-control" required/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-clientId" class="form-label">Client</label>
+                            <select id="edit-clientId" name="clientId" class="form-select" required>
+                                <option th:each="client : ${clients}"
+                                        th:value="${client.id}"
+                                        th:text="${client.name}"></option>
+                            </select>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-8">
+                                <label for="edit-localHost" class="form-label">LAN Host</label>
+                                <input type="text" id="edit-localHost" name="localHost" class="form-control" required/>
+                            </div>
+                            <div class="col-4">
+                                <label for="edit-localPort" class="form-label">Port</label>
+                                <input type="number" id="edit-localPort" name="localPort" class="form-control" required min="1" max="65535"/>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-pathPrefix" class="form-label">Path Prefix <span class="text-muted">(optional)</span></label>
+                            <input type="text" id="edit-pathPrefix" name="pathPrefix" class="form-control" placeholder="/api"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Domains</label>
+                            <div id="edit-domains-list"></div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addEditDomain('')">
+                                <i class="bi bi-plus-lg me-1"></i> Add Domain
+                            </button>
+                            <small class="d-block text-muted mt-1">Each domain must point to this Proxera server via DNS.</small>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input type="checkbox" id="edit-stripPrefix" name="stripPrefix" class="form-check-input" value="true"/>
+                                <label for="edit-stripPrefix" class="form-check-label">Strip path prefix</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" id="edit-enabled" name="enabled" class="form-check-input" value="true"/>
+                                <label for="edit-enabled" class="form-check-label">Enabled</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="extraScripts">
+<script>
+    // Move modal to <body> to escape any stacking context created by <main>
+    document.body.appendChild(document.getElementById('editModal'));
+
+    const editModal = document.getElementById('editModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        const btn = event.relatedTarget;
+        const id          = btn.dataset.id;
+        const name        = btn.dataset.name;
+        const clientId    = btn.dataset.clientId;
+        const localHost   = btn.dataset.localHost;
+        const localPort   = btn.dataset.localPort;
+        const pathPrefix  = btn.dataset.pathPrefix || '';
+        const stripPrefix = btn.dataset.stripPrefix === 'true';
+        const enabled     = btn.dataset.enabled === 'true';
+        const domains     = btn.dataset.domains ? btn.dataset.domains.split(',').filter(d => d) : [];
+
+        document.getElementById('editForm').action = `/admin/routes/${id}`;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-localHost').value = localHost;
+        document.getElementById('edit-localPort').value = localPort;
+        document.getElementById('edit-pathPrefix').value = pathPrefix;
+        document.getElementById('edit-stripPrefix').checked = stripPrefix;
+        document.getElementById('edit-enabled').checked = enabled;
+
+        const clientSelect = document.getElementById('edit-clientId');
+        for (const opt of clientSelect.options) {
+            opt.selected = opt.value === clientId;
+        }
+
+        const list = document.getElementById('edit-domains-list');
+        list.innerHTML = '';
+        if (domains.length > 0) {
+            domains.forEach(d => addEditDomain(d));
+        } else {
+            addEditDomain('');
+        }
+    });
+
+    function addEditDomain(value) {
+        const list = document.getElementById('edit-domains-list');
+        const div = document.createElement('div');
+        div.className = 'input-group mb-2';
+        div.innerHTML = `<input type="text" name="domains" class="form-control" placeholder="e.g. service.example.com" value="${value}"/>
+            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">
+                <i class="bi bi-trash"></i>
+            </button>`;
+        list.appendChild(div);
+    }
+</script>
 </th:block>
 </body>
 </html>
