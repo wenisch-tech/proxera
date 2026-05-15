@@ -143,9 +143,6 @@
 
 <th:block th:fragment="extraScripts">
 <script>
-    // Move modal to <body> to escape any stacking context created by <main>
-    document.body.appendChild(document.getElementById('editModal'));
-
     const editModal = document.getElementById('editModal');
     editModal.addEventListener('show.bs.modal', function (event) {
         const btn = event.relatedTarget;

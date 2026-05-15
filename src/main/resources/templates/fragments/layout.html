@@ -136,6 +136,10 @@
     })();
 </script>
 
+<script>
+    // Move all modals to <body> to escape any CSS stacking context created by animated elements
+    document.querySelectorAll('.modal').forEach(function(m) { document.body.appendChild(m); });
+</script>
 <th:block th:replace="${extraScripts}"></th:block>
 </body>
 </html>
