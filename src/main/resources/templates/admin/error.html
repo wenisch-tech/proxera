@@ -1,40 +1,106 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: layout(activePage='', pageTitle='Error', content=~{::content}, extraHead=~{}, extraScripts=~{})}">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Error – Proxera</title>
+    <script>
+        (function() {
+            var t = localStorage.getItem('proxera-theme');
+            if (t) document.documentElement.setAttribute('data-bs-theme', t);
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}"/>
+    <link rel="stylesheet" th:href="@{/css/proxera.css}"/>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        [data-bs-theme="dark"] body {
+            background:
+                radial-gradient(1000px 420px at 12% -12%, rgba(220, 53, 69, 0.12), transparent 60%),
+                radial-gradient(900px 360px at 90% 0%, rgba(13, 202, 240, 0.08), transparent 64%),
+                #0c1117;
+        }
+        [data-bs-theme="light"] body { background-color: #eef1f6; }
+
+        .error-card {
+            width: 100%;
+            max-width: 520px;
+            border: 1px solid var(--px-border);
+            border-radius: 1.25rem;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 2.25rem 2rem 2rem;
+            animation: fadeInUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        [data-bs-theme="light"] .error-card {
+            background: rgba(255,255,255,0.92);
+            border-color: rgba(27,43,59,0.12);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.1);
+        }
+
+        .error-logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: rgba(220, 53, 69, 0.14);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #dc3545;
+            box-shadow: 0 0 24px rgba(220, 53, 69, 0.2);
+        }
+    </style>
+</head>
 <body>
-<th:block th:fragment="content">
-    <div class="d-flex align-items-center mb-4 gap-3">
-        <i class="bi bi-exclamation-triangle-fill text-danger fs-2"></i>
-        <h2 class="mb-0">An error occurred</h2>
-    </div>
 
-    <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
-        <i class="bi bi-x-circle-fill mt-1 flex-shrink-0"></i>
-        <div>
-            <strong th:text="${errorMessage} ?: 'An unexpected error occurred.'">An unexpected error occurred.</strong>
+<div class="error-card">
+    <div class="text-center mb-4">
+        <div class="error-logo mx-auto mb-3">
+            <i class="bi bi-exclamation-triangle"></i>
         </div>
+        <h4 class="fw-bold mb-0" style="letter-spacing:-0.02em;">An error occurred</h4>
+        <p class="text-muted small mt-1 mb-0">Proxera</p>
     </div>
 
-    <div th:if="${stackTrace}" class="card border-0 shadow-sm">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <span class="fw-semibold text-muted small"><i class="bi bi-code-slash me-1"></i>Stack Trace</span>
-            <button class="btn btn-sm btn-outline-secondary"
+    <div class="alert alert-danger d-flex align-items-start gap-2 mb-3" role="alert">
+        <i class="bi bi-x-circle-fill mt-1 flex-shrink-0"></i>
+        <div th:text="${errorMessage} ?: 'An unexpected error occurred.'">An unexpected error occurred.</div>
+    </div>
+
+    <div th:if="${stackTrace}" class="card mb-3" style="border-color: var(--px-border);">
+        <div class="card-header d-flex justify-content-between align-items-center small">
+            <span class="fw-semibold text-muted"><i class="bi bi-code-slash me-1"></i>Stack Trace</span>
+            <button class="btn btn-sm btn-outline-secondary py-0"
                     onclick="navigator.clipboard.writeText(document.getElementById('stackTrace').innerText)">
                 <i class="bi bi-clipboard me-1"></i>Copy
             </button>
         </div>
         <div class="card-body p-0">
             <pre id="stackTrace" class="m-0 p-3 small text-danger-emphasis bg-danger-subtle"
-                 style="max-height: 60vh; overflow-y: auto; white-space: pre-wrap; word-break: break-all;"
+                 style="max-height: 40vh; overflow-y: auto; white-space: pre-wrap; word-break: break-all; border-radius: 0 0 1rem 1rem;"
                  th:text="${stackTrace}"></pre>
         </div>
     </div>
 
-    <div class="mt-3">
-        <a th:href="@{/admin/}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+    <div class="d-flex gap-2">
+        <a th:href="@{/admin/}" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+        </a>
+        <a href="javascript:history.back()" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-arrow-left me-1"></i>Go Back
         </a>
     </div>
-</th:block>
+</div>
+
+<script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>
