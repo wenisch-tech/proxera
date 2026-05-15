@@ -34,8 +34,10 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
       nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
       nginx.ingress.kubernetes.io/proxy-body-size: "0"
       nginx.ingress.kubernetes.io/proxy-buffering: "off"
+      nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
     hosts:
       - host: proxy.example.com
         paths:
@@ -48,6 +50,7 @@ ingress:
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
       nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
       nginx.ingress.kubernetes.io/proxy-body-size: "64m"
     hosts:
       - host: admin.proxera.example.com
@@ -57,11 +60,11 @@ ingress:
     tls: []
 resources:
   requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    cpu: 500m
+    cpu: 200m
     memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
 livenessProbe:
   enabled: true
   httpGet:
@@ -80,6 +83,19 @@ readinessProbe:
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
+# Startup probe — blocks liveness checks until the JVM is fully up.
+# failureThreshold * periodSeconds = max startup budget (20 * 5s = 100s)
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /actuator/health
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 20
+# Grace period for in-flight tunnel sessions during pod replacement.
+terminationGracePeriodSeconds: 60
 autoscaling:
   enabled: false
   minReplicas: 1
