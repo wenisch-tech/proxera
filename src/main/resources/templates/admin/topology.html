@@ -5,7 +5,41 @@
 
 <th:block th:fragment="extraHead">
     <style>
-        #topology-canvas { width: 100%; height: 600px; border: 1px solid var(--px-border, #dee2e6); border-radius: var(--px-radius, 8px); background: #0d1117; }
+        #topology-canvas {
+            width: 100%;
+            height: 640px;
+            border: 1px solid var(--px-border, #dee2e6);
+            border-radius: var(--px-radius, 8px);
+            background: #060b14;
+            overflow: hidden;
+        }
+
+        /* Animated flow particles on tunnel edges */
+        @keyframes flowDash {
+            from { stroke-dashoffset: 70; }
+            to   { stroke-dashoffset: 0; }
+        }
+        .edge-flow {
+            animation: flowDash 1.8s linear infinite;
+        }
+
+        /* Link pulse on active request */
+        @keyframes linkPulse {
+            0%, 100% { stroke-opacity: 0.6; }
+            50%       { stroke-opacity: 1.0; stroke-width: 3px; }
+        }
+        .link-pulsing {
+            animation: linkPulse 0.55s ease-in-out infinite;
+        }
+
+        /* Legend dots */
+        .topo-legend-dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border-radius: 2px;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
     </style>
 </th:block>
 
@@ -22,11 +56,14 @@
     <div id="topology-canvas"></div>
 
     <!-- Legend -->
-    <div class="d-flex gap-4 mt-3 small">
-        <span><span class="legend-dot bg-primary"></span> Server Pod</span>
-        <span><span class="legend-dot bg-success"></span> Connected Client</span>
-        <span><span class="legend-dot bg-secondary"></span> Disconnected Client</span>
-        <span><span class="legend-dot" style="background:#ffc107"></span> Route</span>
+    <div class="d-flex flex-wrap gap-4 mt-3 small text-muted">
+        <span><span class="topo-legend-dot" style="background:#818cf8;"></span> Proxy Server</span>
+        <span><span class="topo-legend-dot" style="background:#34d399;"></span> Connected Client</span>
+        <span><span class="topo-legend-dot" style="background:#64748b;"></span> Offline Client</span>
+        <span><span class="topo-legend-dot" style="background:#fbbf24;"></span> Route (enabled)</span>
+        <span style="margin-left:auto;" class="text-muted" style="font-size:.8rem;">
+            <i class="bi bi-info-circle me-1"></i>Edges: solid = tunnel &nbsp;·&nbsp; dashed = route mapping
+        </span>
     </div>
 </th:block>
 
