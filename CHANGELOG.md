@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.0.10 - 2026-05-15
+
+### [0.0.10](https://github.com/wenisch-tech/proxera/compare/v0.0.9...v0.0.10) (2026-05-15)
+
+
+### Bug Fixes
+
+* fixed lazyinitialization exception lead to client reconnecting errors ([9fc16be](https://github.com/wenisch-tech/proxera/commit/9fc16bee4bac61047a1478c6a625d3fefee722a3))
+* improved lazy intialiation for clients ([4b8f473](https://github.com/wenisch-tech/proxera/commit/4b8f47353b780888cb279648ab4b3e768c385187))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.10
+
+
 ## v0.0.9 - 2026-05-15
 
 ### [0.0.9](https://github.com/wenisch-tech/proxera/compare/v0.0.8...v0.0.9) (2026-05-15)
