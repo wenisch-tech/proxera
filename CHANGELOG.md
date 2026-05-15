@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.0.19 - 2026-05-15
+
+### [0.0.19](https://github.com/wenisch-tech/proxera/compare/v0.0.18...v0.0.19) (2026-05-15)
+
+
+### Bug Fixes
+
+* updated topology to clearer view from left to right ([1a336b8](https://github.com/wenisch-tech/proxera/commit/1a336b8ad5a2677a8aba3429f537ac4263a9e62b))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.19
+
+
 ## v0.0.18 - 2026-05-15
 
 ### [0.0.18](https://github.com/wenisch-tech/proxera/compare/v0.0.17...v0.0.18) (2026-05-15)
