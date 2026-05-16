@@ -1,15 +1,20 @@
 package tech.wenisch.proxera.admin;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import tech.wenisch.proxera.domain.Agent;
 import tech.wenisch.proxera.service.AgentService;
 import tech.wenisch.proxera.service.RegistrationTokenService;
 import tech.wenisch.proxera.service.RouteService;
-
-import java.util.UUID;
 
 @Controller
 @RequestMapping("/admin/agents")

@@ -1,19 +1,19 @@
 package tech.wenisch.proxera.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import tech.wenisch.proxera.domain.Agent;
-import tech.wenisch.proxera.domain.AgentStatus;
-import tech.wenisch.proxera.domain.RegistrationToken;
-import tech.wenisch.proxera.repository.AgentRepository;
-import tech.wenisch.proxera.repository.RegistrationTokenRepository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.extern.slf4j.Slf4j;
+import tech.wenisch.proxera.domain.Agent;
+import tech.wenisch.proxera.domain.AgentStatus;
+import tech.wenisch.proxera.repository.AgentRepository;
+import tech.wenisch.proxera.repository.RegistrationTokenRepository;
 
 @Service
 @Slf4j
