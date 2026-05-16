@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -136,11 +137,6 @@ public class ProxyService {
     private static final Pattern CSS_ABSOLUTE_URL_PATTERN =
             Pattern.compile("url\\(\\s*(['\"]?)(/)([^'\"()]+)\\1\\s*\\)");
 
-    // Matches absolute-path string literals in JS: "/path", '/path', `/path`
-    // Excludes protocol-relative URLs (//)
-    private static final Pattern JS_ABSOLUTE_URL_PATTERN =
-            Pattern.compile("([\"'`])(/[^/\"'`\\r\\n][^\"'`\\r\\n]*)\\1");
-
     private static final Set<String> REWRITE_ATTRIBUTES =
             Set.of("href", "src", "action", "data-src", "data-href", "data-url");
 
@@ -208,25 +204,20 @@ public class ProxyService {
             body = rewriteHtml(body, ct, effectivePrefix);
         } else if (ct.contains("text/css")) {
             body = rewriteCss(body, ct, effectivePrefix);
-        } else if (ct.contains("javascript")) {
-            body = rewriteJs(body, contentType, effectivePrefix);
         }
 
         response.getOutputStream().write(body);
-    }
-
-    private byte[] rewriteJs(byte[] body, String contentType, String prefix) {
-        Charset charset = charsetFrom(contentType);
-        String text = new String(body, charset);
-        String rewritten = JS_ABSOLUTE_URL_PATTERN.matcher(text)
-                .replaceAll(m -> m.group(1) + prefix + m.group(2) + m.group(1));
-        return rewritten.getBytes(charset);
     }
 
     private byte[] rewriteHtml(byte[] body, String contentType, String prefix) {
         Charset charset = charsetFrom(contentType);
         Document doc = Jsoup.parse(new String(body, charset));
         doc.outputSettings().charset(charset).syntax(Document.OutputSettings.Syntax.html);
+
+        // Inject a runtime shim as the very first script in <head> so it runs
+        // before any application code and intercepts fetch/XHR/history calls.
+        Element shim = doc.head().prependElement("script");
+        shim.appendChild(new DataNode(buildPrefixShim(prefix)));
 
         // Rewrite element attributes
         for (String attr : REWRITE_ATTRIBUTES) {
@@ -249,6 +240,30 @@ public class ProxyService {
         }
 
         return doc.outerHtml().getBytes(charset);
+    }
+
+    /**
+     * Builds a self-contained JS shim that rewrites absolute paths at runtime.
+     * Patches fetch, XMLHttpRequest, and the History API so that any absolute
+     * path (starting with /) is transparently prefixed — regardless of whether
+     * the URL was hard-coded or constructed dynamically in application code.
+     * Already-prefixed URLs are skipped to prevent double-rewriting.
+     */
+    private static String buildPrefixShim(String prefix) {
+        return "(function(){" +
+               "var p='" + prefix + "';" +
+               "function rw(u){" +
+               "return(typeof u==='string'&&u.charAt(0)==='/'&&u.charAt(1)!=='/'" +
+               "&&u.indexOf(p+'/')!==0&&u!==p)?p+u:u;}" +
+               "var of=window.fetch;" +
+               "if(of)window.fetch=function(u,o){return of.call(this,rw(u),o);};" +
+               "var ox=XMLHttpRequest.prototype.open;" +
+               "XMLHttpRequest.prototype.open=function(){" +
+               "arguments[1]=rw(arguments[1]);return ox.apply(this,arguments);};" +
+               "var ops=history.pushState,ors=history.replaceState;" +
+               "if(ops)history.pushState=function(s,t,u){return ops.call(this,s,t,rw(u));};" +
+               "if(ors)history.replaceState=function(s,t,u){return ors.call(this,s,t,rw(u));};" +
+               "})();";
     }
 
     private byte[] rewriteCss(byte[] body, String contentType, String prefix) {
