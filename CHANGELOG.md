@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.1 - 2026-05-16
+
+### [0.1.1](https://github.com/wenisch-tech/proxera/compare/v0.1.0...v0.1.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* Added automatic rewrite for content based on routepath ([06d9c19](https://github.com/wenisch-tech/proxera/commit/06d9c1948fcd5d0833cf1be0f5e4eb314f07467a))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.1.1
+
+
 ## v0.1.0 - 2026-05-16
 
 ## [0.1.0](https://github.com/wenisch-tech/proxera/compare/v0.0.21...v0.1.0) (2026-05-16)
