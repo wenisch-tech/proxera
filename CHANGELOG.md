@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.0.20 - 2026-05-16
+
+### [0.0.20](https://github.com/wenisch-tech/proxera/compare/v0.0.19...v0.0.20) (2026-05-16)
+
+
+### Bug Fixes
+
+* updated problem chart not being properly published ([4cf60a9](https://github.com/wenisch-tech/proxera/commit/4cf60a912952c081b3341d2ce035c4d73f5bae06))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.20
+
+
 ## v0.0.19 - 2026-05-15
 
 ### [0.0.19](https://github.com/wenisch-tech/proxera/compare/v0.0.18...v0.0.19) (2026-05-15)
