@@ -1,25 +1,5 @@
 package tech.wenisch.proxera.proxy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.springframework.stereotype.Service;
-import tech.wenisch.proxera.bus.MessageBus;
-import tech.wenisch.proxera.bus.TopologyEvent;
-import tech.wenisch.proxera.domain.Route;
-import tech.wenisch.proxera.domain.RouteDomain;
-import tech.wenisch.proxera.service.AccessLogService;
-import tech.wenisch.proxera.service.RoutingService;
-import tech.wenisch.proxera.service.SettingsService;
-import tech.wenisch.proxera.tunnel.RequestPayload;
-import tech.wenisch.proxera.tunnel.ResponsePayload;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,6 +15,28 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import tech.wenisch.proxera.bus.MessageBus;
+import tech.wenisch.proxera.bus.TopologyEvent;
+import tech.wenisch.proxera.domain.Route;
+import tech.wenisch.proxera.domain.RouteDomain;
+import tech.wenisch.proxera.service.AccessLogService;
+import tech.wenisch.proxera.service.RoutingService;
+import tech.wenisch.proxera.service.SettingsService;
+import tech.wenisch.proxera.tunnel.RequestPayload;
+import tech.wenisch.proxera.tunnel.ResponsePayload;
 
 @Service
 @Slf4j

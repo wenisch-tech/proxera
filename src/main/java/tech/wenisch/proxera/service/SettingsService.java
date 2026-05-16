@@ -1,6 +1,7 @@
 package tech.wenisch.proxera.service;
 
 import org.springframework.stereotype.Service;
+
 import tech.wenisch.proxera.domain.Settings;
 import tech.wenisch.proxera.repository.SettingsRepository;
 
