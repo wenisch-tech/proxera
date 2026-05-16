@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface RegistrationTokenRepository extends JpaRepository<RegistrationToken, UUID> {
-    List<RegistrationToken> findByClientId(UUID clientId);
-    void deleteByClientId(UUID clientId);
+    List<RegistrationToken> findByAgentId(UUID agentId);
+    void deleteByAgentId(UUID agentId);
 }

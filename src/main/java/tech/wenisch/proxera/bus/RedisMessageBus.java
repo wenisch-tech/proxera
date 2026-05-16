@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 @Slf4j
 public class RedisMessageBus implements MessageBus {
 
-    private static final String CHANNEL_CLIENT_PREFIX = "proxera:client:";
+    private static final String CHANNEL_AGENT_PREFIX = "proxera:agent:";
     private static final String CHANNEL_CORR_PREFIX = "proxera:corr:";
     private static final String CHANNEL_TOPOLOGY = "proxera:topology";
 
@@ -41,7 +41,7 @@ public class RedisMessageBus implements MessageBus {
     }
 
     @Override
-    public CompletableFuture<ResponsePayload> dispatch(UUID clientId, String requestJson, String correlationId) {
+    public CompletableFuture<ResponsePayload> dispatch(UUID agentId, String requestJson, String correlationId) {
         CompletableFuture<ResponsePayload> future = new CompletableFuture<>();
         pending.put(correlationId, future);
 
@@ -59,8 +59,8 @@ public class RedisMessageBus implements MessageBus {
                     }
                 }, responseChannel.getBytes());
 
-        // Publish request to the client's channel
-        String requestChannel = CHANNEL_CLIENT_PREFIX + clientId;
+        // Publish request to the agent's channel
+        String requestChannel = CHANNEL_AGENT_PREFIX + agentId;
         try {
             String payload = objectMapper.writeValueAsString(
                     Map.of("correlationId", correlationId, "requestJson", requestJson));

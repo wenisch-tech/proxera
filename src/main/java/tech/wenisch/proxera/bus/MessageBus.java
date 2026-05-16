@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
- * Abstracted message bus for dispatching request frames to tunnel clients
+ * Abstracted message bus for dispatching request frames to tunnel agents
  * and routing response frames back.
  *
  * Two implementations:
@@ -17,14 +17,14 @@ import java.util.function.Consumer;
 public interface MessageBus {
 
     /**
-     * Dispatch a serialised request payload to the given client.
-     * Returns a future that will be completed when the client sends its RESPONSE frame.
+     * Dispatch a serialised request payload to the given agent.
+     * Returns a future that will be completed when the agent sends its RESPONSE frame.
      *
-     * @param clientId      target client
+     * @param agentId       target agent
      * @param requestJson   JSON-serialised RequestPayload
      * @param correlationId UUID used to correlate the response
      */
-    CompletableFuture<ResponsePayload> dispatch(UUID clientId, String requestJson, String correlationId);
+    CompletableFuture<ResponsePayload> dispatch(UUID agentId, String requestJson, String correlationId);
 
     /**
      * Called by the WebSocket handler when a RESPONSE frame is received.
@@ -33,7 +33,7 @@ public interface MessageBus {
     void complete(String correlationId, ResponsePayload response);
 
     /**
-     * Publish a topology change event (client connected/disconnected, route updated).
+     * Publish a topology change event (agent connected/disconnected, route updated).
      * In Redis mode, broadcasts to all pods.
      */
     void publishTopology(TopologyEvent event);

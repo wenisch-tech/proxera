@@ -30,15 +30,15 @@ public class RouteService {
     }
 
     public List<Route> findAll() {
-        return routeRepository.findAllWithClient();
+        return routeRepository.findAllWithAgent();
     }
 
     public Optional<Route> findById(UUID id) {
         return routeRepository.findByIdWithDetails(id);
     }
 
-    public List<Route> findByClientId(UUID clientId) {
-        return routeRepository.findByClientId(clientId);
+    public List<Route> findByAgentId(UUID agentId) {
+        return routeRepository.findByAgentId(agentId);
     }
 
     @Transactional

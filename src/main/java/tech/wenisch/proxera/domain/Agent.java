@@ -9,13 +9,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "clients")
+@Table(name = "agents")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Client {
+public class Agent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -27,7 +27,7 @@ public class Client {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private ClientStatus status = ClientStatus.PENDING;
+    private AgentStatus status = AgentStatus.PENDING;
 
     @Column(name = "connected_pod_id")
     private String connectedPodId;
@@ -39,11 +39,11 @@ public class Client {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "agent", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Route> routes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "agent", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<RegistrationToken> registrationTokens = new ArrayList<>();
 }

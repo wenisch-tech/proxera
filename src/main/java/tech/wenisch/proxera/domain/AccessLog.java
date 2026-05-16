@@ -26,8 +26,8 @@ public class AccessLog {
     @Column(name = "route_id")
     private UUID routeId;
 
-    @Column(name = "client_id")
-    private UUID clientId;
+    @Column(name = "agent_id")
+    private UUID agentId;
 
     @Column(nullable = false)
     @Builder.Default

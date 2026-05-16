@@ -10,9 +10,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import tech.wenisch.proxera.domain.Client;
+import tech.wenisch.proxera.domain.Agent;
 import tech.wenisch.proxera.domain.Route;
-import tech.wenisch.proxera.service.ClientService;
+import tech.wenisch.proxera.service.AgentService;
 import tech.wenisch.proxera.service.RouteService;
 import tech.wenisch.proxera.tunnel.TunnelManager;
 
@@ -20,14 +20,14 @@ import tech.wenisch.proxera.tunnel.TunnelManager;
 @RequestMapping("/admin/topology")
 public class TopologyController {
 
-    private final ClientService clientService;
+    private final AgentService agentService;
     private final RouteService routeService;
     private final TunnelManager tunnelManager;
 
-    public TopologyController(ClientService clientService,
+    public TopologyController(AgentService agentService,
                               RouteService routeService,
                               TunnelManager tunnelManager) {
-        this.clientService = clientService;
+        this.agentService = agentService;
         this.routeService = routeService;
         this.tunnelManager = tunnelManager;
     }
@@ -50,21 +50,21 @@ public class TopologyController {
         String podId = System.getenv().getOrDefault("HOSTNAME", "server");
         nodes.add(Map.of("id", podId, "type", "server", "name", "Proxera Server"));
 
-        for (Client client : clientService.findAll()) {
-            boolean connected = tunnelManager.isConnected(client.getId());
+        for (Agent agent : agentService.findAll()) {
+            boolean connected = tunnelManager.isConnected(agent.getId());
             Map<String, Object> node = new HashMap<>();
-            node.put("id", client.getId().toString());
-            node.put("type", "client");
-            node.put("name", client.getName());
-            node.put("status", client.getStatus().name());
+            node.put("id", agent.getId().toString());
+            node.put("type", "agent");
+            node.put("name", agent.getName());
+            node.put("status", agent.getStatus().name());
             node.put("connected", connected);
             nodes.add(node);
 
             if (connected) {
-                links.add(Map.of("source", podId, "target", client.getId().toString(), "type", "tunnel"));
+                links.add(Map.of("source", podId, "target", agent.getId().toString(), "type", "tunnel"));
             }
 
-            for (Route route : routeService.findByClientId(client.getId())) {
+            for (Route route : routeService.findByAgentId(agent.getId())) {
                 Map<String, Object> routeNode = new HashMap<>();
                 routeNode.put("id", route.getId().toString());
                 routeNode.put("type", "route");
@@ -72,7 +72,7 @@ public class TopologyController {
                 routeNode.put("enabled", route.isEnabled());
                 routeNode.put("target", route.getLocalHost() + ":" + route.getLocalPort());
                 nodes.add(routeNode);
-                links.add(Map.of("source", client.getId().toString(), "target", route.getId().toString(), "type", "route"));
+                links.add(Map.of("source", agent.getId().toString(), "target", route.getId().toString(), "type", "route"));
             }
         }
 

@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: layout(activePage='clients', pageTitle='Client Detail', content=~{::content}, extraHead=~{}, extraScripts=~{})}">
+      th:replace="~{fragments/layout :: layout(activePage='agents', pageTitle='Agent Detail', content=~{::content}, extraHead=~{}, extraScripts=~{})}">
 <body>
 <th:block th:fragment="content">
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a th:href="@{/admin/clients}" class="btn btn-outline-secondary btn-sm">
+        <a th:href="@{/admin/agents}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left"></i>
         </a>
-        <h2 class="mb-0 fw-bold" style="font-size:1.45rem;" th:text="${client.name}">Client</h2>
+        <h2 class="mb-0 fw-bold" style="font-size:1.45rem;" th:text="${agent.name}">Agent</h2>
         <span class="badge ms-2"
-              th:classappend="${client.status.name() == 'CONNECTED' ? 'bg-success' : (client.status.name() == 'REGISTERED' ? 'bg-info' : 'bg-secondary')}"
-              th:text="${client.status}"></span>
+              th:classappend="${agent.status.name() == 'CONNECTED' ? 'bg-success' : (agent.status.name() == 'REGISTERED' ? 'bg-info' : 'bg-secondary')}"
+              th:text="${agent.status}"></span>
     </div>
 
     <!-- Show new token once -->
@@ -19,29 +19,29 @@
         <div class="mt-2">
             <code class="user-select-all fs-6" th:text="${newToken}"></code>
         </div>
-        <small class="text-muted">Use this token with the Proxera client: <code>proxera-client --token &lt;token&gt; --server wss://proxera.example.com/tunnel</code></small>
+        <small class="text-muted">Use this token with the Proxera agent: <code>proxera-agent --token &lt;token&gt; --server wss://proxera.example.com/tunnel</code></small>
     </div>
 
     <div class="row g-4">
-        <!-- Client info -->
+        <!-- Agent info -->
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header"><i class="bi bi-info-circle me-1"></i>Client Info</div>
+                <div class="card-header"><i class="bi bi-info-circle me-1"></i>Agent Info</div>
                 <div class="card-body">
                     <dl class="row mb-0">
                         <dt class="col-sm-4">ID</dt>
-                        <dd class="col-sm-8 text-muted font-monospace small" th:text="${client.id}"></dd>
+                        <dd class="col-sm-8 text-muted font-monospace small" th:text="${agent.id}"></dd>
                         <dt class="col-sm-4">Name</dt>
-                        <dd class="col-sm-8" th:text="${client.name}"></dd>
+                        <dd class="col-sm-8" th:text="${agent.name}"></dd>
                         <dt class="col-sm-4">Created</dt>
-                        <dd class="col-sm-8 text-muted" th:text="${#temporals.format(client.createdAt, 'yyyy-MM-dd HH:mm')}"></dd>
+                        <dd class="col-sm-8 text-muted" th:text="${#temporals.format(agent.createdAt, 'yyyy-MM-dd HH:mm')}"></dd>
                         <dt class="col-sm-4">Last Seen</dt>
                         <dd class="col-sm-8 text-muted"
-                            th:text="${client.lastSeenAt != null ? #temporals.format(client.lastSeenAt, 'yyyy-MM-dd HH:mm') : '—'}"></dd>
+                            th:text="${agent.lastSeenAt != null ? #temporals.format(agent.lastSeenAt, 'yyyy-MM-dd HH:mm') : '—'}"></dd>
                     </dl>
                 </div>
                 <div class="card-footer">
-                    <form th:action="@{/admin/clients/{id}/token(id=${client.id})}" method="post">
+                    <form th:action="@{/admin/agents/{id}/token(id=${agent.id})}" method="post">
                         <button type="submit" class="btn btn-warning btn-sm">
                             <i class="bi bi-key me-1"></i> Generate New Registration Token
                         </button>

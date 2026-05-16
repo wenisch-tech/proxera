@@ -20,8 +20,8 @@ public class RegistrationToken {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false)
-    private Client client;
+    @JoinColumn(name = "agent_id", nullable = false)
+    private Agent agent;
 
     @Column(name = "token_hash", nullable = false)
     private String tokenHash;

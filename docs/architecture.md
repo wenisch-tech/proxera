@@ -9,9 +9,9 @@ The system consists of two components:
 | Component | Location | Repository |
 |-----------|----------|------------|
 | **Proxera Server** | Kubernetes / Cloud | *This repository* |
-| **Proxera Client** | LAN / on-premise | Separate repository (future) |
+| **Proxera Agent** | LAN / on-premise | Separate repository (future) |
 
-The server never dials into the LAN. All connectivity is initiated by the client outbound, which makes inbound firewall rules unnecessary.
+The server never dials into the LAN. All connectivity is initiated by the agent outbound, which makes inbound firewall rules unnecessary.
 
 ---
 
@@ -50,12 +50,12 @@ The server never dials into the LAN. All connectivity is initiated by the client
                           │               │ WebSocket /tunnel             │
                           └───────────────┼─────────────────────────────┘
                                           │  (outbound connection
-                                          │   from LAN client)
+                                          │   from LAN agent)
                           ┌───────────────▼─────────────────────────────┐
                           │                  Private LAN                  │
                           │                                               │
                           │   ┌──────────────┐   ┌─────────────────────┐ │
-                          │   │Proxera Client│──►│ 192.168.1.10:8080   │ │
+                          │   │Proxera Agent │──►│ 192.168.1.10:8080   │ │
                           │   │   (agent)    │   │ local-service-a     │ │
                           │   └──────────────┘   └─────────────────────┘ │
                           └──────────────────────────────────────────────┘
@@ -69,7 +69,7 @@ The server is a **single Spring Boot application** (Spring MVC on embedded Tomca
 
 | Port | Purpose |
 |------|---------|
-| **8080** | **Proxy Port** — Receives public HTTP requests. Matches routes and forwards frames through the WebSocket tunnel. Also hosts the client tunnel endpoint `/tunnel`. |
+| **8080** | **Proxy Port** — Receives public HTTP requests. Matches routes and forwards frames through the WebSocket tunnel. Also hosts the agent tunnel endpoint `/tunnel`. |
 | **8080** | **Admin Port** — Admin UI (Thymeleaf + Bootstrap 5) and REST API. Intended to be behind an internal network policy or separate ingress with authentication. |
 
 The secondary port is added as an additional Tomcat connector via a `WebServerFactoryCustomizer` bean. A `OncePerRequestFilter` enforces port-level access control (admin paths only on 8080, proxy paths only on 8080).
@@ -78,7 +78,7 @@ The secondary port is added as an additional Tomcat connector via a `WebServerFa
 
 | Module | Package | Responsibility |
 |--------|---------|----------------|
-| **Tunnel Manager** | `tunnel` | Manages active `WebSocketSession` instances by `clientId`. Validates registration tokens during WebSocket handshake. |
+| **Tunnel Manager** | `tunnel` | Manages active `WebSocketSession` instances by `agentId`. Validates registration tokens during WebSocket handshake. |
 | **Proxy Engine** | `proxy` | Receives HTTP requests on port 8080, resolves routes, serialises requests as frames, dispatches via the Pub/Sub layer, writes HTTP responses. Uses Spring MVC async (`DeferredResult`). |
 | **Pub/Sub Layer** | `bus` | Abstracted `MessageBus` interface. Two implementations: `InMemoryMessageBus` (default, single-pod) and `RedisMessageBus` (multi-pod). Activated when `REDIS_HOST` is configured. |
 | **Route Manager** | `service` | CRUD for routes and domains. Validates domain uniqueness. Maintains an in-memory route cache (invalidated on change). |
@@ -101,15 +101,15 @@ Any request arriving on the wrong port receives `404 Not Found`.
 
 ---
 
-## 4. Component Architecture — Client
+## 4. Component Architecture — Agent
 
-> The client is implemented in a **separate repository**. This section documents its responsibilities for complete system context.
+> The agent is implemented in a **separate repository**. This section documents its responsibilities for complete system context.
 
-The Proxera Client is a lightweight agent deployed within the LAN (Docker container, systemd service, or Kubernetes DaemonSet). It:
+The Proxera Agent is a lightweight agent deployed within the LAN (Docker container, systemd service, or Kubernetes DaemonSet). It:
 
 1. Reads configuration: server URL, registration token, list of local `host:port` targets per route.
 2. Connects outbound to `wss://<proxy-domain>/tunnel` with header `X-Proxera-Token: <token>`.
-3. On successful registration receives a `REGISTER_ACK` frame; client status is set to `CONNECTED` by the server.
+3. On successful registration receives a `REGISTER_ACK` frame; agent status is set to `CONNECTED` by the server.
 4. Enters a receive loop: on each `REQUEST` frame it performs a local HTTP call to the configured `localHost:localPort`, then sends a `RESPONSE` frame with the same `correlationId`.
 5. Sends a `PING` frame every 30 seconds; expects `PONG` within 10 seconds, otherwise reconnects.
 6. On disconnect, reconnects with exponential backoff (initial 1 s, cap 60 s, ±30% jitter).
@@ -118,7 +118,7 @@ The Proxera Client is a lightweight agent deployed within the LAN (Docker contai
 
 ## 5. Transport Protocol — WebSocket Tunnel
 
-All communication over the tunnel WebSocket uses **text frames containing JSON** (Phase 1). The client always initiates the WebSocket connection; subsequent communication is bidirectional.
+All communication over the tunnel WebSocket uses **text frames containing JSON** (Phase 1). The agent always initiates the WebSocket connection; subsequent communication is bidirectional.
 
 ### 5.1 Frame Envelope
 
@@ -134,9 +134,9 @@ All communication over the tunnel WebSocket uses **text frames containing JSON**
 
 | Type | Direction | Description |
 |------|-----------|-------------|
-| `REGISTER_ACK` | Server → Client | Registration confirmed. Payload: `{ "clientId": "...", "name": "..." }` |
-| `REQUEST` | Server → Client | Proxy an HTTP request. See §5.3. |
-| `RESPONSE` | Client → Server | Result of proxying. Same `correlationId` as the `REQUEST`. |
+| `REGISTER_ACK` | Server → Agent | Registration confirmed. Payload: `{ "agentId": "...", "name": "..." }` |
+| `REQUEST` | Server → Agent | Proxy an HTTP request. See §5.3. |
+| `RESPONSE` | Agent → Server | Result of proxying. Same `correlationId` as the `REQUEST`. |
 | `PING` | Either | Heartbeat. No payload. |
 | `PONG` | Either | Heartbeat reply. Same `correlationId` as `PING`. |
 | `ERROR` | Either | Frame processing error. Payload: `{ "code": "...", "message": "..." }` |
@@ -195,12 +195,12 @@ Multiple in-flight HTTP requests are multiplexed on a single WebSocket connectio
   Pod A                      Redis                      Pod B
    │  receives HTTP request    │                           │
    │                           │                           │
-   │──publish──────────────────►  proxera:client:{id}:req  │
+   │──publish──────────────────►  proxera:agent:{id}:req  │
    │  subscribe to response    │                           │
    │                           │◄──subscribe───────────────│ (Pod B holds WS)
    │                           │──deliver──────────────────►│
    │                           │                           │──► WebSocket frame to client
-   │                           │                           │◄── RESPONSE frame from client
+   │                           │                           │◄── RESPONSE frame from agent
    │                           │◄──publish──────────────────│
    │                           │  proxera:corr:{corrId}:resp│
    │◄──deliver─────────────────│                           │
@@ -213,13 +213,13 @@ Multiple in-flight HTTP requests are multiplexed on a single WebSocket connectio
 
 | Channel | Published by | Consumed by |
 |---------|--------------|-------------|
-| `proxera:client:{clientId}:req` | Any pod receiving a proxied HTTP request | The pod holding the client's WebSocket session |
+| `proxera:agent:{agentId}:req` | Any pod receiving a proxied HTTP request | The pod holding the agent's WebSocket session |
 | `proxera:corr:{correlationId}:resp` | The pod holding the WebSocket session | The pod that published the request |
-| `proxera:topology` | Any pod on client connect/disconnect | All pods (for SSE topology fan-out) |
+| `proxera:topology` | Any pod on agent connect/disconnect | All pods (for SSE topology fan-out) |
 
-### 6.4 Client Presence Tracking
+### 6.4 Agent Presence Tracking
 
-In Redis mode, client presence is stored as `proxera:presence:{clientId}` (hash: `podId`, `connectedAt`) with a TTL of 60 seconds. The holding pod refreshes the TTL every 30 seconds. On graceful pod shutdown all owned sessions are closed and presence keys deleted. On unclean shutdown, TTL expiry drives cleanup.
+In Redis mode, agent presence is stored as `proxera:presence:{agentId}` (hash: `podId`, `connectedAt`) with a TTL of 60 seconds. The holding pod refreshes the TTL every 30 seconds. On graceful pod shutdown all owned sessions are closed and presence keys deleted. On unclean shutdown, TTL expiry drives cleanup.
 
 ---
 
@@ -227,14 +227,14 @@ In Redis mode, client presence is stored as `proxera:presence:{clientId}` (hash:
 
 ### 7.1 Route Definition
 
-A **Route** is the core configuration entity that maps one or more public domain names (+ optional path prefix) to a local service reachable by the client.
+A **Route** is the core configuration entity that maps one or more public domain names (+ optional path prefix) to a local service reachable by the agent.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | UUID | Primary key |
 | `name` | String | Human-readable label |
-| `clientId` | UUID FK → `clients` | The client agent responsible for this route |
-| `localHost` | String | LAN hostname or IP the client forwards to |
+| `agentId` | UUID FK → `agents` | The agent responsible for this route |
+| `localHost` | String | LAN hostname or IP the agent forwards to |
 | `localPort` | int | LAN port |
 | `pathPrefix` | String | Optional path prefix to match (e.g. `/api`) |
 | `stripPrefix` | boolean | If true, `pathPrefix` is stripped before forwarding |
@@ -247,8 +247,8 @@ A **Route** is the core configuration entity that maps one or more public domain
 2. Look up `route_domains` by `domain = host` → retrieve `route_id`.
 3. If `pathPrefix` is configured, verify `request.path.startsWith(pathPrefix)`. When multiple routes share a domain (different path prefixes), the **longest matching prefix wins**.
 4. No match → `502 Bad Gateway`.
-5. Matched client not connected → `503 Service Unavailable`.
-6. Client connected → dispatch request frame.
+5. Matched agent not connected → `503 Service Unavailable`.
+6. Agent connected → dispatch request frame.
 
 ### 7.3 Multiple Domains per Route
 
@@ -264,18 +264,18 @@ A single route may serve multiple domains (e.g. `api.example.com` and `api.examp
 - **OIDC / OAuth2** (optional): any OpenID Connect provider (Keycloak, Auth0, etc.) configured via environment variables `OIDC_ENABLED`, `OIDC_ISSUER_URI`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`.
 - **API Keys**: named keys for machine-to-machine REST API access, passed as `X-API-KEY: <key>` header. A `OncePerRequestFilter` validates the key (hashed comparison) before the Spring Security filter chain.
 
-### 8.2 Client Registration (GitLab Runner Pattern)
+### 8.2 Agent Registration (GitLab Runner Pattern)
 
 ```
-  Admin UI              Proxera Server                    Proxera Client
+  Admin UI              Proxera Server                    Proxera Agent
       │                        │                                 │
-      │── Create client slot ──►│                                 │
+      │── Create agent slot ───►│                                 │
       │   { name: "home-lab" }  │                                 │
       │◄── Registration token ──│                                 │
       │    (shown once,         │                                 │
       │     stored hashed)      │                                 │
       │                        │                                 │
-      │  (Admin copies token to client config file)              │
+      │  (Admin copies token to agent config file)               │
       │                        │                                 │
       │                        │◄── WS Upgrade ─────────────────│
       │                        │    X-Proxera-Token: <token>     │
@@ -286,14 +286,14 @@ A single route may serve multiple domains (e.g. `api.example.com` and `api.examp
       │                        │◄──────────────────┘            │
       │                        │                                 │
       │                        │── REGISTER_ACK ────────────────►│
-      │                        │   { clientId, name }            │
+      │                        │   { agentId, name }             │
 ```
 
 **Token lifecycle:**
 - Token is a cryptographically random 32-byte value (hex encoded, 64 chars), stored **BCrypt-hashed** in `registration_tokens`.
 - Token is displayed **once** in the Admin UI after generation. It is never recoverable; a new token can always be generated (invalidating the previous).
-- On first WebSocket connect: token is validated in the handshake interceptor, marked `used=true`, and the client status is set to `CONNECTED`. Subsequent reconnects by the same client use the same token (validated again each time) if the token is still valid and `used=true`.
-- If a client is deleted, its registration tokens are cascade-deleted.
+- On first WebSocket connect: token is validated in the handshake interceptor, marked `used=true`, and the agent status is set to `CONNECTED`. Subsequent reconnects by the same agent use the same token (validated again each time) if the token is still valid and `used=true`.
+- If an agent is deleted, its registration tokens are cascade-deleted.
 
 ### 8.3 Port-Level Access Control
 
@@ -310,12 +310,12 @@ A single route may serve multiple domains (e.g. `api.example.com` and `api.examp
 
 | Page | URL | Description |
 |------|-----|-------------|
-| **Dashboard** | `/admin/` | Summary cards: connected clients, active routes, requests/min (last 60 s). Recent access log entries table. |
-| **Topology** | `/admin/topology` | Interactive live node graph (D3.js via WebJar). Server pod nodes → client nodes → route nodes. Node colour encodes status (green = connected, grey = disconnected, red = error). Edges pulse on in-flight requests. SSE-driven live updates from `/admin/sse/topology`. |
+| **Dashboard** | `/admin/` | Summary cards: connected agents, active routes, requests/min (last 60 s). Recent access log entries table. |
+| **Topology** | `/admin/topology` | Interactive live node graph (D3.js via WebJar). Server pod nodes → agent nodes → route nodes. Node colour encodes status (green = connected, grey = disconnected, red = error). Edges pulse on in-flight requests. SSE-driven live updates from `/admin/sse/topology`. |
 | **Routes** | `/admin/routes` | Route list with status badge, domain/path, requests/min. Create / edit / delete. |
 | **Route Detail** | `/admin/routes/{id}` | Route config; live traffic-rate sparkline (Chart.js); scrolling request log table streamed via SSE from `/admin/sse/routes/{id}/log`. |
-| **Clients** | `/admin/clients` | Registered clients: name, status indicator, last seen, connected pod, assigned routes count. |
-| **Client Detail** | `/admin/clients/{id}` | Client config; registration token management (generate, invalidate); list of assigned routes. |
+| **Agents** | `/admin/agents` | Registered agents: name, status indicator, last seen, connected pod, assigned routes count. |
+| **Agent Detail** | `/admin/agents/{id}` | Agent config; registration token management (generate, invalidate); list of assigned routes. |
 | **API Keys** | `/admin/api-keys` | Generate / revoke named API keys for REST access. |
 | **Users** | `/admin/users` | Create / update / delete local user accounts. |
 | **Settings** | `/admin/settings` | Global config: access log retention days, proxy header options, OIDC settings. |
@@ -333,7 +333,7 @@ A single route may serve multiple domains (e.g. `api.example.com` and `api.examp
 
 | Endpoint | Port | Payload events | Used by |
 |----------|------|---------------|---------|
-| `GET /admin/sse/topology` | 8080 | `CLIENT_CONNECTED`, `CLIENT_DISCONNECTED`, `ROUTE_UPDATED`, `REQUEST_IN_FLIGHT`, `REQUEST_COMPLETED` | Topology page |
+| `GET /admin/sse/topology` | 8080 | `AGENT_CONNECTED`, `AGENT_DISCONNECTED`, `ROUTE_UPDATED`, `REQUEST_IN_FLIGHT`, `REQUEST_COMPLETED` | Topology page |
 | `GET /admin/sse/routes/{id}/log` | 8080 | `AccessLogEntry` JSON objects | Route Detail page |
 | `GET /admin/api/topology` | 8080 | Full topology snapshot (REST, used on initial page load) | Topology page |
 
@@ -342,12 +342,12 @@ A single route may serve multiple domains (e.g. `api.example.com` and `api.examp
 ```
   [Pod: proxera-7d9f8b-xkz4]          colour: blue rectangle
           │
-          ├──── [Client: home-lab]     colour: green circle (connected)
+          ├──── [Agent: home-lab]      colour: green circle (connected)
           │           │
           │           ├── [Route: api.example.com/api]   diamond
           │           └── [Route: files.example.com]     diamond
           │
-          └──── [Client: office-net]  colour: grey circle (disconnected)
+          └──── [Agent: office-net]   colour: grey circle (disconnected)
                       │
                       └── [Route: office.example.com]    diamond
 ```
@@ -368,7 +368,7 @@ users ────────────────────────�
   role VARCHAR                                               │
   created_at TIMESTAMP                                       │
                                                              │
-clients ────────────────────────────────────────────────────┤
+agents ────────────────────────────────────────────────────┤
   id UUID PK                                                 │
   name VARCHAR UNIQUE                                        │
   status VARCHAR (PENDING|REGISTERED|CONNECTED|DISCONNECTED) │
@@ -378,7 +378,7 @@ clients ────────────────────────
        │                                                     │
        ├──► registration_tokens                              │
        │      id UUID PK                                     │
-       │      client_id UUID FK→clients                      │
+       │      agent_id UUID FK→agents                        │
        │      token_hash VARCHAR                             │
        │      used BOOLEAN                                   │
        │      created_at TIMESTAMP                           │
@@ -387,7 +387,7 @@ clients ────────────────────────
        └──► routes                                           │
               id UUID PK                                     │
               name VARCHAR                                   │
-              client_id UUID FK→clients                      │
+              agent_id UUID FK→agents                        │
               local_host VARCHAR                             │
               local_port INT                                 │
               path_prefix VARCHAR                            │
@@ -404,7 +404,7 @@ clients ────────────────────────
                     └──► access_log
                            id BIGINT IDENTITY PK
                            route_id UUID FK→routes (nullable on delete)
-                           client_id UUID FK→clients (nullable on delete)
+                           agent_id UUID FK→agents (nullable on delete)
                            timestamp TIMESTAMP
                            method VARCHAR
                            path TEXT
@@ -431,7 +431,7 @@ A `@Scheduled` task runs daily and deletes `access_log` rows older than `proxera
 
 ## 11. Proxy Header Handling
 
-The Proxy Engine adds the following headers to every forwarded request before sending the `REQUEST` frame to the client:
+The Proxy Engine adds the following headers to every forwarded request before sending the `REQUEST` frame to the agent:
 
 | Header | Value |
 |--------|-------|
@@ -582,8 +582,8 @@ ci.yml (orchestrator, triggers on push/PR/workflow_dispatch)
 |------|----------|-------------|
 | **Binary frame protocol** | High | Replace JSON+Base64 for request/response bodies with binary WebSocket frames (~33% payload reduction) |
 | **WebSocket proxying** | High | Forward WebSocket upgrade requests through the tunnel (HTTP/1.1 only in Phase 1) |
-| **mTLS for tunnel** | Medium | Mutual TLS on `/tunnel` endpoint for hardware-bound client authentication |
+| **mTLS for tunnel** | Medium | Mutual TLS on `/tunnel` endpoint for hardware-bound agent authentication |
 | **Rate limiting per route** | Medium | Configurable per-route request rate limits with burst allowance |
-| **Multi-client load balancing** | Low | A route pointing to multiple clients with round-robin or least-connections |
-| **Proxera Client Helm chart** | Low | Helm chart for deploying the client agent within a Kubernetes LAN |
+| **Multi-agent load balancing** | Low | A route pointing to multiple agents with round-robin or least-connections |
+| **Proxera Agent Helm chart** | Low | Helm chart for deploying the agent within a Kubernetes LAN |
 | **HTTP/2 proxying** | Low | Full HTTP/2 support in both the proxy engine and tunnel protocol |

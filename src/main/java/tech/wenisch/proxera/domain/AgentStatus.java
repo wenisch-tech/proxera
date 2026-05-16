@@ -1,6 +1,6 @@
 package tech.wenisch.proxera.domain;
 
-public enum ClientStatus {
+public enum AgentStatus {
     PENDING,
     REGISTERED,
     CONNECTED,

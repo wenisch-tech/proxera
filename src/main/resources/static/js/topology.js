@@ -11,8 +11,8 @@ const CR = 11;    // corner radius
 const IW = 52;    // left icon-zone width
 
 // ── Column fractions of canvas width ──────────────────────────────────────────
-const COL_X     = { server: 0.12, client: 0.47, route: 0.83 };
-const COL_LABEL = { server: 'PROXY SERVER', client: 'TUNNEL CLIENTS', route: 'ROUTES' };
+const COL_X     = { server: 0.12, agent: 0.47, route: 0.83 };
+const COL_LABEL = { server: 'PROXY SERVER', agent: 'AGENTS', route: 'ROUTES' };
 const MIN_GAP   = 118;   // minimum vertical pitch between nodes (px)
 
 let svg, _defs, linkLayer, nodeLayer, canvasW, canvasH;
@@ -21,9 +21,9 @@ let svg, _defs, linkLayer, nodeLayer, canvasW, canvasH;
 function palette(d) {
     if (d.type === 'server')
         return { accent: '#818cf8', glow: '#4338ca', border: 'rgba(129,140,248,0.55)', muted: '#c7d2fe' };
-    if (d.type === 'client' && d.connected)
+    if (d.type === 'agent' && d.connected)
         return { accent: '#34d399', glow: '#059669', border: 'rgba(52,211,153,0.50)', muted: '#a7f3d0' };
-    if (d.type === 'client')
+    if (d.type === 'agent')
         return { accent: '#64748b', glow: '#1e293b', border: 'rgba(100,116,139,0.38)', muted: '#94a3b8' };
     if (d.enabled !== false)
         return { accent: '#fbbf24', glow: '#b45309', border: 'rgba(251,191,36,0.45)', muted: '#fde68a' };
@@ -33,7 +33,7 @@ function palette(d) {
 function metaLabel(d) {
     const trim = (s, n) => s.length > n ? s.slice(0, n - 1) + '\u2026' : s;
     if (d.type === 'server') return 'Reverse Proxy  \u00b7  Active';
-    if (d.type === 'client') return d.connected ? '\u25cf Online' : '\u25cb Offline';
+    if (d.type === 'agent') return d.connected ? '\u25cf Online' : '\u25cb Offline';
     if (d.target) return '\u2192 ' + trim(String(d.target), 18);
     return d.enabled !== false ? '\u25cf Enabled' : '\u25cb Disabled';
 }
@@ -51,7 +51,7 @@ function drawIcon(g, d) {
             g.append('rect').attr('x', -3).attr('y', yo + 2).attr('width', 9).attr('height', 2)
                 .attr('rx', 1).attr('fill', c).attr('opacity', 0.6);
         });
-    } else if (d.type === 'client') {
+    } else if (d.type === 'agent') {
         // Monitor + stand
         g.append('rect').attr('x', -11).attr('y', -9).attr('width', 22).attr('height', 15)
             .attr('rx', 2).attr('fill', 'none').attr('stroke', c).attr('stroke-width', 1.5);
@@ -76,7 +76,7 @@ function drawIcon(g, d) {
 
 // ── Column layout ──────────────────────────────────────────────────────────────
 function computeLayout(nodes) {
-    const groups = { server: [], client: [], route: [] };
+    const groups = { server: [], agent: [], route: [] };
     nodes.forEach(n => { if (groups[n.type]) groups[n.type].push(n); });
     Object.entries(groups).forEach(([type, group]) => {
         if (!group.length) return;
@@ -180,7 +180,7 @@ function renderGraph(data) {
     });
 
     // Column dividers
-    [(COL_X.server + COL_X.client) / 2 * canvasW, (COL_X.client + COL_X.route) / 2 * canvasW]
+    [(COL_X.server + COL_X.agent) / 2 * canvasW, (COL_X.agent + COL_X.route) / 2 * canvasW]
         .forEach(x => {
             svg.append('line').attr('class', 'col-div')
                 .attr('x1', x).attr('y1', 40).attr('x2', x).attr('y2', canvasH - 24)
@@ -275,7 +275,7 @@ function renderGraph(data) {
 
         // ⑥ Status dot (top-right corner)
         const active = d.type === 'server'
-            || (d.type === 'client' && d.connected)
+            || (d.type === 'agent' && d.connected)
             || (d.type === 'route'  && d.enabled !== false);
         g.append('circle').attr('cx', CW - 15).attr('cy', 15).attr('r', 3.5)
             .attr('fill', active ? col.accent : '#334155').attr('opacity', 0.95);
@@ -327,7 +327,7 @@ function refreshTopology() {
 function pulseLink(event) {
     linkLayer.selectAll('path.topo-link')
         .filter(function(d) {
-            return d && (d.src?.id === event.clientId || d.tgt?.id === event.clientId);
+            return d && (d.src?.id === event.agentId || d.tgt?.id === event.agentId);
         })
         .classed('link-pulsing', true).attr('filter', 'url(#link-glow)');
 }
@@ -335,7 +335,7 @@ function pulseLink(event) {
 function clearPulse(event) {
     linkLayer.selectAll('path.topo-link')
         .filter(function(d) {
-            return d && (d.src?.id === event.clientId || d.tgt?.id === event.clientId);
+            return d && (d.src?.id === event.agentId || d.tgt?.id === event.agentId);
         })
         .classed('link-pulsing', false).attr('filter', null);
 }

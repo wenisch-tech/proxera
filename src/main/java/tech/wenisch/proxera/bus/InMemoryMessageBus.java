@@ -44,14 +44,14 @@ public class InMemoryMessageBus implements MessageBus {
     }
 
     @Override
-    public CompletableFuture<ResponsePayload> dispatch(UUID clientId, String requestJson, String correlationId) {
+    public CompletableFuture<ResponsePayload> dispatch(UUID agentId, String requestJson, String correlationId) {
         CompletableFuture<ResponsePayload> future = new CompletableFuture<>();
         pending.put(correlationId, future);
 
         try {
             Map<String, Object> payload = objectMapper.readValue(requestJson, Map.class);
             TunnelFrame frame = TunnelFrame.of(FrameType.REQUEST, correlationId, payload);
-            tunnelManager.sendFrame(clientId, frame);
+            tunnelManager.sendFrame(agentId, frame);
         } catch (IOException e) {
             pending.remove(correlationId);
             future.completeExceptionally(e);

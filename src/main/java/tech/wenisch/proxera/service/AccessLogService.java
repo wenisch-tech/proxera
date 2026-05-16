@@ -26,10 +26,10 @@ public class AccessLogService {
     }
 
     @Transactional
-    public AccessLog log(Route route, UUID clientId, HttpServletRequest request, ResponsePayload response) {
+    public AccessLog log(Route route, UUID agentId, HttpServletRequest request, ResponsePayload response) {
         AccessLog entry = AccessLog.builder()
                 .routeId(route.getId())
-                .clientId(clientId)
+                .agentId(agentId)
                 .method(request.getMethod())
                 .path(request.getRequestURI())
                 .statusCode(response.status())

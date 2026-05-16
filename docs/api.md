@@ -11,20 +11,20 @@ The raw OpenAPI JSON spec is at `/v3/api-docs`.
 All API endpoints require authentication. Pass a named API key via the `X-API-KEY` header:
 
 ```bash
-curl -H "X-API-KEY: your-api-key" http://localhost:8080/admin/api/clients
+curl -H "X-API-KEY: your-api-key" http://localhost:8080/admin/api/agents
 ```
 
 API keys can be generated in the Admin UI under **API Keys**.
 
-## Clients
+## Agents
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/admin/api/clients` | List all clients |
-| `POST` | `/admin/api/clients` | Create a new client slot |
-| `GET` | `/admin/api/clients/{id}` | Get client details |
-| `DELETE` | `/admin/api/clients/{id}` | Delete a client |
-| `POST` | `/admin/api/clients/{id}/token` | Generate a new registration token (invalidates previous) |
+| `GET` | `/admin/api/agents` | List all agents |
+| `POST` | `/admin/api/agents` | Create a new agent slot |
+| `GET` | `/admin/api/agents/{id}` | Get agent details |
+| `DELETE` | `/admin/api/agents/{id}` | Delete an agent |
+| `POST` | `/admin/api/agents/{id}/token` | Generate a new registration token (invalidates previous) |
 
 ## Routes
 
@@ -41,7 +41,7 @@ API keys can be generated in the Admin UI under **API Keys**.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/admin/api/topology` | Full topology snapshot (pods, clients, routes, edges) |
+| `GET` | `/admin/api/topology` | Full topology snapshot (pods, agents, routes, edges) |
 
 ## API Keys
 
@@ -64,24 +64,24 @@ API keys can be generated in the Admin UI under **API Keys**.
 
 | Path | Port | Description |
 |------|------|-------------|
-| `GET /admin/sse/topology` | 8080 | Live topology events (`CLIENT_CONNECTED`, `CLIENT_DISCONNECTED`, `REQUEST_IN_FLIGHT`, ...) |
+| `GET /admin/sse/topology` | 8080 | Live topology events (`AGENT_CONNECTED`, `AGENT_DISCONNECTED`, `REQUEST_IN_FLIGHT`, ...) |
 | `GET /admin/sse/routes/{id}/log` | 8080 | Live access log entries for a specific route |
 
-## Example: Create a Client and Generate a Token
+## Example: Create an Agent and Generate a Token
 
 ```bash
-# Create client slot
-CLIENT=$(curl -s -X POST http://localhost:8080/admin/api/clients \
+# Create agent slot
+AGENT=$(curl -s -X POST http://localhost:8080/admin/api/agents \
   -H "X-API-KEY: your-key" \
   -H "Content-Type: application/json" \
   -d '{"name": "home-lab"}')
 
-CLIENT_ID=$(echo $CLIENT | jq -r '.id')
+AGENT_ID=$(echo $AGENT | jq -r '.id')
 
 # Generate registration token
-TOKEN=$(curl -s -X POST http://localhost:8080/admin/api/clients/$CLIENT_ID/token \
+TOKEN=$(curl -s -X POST http://localhost:8080/admin/api/agents/$AGENT_ID/token \
   -H "X-API-KEY: your-key")
 
 echo "Registration token: $(echo $TOKEN | jq -r '.token')"
-# Copy this token to your Proxera Client config — it is shown only once.
+# Copy this token to your Proxera Agent config — it is shown only once.
 ```

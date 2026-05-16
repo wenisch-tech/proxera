@@ -58,8 +58,8 @@
     <!-- Legend -->
     <div class="d-flex flex-wrap gap-4 mt-3 small text-muted">
         <span><span class="topo-legend-dot" style="background:#818cf8;"></span> Proxy Server</span>
-        <span><span class="topo-legend-dot" style="background:#34d399;"></span> Connected Client</span>
-        <span><span class="topo-legend-dot" style="background:#64748b;"></span> Offline Client</span>
+        <span><span class="topo-legend-dot" style="background:#34d399;"></span> Connected Agent</span>
+        <span><span class="topo-legend-dot" style="background:#64748b;"></span> Offline Agent</span>
         <span><span class="topo-legend-dot" style="background:#fbbf24;"></span> Route (enabled)</span>
         <span style="margin-left:auto;" class="text-muted" style="font-size:.8rem;">
             <i class="bi bi-info-circle me-1"></i>Edges: solid = tunnel &nbsp;·&nbsp; dashed = route mapping
@@ -75,8 +75,8 @@
         refreshTopology();
 
         const sse = new EventSource('/admin/sse/topology');
-        sse.addEventListener('CLIENT_CONNECTED', () => refreshTopology());
-        sse.addEventListener('CLIENT_DISCONNECTED', () => refreshTopology());
+        sse.addEventListener('AGENT_CONNECTED', () => refreshTopology());
+        sse.addEventListener('AGENT_DISCONNECTED', () => refreshTopology());
         sse.addEventListener('ROUTE_UPDATED', () => refreshTopology());
         sse.addEventListener('REQUEST_IN_FLIGHT', (e) => pulseLink(JSON.parse(e.data)));
         sse.addEventListener('REQUEST_COMPLETED', (e) => clearPulse(JSON.parse(e.data)));

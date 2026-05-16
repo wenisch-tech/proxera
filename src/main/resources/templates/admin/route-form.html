@@ -20,12 +20,12 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="clientId" class="form-label">Client</label>
-                    <select id="clientId" name="clientId" class="form-select" required>
-                        <option value="">— select a client —</option>
-                        <option th:each="client : ${clients}"
-                                th:value="${client.id}"
-                                th:text="${client.name}"></option>
+                    <label for="agentId" class="form-label">Agent</label>
+                    <select id="agentId" name="agentId" class="form-select" required>
+                        <option value="">— select an agent —</option>
+                        <option th:each="agent : ${agents}"
+                                th:value="${agent.id}"
+                                th:text="${agent.name}"></option>
                     </select>
                 </div>
 

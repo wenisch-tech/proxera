@@ -25,8 +25,8 @@ public class Route {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false)
-    private Client client;
+    @JoinColumn(name = "agent_id", nullable = false)
+    private Agent agent;
 
     @Column(name = "local_host", nullable = false)
     private String localHost;

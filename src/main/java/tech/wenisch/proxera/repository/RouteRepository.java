@@ -11,13 +11,13 @@ import tech.wenisch.proxera.domain.Route;
 
 public interface RouteRepository extends JpaRepository<Route, UUID> {
 
-    @Query("SELECT DISTINCT r FROM Route r LEFT JOIN FETCH r.client LEFT JOIN FETCH r.domains")
-    List<Route> findAllWithClient();
+    @Query("SELECT DISTINCT r FROM Route r LEFT JOIN FETCH r.agent LEFT JOIN FETCH r.domains")
+    List<Route> findAllWithAgent();
 
-    @Query("SELECT r FROM Route r LEFT JOIN FETCH r.client LEFT JOIN FETCH r.domains WHERE r.id = :id")
+    @Query("SELECT r FROM Route r LEFT JOIN FETCH r.agent LEFT JOIN FETCH r.domains WHERE r.id = :id")
     Optional<Route> findByIdWithDetails(UUID id);
 
-    List<Route> findByClientId(UUID clientId);
+    List<Route> findByAgentId(UUID agentId);
 
     @Query("SELECT r FROM Route r JOIN r.domains d WHERE d.domain = :domain AND r.enabled = true")
     List<Route> findEnabledByDomain(String domain);

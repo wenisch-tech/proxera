@@ -16,7 +16,7 @@
                 <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Client</th>
+                    <th>Agent</th>
                     <th>Target</th>
                     <th>Domains</th>
                     <th>Status</th>
@@ -28,7 +28,7 @@
                     <td>
                         <span th:text="${route.name}" class="fw-semibold"></span>
                     </td>
-                    <td th:text="${route.client?.name}"></td>
+                    <td th:text="${route.agent?.name}"></td>
                     <td class="small text-muted" th:text="${route.localHost + ':' + route.localPort}"></td>
                     <td>
                         <span th:each="d : ${route.domains}">
@@ -50,7 +50,7 @@
                                 th:attr="
                                     data-id=${route.id},
                                     data-name=${route.name},
-                                    data-client-id=${route.client?.id},
+                                    data-agent-id=${route.agent?.id},
                                     data-local-host=${route.localHost},
                                     data-local-port=${route.localPort},
                                     data-path-prefix=${route.pathPrefix},
@@ -92,11 +92,11 @@
                             <input type="text" id="edit-name" name="name" class="form-control" required/>
                         </div>
                         <div class="mb-3">
-                            <label for="edit-clientId" class="form-label">Client</label>
-                            <select id="edit-clientId" name="clientId" class="form-select" required>
-                                <option th:each="client : ${clients}"
-                                        th:value="${client.id}"
-                                        th:text="${client.name}"></option>
+                            <label for="edit-agentId" class="form-label">Agent</label>
+                            <select id="edit-agentId" name="agentId" class="form-select" required>
+                                <option th:each="agent : ${agents}"
+                                        th:value="${agent.id}"
+                                        th:text="${agent.name}"></option>
                             </select>
                         </div>
                         <div class="row g-3 mb-3">
@@ -149,7 +149,7 @@
         const btn = event.relatedTarget;
         const id          = btn.dataset.id;
         const name        = btn.dataset.name;
-        const clientId    = btn.dataset.clientId;
+        const agentId    = btn.dataset.agentId;
         const localHost   = btn.dataset.localHost;
         const localPort   = btn.dataset.localPort;
         const pathPrefix  = btn.dataset.pathPrefix || '';
@@ -165,9 +165,9 @@
         document.getElementById('edit-stripPrefix').checked = stripPrefix;
         document.getElementById('edit-enabled').checked = enabled;
 
-        const clientSelect = document.getElementById('edit-clientId');
-        for (const opt of clientSelect.options) {
-            opt.selected = opt.value === clientId;
+        const agentSelect = document.getElementById('edit-agentId');
+        for (const opt of agentSelect.options) {
+            opt.selected = opt.value === agentId;
         }
 
         const list = document.getElementById('edit-domains-list');

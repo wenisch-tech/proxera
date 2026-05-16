@@ -44,8 +44,8 @@ public class TunnelHandshakeInterceptor implements HandshakeInterceptor {
 
         return registrationTokenService.validate(token)
                 .map(result -> {
-                    attributes.put("clientId", result.clientId());
-                    attributes.put("clientName", result.clientName());
+                    attributes.put("agentId", result.agentId());
+                    attributes.put("agentName", result.agentName());
                     return true;
                 })
                 .orElseGet(() -> {

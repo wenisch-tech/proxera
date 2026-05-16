@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import tech.wenisch.proxera.domain.Client;
+import tech.wenisch.proxera.domain.Agent;
 import tech.wenisch.proxera.domain.Route;
 import tech.wenisch.proxera.domain.RouteDomain;
 import tech.wenisch.proxera.service.AccessLogService;
-import tech.wenisch.proxera.service.ClientService;
+import tech.wenisch.proxera.service.AgentService;
 import tech.wenisch.proxera.service.RouteService;
 
 @Controller
@@ -24,21 +24,21 @@ import tech.wenisch.proxera.service.RouteService;
 public class RouteController {
 
     private final RouteService routeService;
-    private final ClientService clientService;
+    private final AgentService agentService;
     private final AccessLogService accessLogService;
 
     public RouteController(RouteService routeService,
-                           ClientService clientService,
+                           AgentService agentService,
                            AccessLogService accessLogService) {
         this.routeService = routeService;
-        this.clientService = clientService;
+        this.agentService = agentService;
         this.accessLogService = accessLogService;
     }
 
     @GetMapping
     public String list(Model model) {
         model.addAttribute("routes", routeService.findAll());
-        model.addAttribute("clients", clientService.findAll());
+        model.addAttribute("agents", agentService.findAll());
         return "admin/routes";
     }
 
@@ -54,13 +54,13 @@ public class RouteController {
     @GetMapping("/new")
     public String newForm(Model model) {
         model.addAttribute("route", new Route());
-        model.addAttribute("clients", clientService.findAll());
+        model.addAttribute("agents", agentService.findAll());
         return "admin/route-form";
     }
 
     @PostMapping
     public String save(@RequestParam String name,
-                       @RequestParam UUID clientId,
+                       @RequestParam UUID agentId,
                        @RequestParam String localHost,
                        @RequestParam int localPort,
                        @RequestParam(required = false) String pathPrefix,
@@ -69,11 +69,11 @@ public class RouteController {
                        @RequestParam(required = false) List<String> domains,
                        RedirectAttributes ra) {
         try {
-            Client client = clientService.findById(clientId)
-                    .orElseThrow(() -> new IllegalArgumentException("Client not found"));
+            Agent agent = agentService.findById(agentId)
+                    .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
             Route route = Route.builder()
                     .name(name)
-                    .client(client)
+                    .agent(agent)
                     .localHost(localHost)
                     .localPort(localPort)
                     .pathPrefix(pathPrefix != null && !pathPrefix.isBlank() ? pathPrefix : null)
@@ -109,7 +109,7 @@ public class RouteController {
     @PostMapping("/{id}")
     public String update(@PathVariable UUID id,
                          @RequestParam String name,
-                         @RequestParam UUID clientId,
+                         @RequestParam UUID agentId,
                          @RequestParam String localHost,
                          @RequestParam int localPort,
                          @RequestParam(required = false) String pathPrefix,
@@ -120,10 +120,10 @@ public class RouteController {
         try {
             Route route = routeService.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Route not found"));
-            Client client = clientService.findById(clientId)
-                    .orElseThrow(() -> new IllegalArgumentException("Client not found"));
+            Agent agent = agentService.findById(agentId)
+                    .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
             route.setName(name);
-            route.setClient(client);
+            route.setAgent(agent);
             route.setLocalHost(localHost);
             route.setLocalPort(localPort);
             route.setPathPrefix(pathPrefix != null && !pathPrefix.isBlank() ? pathPrefix : null);

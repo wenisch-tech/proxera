@@ -4,53 +4,53 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import tech.wenisch.proxera.domain.Client;
-import tech.wenisch.proxera.service.ClientService;
+import tech.wenisch.proxera.domain.Agent;
+import tech.wenisch.proxera.service.AgentService;
 import tech.wenisch.proxera.service.RegistrationTokenService;
 import tech.wenisch.proxera.service.RouteService;
 
 import java.util.UUID;
 
 @Controller
-@RequestMapping("/admin/clients")
-public class ClientController {
+@RequestMapping("/admin/agents")
+public class AgentController {
 
-    private final ClientService clientService;
+    private final AgentService agentService;
     private final RouteService routeService;
     private final RegistrationTokenService tokenService;
 
-    public ClientController(ClientService clientService,
-                            RouteService routeService,
-                            RegistrationTokenService tokenService) {
-        this.clientService = clientService;
+    public AgentController(AgentService agentService,
+                           RouteService routeService,
+                           RegistrationTokenService tokenService) {
+        this.agentService = agentService;
         this.routeService = routeService;
         this.tokenService = tokenService;
     }
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("clients", clientService.findAll());
-        return "admin/clients";
+        model.addAttribute("agents", agentService.findAll());
+        return "admin/agents";
     }
 
     @GetMapping("/{id}")
     public String detail(@PathVariable UUID id, Model model) {
-        return clientService.findById(id).map(client -> {
-            model.addAttribute("client", client);
-            model.addAttribute("routes", routeService.findByClientId(id));
-            return "admin/client-detail";
-        }).orElse("redirect:/admin/clients");
+        return agentService.findById(id).map(agent -> {
+            model.addAttribute("agent", agent);
+            model.addAttribute("routes", routeService.findByAgentId(id));
+            return "admin/agent-detail";
+        }).orElse("redirect:/admin/agents");
     }
 
     @PostMapping
     public String create(@RequestParam String name, RedirectAttributes ra) {
         try {
-            Client client = clientService.create(name);
-            ra.addFlashAttribute("success", "Client '" + name + "' created.");
-            return "redirect:/admin/clients/" + client.getId();
+            Agent agent = agentService.create(name);
+            ra.addFlashAttribute("success", "Agent '" + name + "' created.");
+            return "redirect:/admin/agents/" + agent.getId();
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
-            return "redirect:/admin/clients";
+            return "redirect:/admin/agents";
         }
     }
 
@@ -63,13 +63,13 @@ public class ClientController {
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/admin/clients/" + id;
+        return "redirect:/admin/agents/" + id;
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable UUID id, RedirectAttributes ra) {
-        clientService.delete(id);
-        ra.addFlashAttribute("success", "Client deleted.");
-        return "redirect:/admin/clients";
+        agentService.delete(id);
+        ra.addFlashAttribute("success", "Agent deleted.");
+        return "redirect:/admin/agents";
     }
 }

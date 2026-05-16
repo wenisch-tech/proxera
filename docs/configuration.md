@@ -37,7 +37,7 @@ When `REDIS_HOST` is not set, Proxera uses an in-memory message bus suitable for
 |----------|---------|-------------|
 | `PROXERA_ADMIN_PORT` | `8080` | Admin UI / API port |
 | `PROXERA_LOG_RETENTION_DAYS` | `7` | Days to retain access log entries |
-| `PROXERA_TUNNEL_HEARTBEAT_INTERVAL` | `30` | Seconds between client heartbeat pings |
+| `PROXERA_TUNNEL_HEARTBEAT_INTERVAL` | `30` | Seconds between agent heartbeat pings |
 | `PROXERA_TUNNEL_HEARTBEAT_TIMEOUT` | `10` | Seconds to wait for pong before disconnecting |
 | `PROXERA_POD_ID` | *(hostname)* | Identifier for this pod in multi-pod topology display |
 

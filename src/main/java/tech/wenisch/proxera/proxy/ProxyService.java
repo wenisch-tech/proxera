@@ -54,7 +54,7 @@ public class ProxyService {
         String path = request.getRequestURI();
 
         routingService.resolve(host, path).ifPresentOrElse(
-                route -> dispatchToClient(route, request, response, asyncContext),
+                route -> dispatchToAgent(route, request, response, asyncContext),
                 () -> {
                     try {
                         response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -67,18 +67,18 @@ public class ProxyService {
         );
     }
 
-    private void dispatchToClient(Route route, HttpServletRequest request,
+    private void dispatchToAgent(Route route, HttpServletRequest request,
                                   HttpServletResponse response, AsyncContext asyncContext) {
         try {
             String correlationId = UUID.randomUUID().toString();
             RequestPayload payload = buildPayload(route, request);
             String requestJson = objectMapper.writeValueAsString(payload);
 
-            UUID clientId = route.getClient().getId();
-            messageBus.publishTopology(new TopologyEvent("REQUEST_IN_FLIGHT", clientId.toString(),
+            UUID agentId = route.getAgent().getId();
+            messageBus.publishTopology(new TopologyEvent("REQUEST_IN_FLIGHT", agentId.toString(),
                     route.getName()));
 
-            CompletableFuture<ResponsePayload> future = messageBus.dispatch(clientId, requestJson, correlationId);
+            CompletableFuture<ResponsePayload> future = messageBus.dispatch(agentId, requestJson, correlationId);
 
             future.orTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS).whenComplete((resp, ex) -> {
                 if (ex != null) {
@@ -91,9 +91,9 @@ public class ProxyService {
                         asyncContext.complete();
                     }
                 } else {
-                    messageBus.publishTopology(new TopologyEvent("REQUEST_COMPLETED", clientId.toString(),
+                    messageBus.publishTopology(new TopologyEvent("REQUEST_COMPLETED", agentId.toString(),
                             route.getName()));
-                    accessLogService.log(route, clientId, request, resp);
+                    accessLogService.log(route, agentId, request, resp);
                     try {
                         writeResponse(resp, response);
                     } catch (IOException ioEx) {

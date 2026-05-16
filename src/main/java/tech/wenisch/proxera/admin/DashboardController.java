@@ -5,7 +5,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import tech.wenisch.proxera.service.AccessLogService;
-import tech.wenisch.proxera.service.ClientService;
+import tech.wenisch.proxera.service.AgentService;
 import tech.wenisch.proxera.service.RouteService;
 import tech.wenisch.proxera.tunnel.TunnelManager;
 
@@ -13,16 +13,16 @@ import tech.wenisch.proxera.tunnel.TunnelManager;
 @RequestMapping("/admin")
 public class DashboardController {
 
-    private final ClientService clientService;
+    private final AgentService agentService;
     private final RouteService routeService;
     private final AccessLogService accessLogService;
     private final TunnelManager tunnelManager;
 
-    public DashboardController(ClientService clientService,
+    public DashboardController(AgentService agentService,
                                RouteService routeService,
                                AccessLogService accessLogService,
                                TunnelManager tunnelManager) {
-        this.clientService = clientService;
+        this.agentService = agentService;
         this.routeService = routeService;
         this.accessLogService = accessLogService;
         this.tunnelManager = tunnelManager;
@@ -30,7 +30,7 @@ public class DashboardController {
 
     @GetMapping({"", "/"})
     public String dashboard(Model model) {
-        model.addAttribute("connectedClients", clientService.countConnected());
+        model.addAttribute("connectedAgents", agentService.countConnected());
         model.addAttribute("activeRoutes", routeService.countEnabled());
         model.addAttribute("activeSessions", tunnelManager.getActiveSessions().size());
         model.addAttribute("recentLogs", accessLogService.getRecentGlobal(20));
