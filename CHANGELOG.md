@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.2.1 - 2026-05-16
+
+### [0.2.1](https://github.com/wenisch-tech/proxera/compare/v0.2.0...v0.2.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* updated rewriting for css ([8dc98da](https://github.com/wenisch-tech/proxera/commit/8dc98da145b3dd307ead54e6dad0fd62f9faf97b))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.2.1
+
+
 ## v0.2.0 - 2026-05-16
 
 ## [0.2.0](https://github.com/wenisch-tech/proxera/compare/v0.1.1...v0.2.0) (2026-05-16)
