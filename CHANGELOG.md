@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.0 - 2026-05-16
+
+## [0.1.0](https://github.com/wenisch-tech/proxera/compare/v0.0.21...v0.1.0) (2026-05-16)
+
+
+### Features
+
+* added support for exposing multiple services on same domain ([fb2a77f](https://github.com/wenisch-tech/proxera/commit/fb2a77ffbdd69bd5b13cc3ba78511a035ecce684))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.1.0
+
+
 ## v0.0.21 - 2026-05-16
 
 ### [0.0.21](https://github.com/wenisch-tech/proxera/compare/v0.0.20...v0.0.21) (2026-05-16)
