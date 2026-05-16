@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.0.21 - 2026-05-16
+
+### [0.0.21](https://github.com/wenisch-tech/proxera/compare/v0.0.20...v0.0.21) (2026-05-16)
+
+
+### Bug Fixes
+
+* added missing agent classes ([7166f00](https://github.com/wenisch-tech/proxera/commit/7166f0055be93b77938d5bf767aaf2c8767558ff))
+
+
+### Code Refactoring
+
+* updated naming of client to agent ([086212c](https://github.com/wenisch-tech/proxera/commit/086212c3ffed5799f091b57f8ab1b3107cd5b3f6))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.0.21
+
+
 ## v0.0.20 - 2026-05-16
 
 ### [0.0.20](https://github.com/wenisch-tech/proxera/compare/v0.0.19...v0.0.20) (2026-05-16)
