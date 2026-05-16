@@ -63,10 +63,10 @@ public class RouteController {
                        @RequestParam UUID agentId,
                        @RequestParam String localHost,
                        @RequestParam int localPort,
-                       @RequestParam(required = false) String pathPrefix,
-                       @RequestParam(required = false) boolean stripPrefix,
                        @RequestParam(required = false) boolean enabled,
-                       @RequestParam(required = false) List<String> domains,
+                       @RequestParam(required = false) List<String> domainHosts,
+                       @RequestParam(required = false) List<String> domainPaths,
+                       @RequestParam(required = false) List<String> domainStrips,
                        RedirectAttributes ra) {
         try {
             Agent agent = agentService.findById(agentId)
@@ -76,21 +76,9 @@ public class RouteController {
                     .agent(agent)
                     .localHost(localHost)
                     .localPort(localPort)
-                    .pathPrefix(pathPrefix != null && !pathPrefix.isBlank() ? pathPrefix : null)
-                    .stripPrefix(stripPrefix)
                     .enabled(enabled)
                     .build();
-            if (domains != null) {
-                for (String domain : domains) {
-                    String trimmed = domain.trim().toLowerCase();
-                    if (!trimmed.isBlank()) {
-                        RouteDomain rd = new RouteDomain();
-                        rd.setRoute(route);
-                        rd.setDomain(trimmed);
-                        route.getDomains().add(rd);
-                    }
-                }
-            }
+            addDomainEntries(route, domainHosts, domainPaths, domainStrips);
             routeService.save(route);
             ra.addFlashAttribute("success", "Route saved successfully.");
         } catch (Exception e) {
@@ -112,10 +100,10 @@ public class RouteController {
                          @RequestParam UUID agentId,
                          @RequestParam String localHost,
                          @RequestParam int localPort,
-                         @RequestParam(required = false) String pathPrefix,
-                         @RequestParam(required = false) boolean stripPrefix,
                          @RequestParam(required = false) boolean enabled,
-                         @RequestParam(required = false) List<String> domains,
+                         @RequestParam(required = false) List<String> domainHosts,
+                         @RequestParam(required = false) List<String> domainPaths,
+                         @RequestParam(required = false) List<String> domainStrips,
                          RedirectAttributes ra) {
         try {
             Route route = routeService.findById(id)
@@ -126,26 +114,30 @@ public class RouteController {
             route.setAgent(agent);
             route.setLocalHost(localHost);
             route.setLocalPort(localPort);
-            route.setPathPrefix(pathPrefix != null && !pathPrefix.isBlank() ? pathPrefix : null);
-            route.setStripPrefix(stripPrefix);
             route.setEnabled(enabled);
             route.getDomains().clear();
-            if (domains != null) {
-                for (String domain : domains) {
-                    String trimmed = domain.trim().toLowerCase();
-                    if (!trimmed.isBlank()) {
-                        RouteDomain rd = new RouteDomain();
-                        rd.setRoute(route);
-                        rd.setDomain(trimmed);
-                        route.getDomains().add(rd);
-                    }
-                }
-            }
+            addDomainEntries(route, domainHosts, domainPaths, domainStrips);
             routeService.save(route);
             ra.addFlashAttribute("success", "Route updated successfully.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/admin/routes";
+    }
+
+    private void addDomainEntries(Route route, List<String> hosts, List<String> paths, List<String> strips) {
+        if (hosts == null) return;
+        for (int i = 0; i < hosts.size(); i++) {
+            String host = hosts.get(i).trim().toLowerCase();
+            if (host.isBlank()) continue;
+            String path = (paths != null && i < paths.size()) ? paths.get(i).trim() : "";
+            boolean strip = (strips != null && i < strips.size()) && "true".equals(strips.get(i));
+            RouteDomain rd = new RouteDomain();
+            rd.setRoute(route);
+            rd.setDomain(host);
+            rd.setPathPrefix(path.isBlank() ? null : path);
+            rd.setStripPrefix(strip);
+            route.getDomains().add(rd);
+        }
     }
 }

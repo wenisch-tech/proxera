@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS routes (
 CREATE TABLE IF NOT EXISTS route_domains (
     id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
     route_id    UUID        NOT NULL REFERENCES routes(id) ON DELETE CASCADE,
-    domain      VARCHAR(255) NOT NULL UNIQUE
+    domain      VARCHAR(255) NOT NULL,
+    CONSTRAINT route_domains_domain_key UNIQUE (domain)
 );
 
 -- API keys

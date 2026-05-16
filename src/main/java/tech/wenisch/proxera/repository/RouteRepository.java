@@ -18,7 +18,4 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     Optional<Route> findByIdWithDetails(UUID id);
 
     List<Route> findByAgentId(UUID agentId);
-
-    @Query("SELECT r FROM Route r JOIN r.domains d WHERE d.domain = :domain AND r.enabled = true")
-    List<Route> findEnabledByDomain(String domain);
 }

@@ -6,8 +6,7 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "route_domains",
-        uniqueConstraints = @UniqueConstraint(columnNames = "domain"))
+@Table(name = "route_domains")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,10 +18,16 @@ public class RouteDomain {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
     @Column(nullable = false)
     private String domain;
+
+    @Column(name = "path_prefix")
+    private String pathPrefix;
+
+    @Column(name = "strip_prefix", nullable = false)
+    private boolean stripPrefix;
 }

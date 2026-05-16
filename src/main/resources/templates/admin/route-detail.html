@@ -29,13 +29,24 @@
                         <dd class="col-sm-8" th:text="${route.agent?.name}"></dd>
                         <dt class="col-sm-4">Target</dt>
                         <dd class="col-sm-8 font-monospace" th:text="${route.localHost + ':' + route.localPort}"></dd>
-                        <dt class="col-sm-4">Path Prefix</dt>
-                        <dd class="col-sm-8 text-muted" th:text="${route.pathPrefix ?: '/'}"></dd>
-                        <dt class="col-sm-4">Strip Prefix</dt>
-                        <dd class="col-sm-8" th:text="${route.stripPrefix ? 'Yes' : 'No'}"></dd>
-                        <dt class="col-sm-4">Domains</dt>
+                        <dt class="col-sm-4">Domain Entries</dt>
                         <dd class="col-sm-8">
-                            <span th:each="d : ${route.domains}" class="badge bg-secondary me-1" th:text="${d.domain}"></span>
+                            <table class="table table-sm table-borderless mb-0 small">
+                                <thead class="text-muted">
+                                <tr>
+                                    <th>Domain</th>
+                                    <th>Path Prefix</th>
+                                    <th>Strip</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="d : ${route.domains}">
+                                    <td class="font-monospace" th:text="${d.domain}"></td>
+                                    <td class="font-monospace" th:text="${d.pathPrefix ?: '/'}"></td>
+                                    <td th:text="${d.stripPrefix ? 'Yes' : 'No'}"></td>
+                                </tr>
+                                </tbody>
+                            </table>
                         </dd>
                     </dl>
                 </div>

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import tech.wenisch.proxera.bus.MessageBus;
 import tech.wenisch.proxera.bus.TopologyEvent;
 import tech.wenisch.proxera.domain.Route;
+import tech.wenisch.proxera.domain.RouteDomain;
 import tech.wenisch.proxera.service.AccessLogService;
 import tech.wenisch.proxera.service.RoutingService;
 import tech.wenisch.proxera.tunnel.RequestPayload;
@@ -54,7 +55,7 @@ public class ProxyService {
         String path = request.getRequestURI();
 
         routingService.resolve(host, path).ifPresentOrElse(
-                route -> dispatchToAgent(route, request, response, asyncContext),
+                routeDomain -> dispatchToAgent(routeDomain, request, response, asyncContext),
                 () -> {
                     try {
                         response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -67,11 +68,12 @@ public class ProxyService {
         );
     }
 
-    private void dispatchToAgent(Route route, HttpServletRequest request,
+    private void dispatchToAgent(RouteDomain routeDomain, HttpServletRequest request,
                                   HttpServletResponse response, AsyncContext asyncContext) {
+        Route route = routeDomain.getRoute();
         try {
             String correlationId = UUID.randomUUID().toString();
-            RequestPayload payload = buildPayload(route, request);
+            RequestPayload payload = buildPayload(routeDomain, request);
             String requestJson = objectMapper.writeValueAsString(payload);
 
             UUID agentId = route.getAgent().getId();
@@ -126,7 +128,8 @@ public class ProxyService {
         response.getOutputStream().write(body);
     }
 
-    private RequestPayload buildPayload(Route route, HttpServletRequest request) throws IOException {
+    private RequestPayload buildPayload(RouteDomain routeDomain, HttpServletRequest request) throws IOException {
+        Route route = routeDomain.getRoute();
         Map<String, String> headers = new HashMap<>();
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
@@ -152,7 +155,7 @@ public class ProxyService {
                 body,
                 route.getLocalHost(),
                 route.getLocalPort(),
-                route.getPathPrefix(),
+                routeDomain.isStripPrefix() ? routeDomain.getPathPrefix() : null,
                 request.getRemoteAddr()
         );
     }

@@ -34,13 +34,6 @@ public class Route {
     @Column(name = "local_port", nullable = false)
     private int localPort;
 
-    @Column(name = "path_prefix")
-    private String pathPrefix;
-
-    @Column(name = "strip_prefix", nullable = false)
-    @Builder.Default
-    private boolean stripPrefix = false;
-
     @Column(nullable = false)
     @Builder.Default
     private boolean enabled = true;

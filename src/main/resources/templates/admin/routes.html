@@ -31,9 +31,10 @@
                     <td th:text="${route.agent?.name}"></td>
                     <td class="small text-muted" th:text="${route.localHost + ':' + route.localPort}"></td>
                     <td>
-                        <span th:each="d : ${route.domains}">
-                            <span class="badge bg-secondary" th:text="${d.domain}"></span>
-                        </span>
+                        <div th:each="d : ${route.domains}" class="mb-1">
+                            <span class="badge bg-secondary"
+                                  th:text="${d.domain + (d.pathPrefix != null ? d.pathPrefix : '')}"></span>
+                        </div>
                     </td>
                     <td>
                         <span th:if="${route.enabled}" class="badge bg-success">Enabled</span>
@@ -53,10 +54,10 @@
                                     data-agent-id=${route.agent?.id},
                                     data-local-host=${route.localHost},
                                     data-local-port=${route.localPort},
-                                    data-path-prefix=${route.pathPrefix},
-                                    data-strip-prefix=${route.stripPrefix},
                                     data-enabled=${route.enabled},
-                                    data-domains=${#strings.listJoin(route.domains.![domain], ',')}">
+                                    data-domain-hosts=${#strings.listJoin(route.domains.![domain], ',')},
+                                    data-domain-paths=${#strings.listJoin(route.domains.![pathPrefix ?: ''], ',')},
+                                    data-domain-strips=${#strings.listJoin(route.domains.![stripPrefix ? 'true' : 'false'], ',')}">
                             <i class="bi bi-pencil"></i>
                         </button>
                         <!-- Delete -->
@@ -110,26 +111,22 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="edit-pathPrefix" class="form-label">Path Prefix <span class="text-muted">(optional)</span></label>
-                            <input type="text" id="edit-pathPrefix" name="pathPrefix" class="form-control" placeholder="/api"/>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Domains</label>
-                            <div id="edit-domains-list"></div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addEditDomain('')">
-                                <i class="bi bi-plus-lg me-1"></i> Add Domain
+                            <label class="form-label">Domain Entries</label>
+                            <div class="row g-2 mb-1">
+                                <div class="col-5 small text-muted fw-semibold">Domain</div>
+                                <div class="col-4 small text-muted fw-semibold">Path Prefix</div>
+                                <div class="col-2 small text-muted fw-semibold text-center">Strip</div>
+                                <div class="col-1"></div>
+                            </div>
+                            <div id="edit-domains-table"></div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addEditDomainEntry('','',true)">
+                                <i class="bi bi-plus-lg me-1"></i> Add Entry
                             </button>
                             <small class="d-block text-muted mt-1">Each domain must point to this Proxera server via DNS.</small>
                         </div>
-                        <div class="d-flex gap-3">
-                            <div class="form-check">
-                                <input type="checkbox" id="edit-stripPrefix" name="stripPrefix" class="form-check-input" value="true"/>
-                                <label for="edit-stripPrefix" class="form-check-label">Strip path prefix</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" id="edit-enabled" name="enabled" class="form-check-input" value="true"/>
-                                <label for="edit-enabled" class="form-check-label">Enabled</label>
-                            </div>
+                        <div class="form-check">
+                            <input type="checkbox" id="edit-enabled" name="enabled" class="form-check-input" value="true"/>
+                            <label for="edit-enabled" class="form-check-label">Enabled</label>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -149,20 +146,18 @@
         const btn = event.relatedTarget;
         const id          = btn.dataset.id;
         const name        = btn.dataset.name;
-        const agentId    = btn.dataset.agentId;
+        const agentId     = btn.dataset.agentId;
         const localHost   = btn.dataset.localHost;
         const localPort   = btn.dataset.localPort;
-        const pathPrefix  = btn.dataset.pathPrefix || '';
-        const stripPrefix = btn.dataset.stripPrefix === 'true';
         const enabled     = btn.dataset.enabled === 'true';
-        const domains     = btn.dataset.domains ? btn.dataset.domains.split(',').filter(d => d) : [];
+        const hosts  = btn.dataset.domainHosts  ? btn.dataset.domainHosts.split(',')  : [];
+        const paths  = btn.dataset.domainPaths  ? btn.dataset.domainPaths.split(',')  : [];
+        const strips = btn.dataset.domainStrips ? btn.dataset.domainStrips.split(',') : [];
 
         document.getElementById('editForm').action = `/admin/routes/${id}`;
         document.getElementById('edit-name').value = name;
         document.getElementById('edit-localHost').value = localHost;
         document.getElementById('edit-localPort').value = localPort;
-        document.getElementById('edit-pathPrefix').value = pathPrefix;
-        document.getElementById('edit-stripPrefix').checked = stripPrefix;
         document.getElementById('edit-enabled').checked = enabled;
 
         const agentSelect = document.getElementById('edit-agentId');
@@ -170,24 +165,42 @@
             opt.selected = opt.value === agentId;
         }
 
-        const list = document.getElementById('edit-domains-list');
-        list.innerHTML = '';
-        if (domains.length > 0) {
-            domains.forEach(d => addEditDomain(d));
+        const table = document.getElementById('edit-domains-table');
+        table.innerHTML = '';
+        if (hosts.length > 0) {
+            hosts.forEach((h, i) => addEditDomainEntry(h, paths[i] || '', strips[i] !== 'false'));
         } else {
-            addEditDomain('');
+            addEditDomainEntry('', '', true);
         }
     });
 
-    function addEditDomain(value) {
-        const list = document.getElementById('edit-domains-list');
+    function addEditDomainEntry(host, path, strip) {
+        const table = document.getElementById('edit-domains-table');
         const div = document.createElement('div');
-        div.className = 'input-group mb-2';
-        div.innerHTML = `<input type="text" name="domains" class="form-control" placeholder="e.g. service.example.com" value="${value}"/>
-            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">
-                <i class="bi bi-trash"></i>
-            </button>`;
-        list.appendChild(div);
+        div.className = 'row g-2 mb-2 align-items-center domain-entry';
+        const checked = strip ? 'checked' : '';
+        const stripVal = strip ? 'true' : 'false';
+        div.innerHTML = `
+            <div class="col-5">
+                <input type="text" name="domainHosts" class="form-control form-control-sm"
+                       placeholder="example.com" value="${host}"/>
+            </div>
+            <div class="col-4">
+                <input type="text" name="domainPaths" class="form-control form-control-sm"
+                       placeholder="/grafana" value="${path}"/>
+            </div>
+            <div class="col-2 text-center">
+                <input type="hidden" name="domainStrips" value="${stripVal}"/>
+                <input type="checkbox" class="form-check-input" ${checked}
+                       onchange="this.previousElementSibling.value = this.checked ? 'true' : 'false'"/>
+            </div>
+            <div class="col-1">
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        onclick="this.closest('.domain-entry').remove()">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>`;
+        table.appendChild(div);
     }
 </script>
 </th:block>

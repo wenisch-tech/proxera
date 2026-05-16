@@ -10,47 +10,49 @@ import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.domain.Route;
+import tech.wenisch.proxera.domain.RouteDomain;
 import tech.wenisch.proxera.repository.RouteRepository;
 
 /**
- * Resolves an inbound HTTP request (host + path) to a Route.
- * Maintains an in-memory cache of domain → routes, invalidated on route changes.
+ * Resolves an inbound HTTP request (host + path) to a RouteDomain.
+ * Each RouteDomain carries its own pathPrefix and stripPrefix alongside the target Route.
+ * Maintains an in-memory cache of domain → RouteDomain entries, invalidated on route changes.
  */
 @Service
 @Slf4j
 public class RoutingService {
 
     private final RouteRepository routeRepository;
-    // domain → sorted list of routes (longest pathPrefix first)
-    private volatile Map<String, List<Route>> cache = null;
+    // domain → list of RouteDomain entries (each carries its own pathPrefix/stripPrefix)
+    private volatile Map<String, List<RouteDomain>> cache = null;
 
     public RoutingService(RouteRepository routeRepository) {
         this.routeRepository = routeRepository;
     }
 
     /**
-     * Resolve a host + path to a Route.
+     * Resolve a host + path to a RouteDomain.
      * Strips port from host if present. Matches longest pathPrefix first.
      */
-    public Optional<Route> resolve(String host, String path) {
+    public Optional<RouteDomain> resolve(String host, String path) {
         if (host == null) return Optional.empty();
 
         // Strip port from host header (e.g. "example.com:8080" -> "example.com")
         String cleanHost = host.contains(":") ? host.substring(0, host.indexOf(':')) : host;
         cleanHost = cleanHost.toLowerCase();
 
-        Map<String, List<Route>> routeCache = getCache();
-        List<Route> candidates = routeCache.get(cleanHost);
+        Map<String, List<RouteDomain>> routeCache = getCache();
+        List<RouteDomain> candidates = routeCache.get(cleanHost);
         if (candidates == null || candidates.isEmpty()) return Optional.empty();
 
         // Find longest matching path prefix
         return candidates.stream()
-                .filter(r -> {
-                    String prefix = r.getPathPrefix();
+                .filter(rd -> {
+                    String prefix = rd.getPathPrefix();
                     return prefix == null || prefix.isBlank() || path.startsWith(prefix);
                 })
-                .max(Comparator.comparingInt(r ->
-                        r.getPathPrefix() == null ? 0 : r.getPathPrefix().length()));
+                .max(Comparator.comparingInt(rd ->
+                        rd.getPathPrefix() == null ? 0 : rd.getPathPrefix().length()));
     }
 
     public void invalidateCache() {
@@ -58,7 +60,7 @@ public class RoutingService {
         log.debug("Route cache invalidated");
     }
 
-    private Map<String, List<Route>> getCache() {
+    private Map<String, List<RouteDomain>> getCache() {
         if (cache == null) {
             synchronized (this) {
                 if (cache == null) {
@@ -69,14 +71,15 @@ public class RoutingService {
         return cache;
     }
 
-    private Map<String, List<Route>> buildCache() {
-        Map<String, List<Route>> newCache = new ConcurrentHashMap<>();
+    private Map<String, List<RouteDomain>> buildCache() {
+        Map<String, List<RouteDomain>> newCache = new ConcurrentHashMap<>();
         routeRepository.findAllWithAgent().stream()
                 .filter(Route::isEnabled)
-                .forEach(route -> route.getDomains().forEach(d ->
-                        newCache.computeIfAbsent(d.getDomain().toLowerCase(), k -> new java.util.ArrayList<>())
-                                .add(route)));
+                .forEach(route -> route.getDomains().forEach(rd ->
+                        newCache.computeIfAbsent(rd.getDomain().toLowerCase(), k -> new java.util.ArrayList<>())
+                                .add(rd)));
         log.debug("Route cache built with {} domain entries", newCache.size());
         return newCache;
     }
 }
+

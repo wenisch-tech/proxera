@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{fragments/layout :: layout(activePage='routes', pageTitle='New Route', content=~{::content}, extraHead=~{}, extraScripts=~{})}">
+      th:replace="~{fragments/layout :: layout(activePage='routes', pageTitle='New Route', content=~{::content}, extraHead=~{}, extraScripts=~{::extraScripts})}">
 <body>
 <th:block th:fragment="content">
     <div class="d-flex align-items-center gap-2 mb-4">
@@ -43,27 +43,38 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="pathPrefix" class="form-label">Path Prefix <span class="text-muted">(optional)</span></label>
-                    <input type="text" id="pathPrefix" name="pathPrefix" class="form-control"
-                           placeholder="/api"/>
-                </div>
-
-                <div class="mb-3 form-check">
-                    <input type="checkbox" id="stripPrefix" name="stripPrefix" class="form-check-input" value="true"/>
-                    <label for="stripPrefix" class="form-check-label">Strip path prefix before forwarding</label>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Domains</label>
-                    <div id="domains-list">
-                        <div class="input-group mb-2">
-                            <input type="text" name="domains" class="form-control" placeholder="e.g. homeassistant.example.com"/>
-                            <button type="button" class="btn btn-outline-secondary" onclick="addDomain()">
-                                <i class="bi bi-plus-lg"></i>
-                            </button>
+                    <label class="form-label">Domain Entries</label>
+                    <div class="row g-2 mb-1">
+                        <div class="col-5 small text-muted fw-semibold">Domain</div>
+                        <div class="col-4 small text-muted fw-semibold">Path Prefix</div>
+                        <div class="col-2 small text-muted fw-semibold text-center">Strip</div>
+                        <div class="col-1"></div>
+                    </div>
+                    <div id="domains-table">
+                        <div class="row g-2 mb-2 align-items-center domain-entry">
+                            <div class="col-5">
+                                <input type="text" name="domainHosts" class="form-control form-control-sm" placeholder="example.com"/>
+                            </div>
+                            <div class="col-4">
+                                <input type="text" name="domainPaths" class="form-control form-control-sm" placeholder="/grafana"/>
+                            </div>
+                            <div class="col-2 text-center">
+                                <input type="hidden" name="domainStrips" value="true"/>
+                                <input type="checkbox" class="form-check-input" checked
+                                       onchange="this.previousElementSibling.value = this.checked ? 'true' : 'false'"/>
+                            </div>
+                            <div class="col-1">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        onclick="this.closest('.domain-entry').remove()">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <small class="text-muted">Each domain must point to this Proxera server via DNS.</small>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="addDomainEntry()">
+                        <i class="bi bi-plus-lg me-1"></i> Add Entry
+                    </button>
+                    <small class="d-block text-muted mt-1">Each domain must point to this Proxera server via DNS. The path prefix is stripped before forwarding by default.</small>
                 </div>
 
                 <div class="mb-4 form-check">
@@ -81,17 +92,34 @@
         </div>
     </div>
 </th:block>
-</body>
+
+<th:block th:fragment="extraScripts">
 <script>
-function addDomain() {
-    const list = document.getElementById('domains-list');
+function addDomainEntry() {
+    const table = document.getElementById('domains-table');
     const div = document.createElement('div');
-    div.className = 'input-group mb-2';
-    div.innerHTML = `<input type="text" name="domains" class="form-control" placeholder="e.g. service.example.com"/>
-        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">
-            <i class="bi bi-trash"></i>
-        </button>`;
-    list.appendChild(div);
+    div.className = 'row g-2 mb-2 align-items-center domain-entry';
+    div.innerHTML = `
+        <div class="col-5">
+            <input type="text" name="domainHosts" class="form-control form-control-sm" placeholder="example.com"/>
+        </div>
+        <div class="col-4">
+            <input type="text" name="domainPaths" class="form-control form-control-sm" placeholder="/grafana"/>
+        </div>
+        <div class="col-2 text-center">
+            <input type="hidden" name="domainStrips" value="true"/>
+            <input type="checkbox" class="form-check-input" checked
+                   onchange="this.previousElementSibling.value = this.checked ? 'true' : 'false'"/>
+        </div>
+        <div class="col-1">
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    onclick="this.closest('.domain-entry').remove()">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>`;
+    table.appendChild(div);
 }
 </script>
+</th:block>
+</body>
 </html>
