@@ -5,6 +5,10 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 import tech.wenisch.proxera.bus.MessageBus;
 import tech.wenisch.proxera.bus.TopologyEvent;
@@ -15,7 +19,11 @@ import tech.wenisch.proxera.service.RoutingService;
 import tech.wenisch.proxera.tunnel.RequestPayload;
 import tech.wenisch.proxera.tunnel.ResponsePayload;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -24,6 +32,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 @Service
 @Slf4j
@@ -97,7 +107,7 @@ public class ProxyService {
                             route.getName()));
                     accessLogService.log(route, agentId, request, resp);
                     try {
-                        writeResponse(resp, response);
+                        writeResponse(resp, response, routeDomain);
                     } catch (IOException ioEx) {
                         log.error("Failed to write proxy response", ioEx);
                     } finally {
@@ -117,15 +127,132 @@ public class ProxyService {
         }
     }
 
-    private void writeResponse(ResponsePayload resp, HttpServletResponse response) throws IOException {
-        response.setStatus(resp.status());
-        resp.headers().forEach((name, value) -> {
-            if (!HOP_BY_HOP_HEADERS.contains(name.toLowerCase())) {
-                response.setHeader(name, value);
+    private static final Pattern CSS_ABSOLUTE_URL_PATTERN =
+            Pattern.compile("url\\(\\s*(['\"]?)(/)([^'\"()]+)\\1\\s*\\)");
+
+    private static final Set<String> REWRITE_ATTRIBUTES =
+            Set.of("href", "src", "action", "data-src", "data-href", "data-url");
+
+    private void writeResponse(ResponsePayload resp, HttpServletResponse response, RouteDomain routeDomain)
+            throws IOException {
+
+        // Determine whether path-prefix rewriting is needed
+        String prefix = null;
+        if (routeDomain.isStripPrefix()) {
+            String raw = routeDomain.getPathPrefix();
+            if (raw != null && !raw.isBlank()) {
+                prefix = "/" + raw.strip().replaceAll("^/+", "").replaceAll("/+$", "");
             }
+        }
+
+        response.setStatus(resp.status());
+
+        // Track Content-Type and Content-Encoding before writing headers
+        String contentType = null;
+        String contentEncoding = null;
+        for (Map.Entry<String, String> entry : resp.headers().entrySet()) {
+            String lower = entry.getKey().toLowerCase();
+            if (lower.equals("content-type")) contentType = entry.getValue();
+            if (lower.equals("content-encoding")) contentEncoding = entry.getValue();
+        }
+
+        final String effectivePrefix = prefix;
+        final boolean rewriting = effectivePrefix != null;
+        final boolean gzipped = rewriting && contentEncoding != null
+                && contentEncoding.toLowerCase().contains("gzip");
+
+        resp.headers().forEach((name, value) -> {
+            String lower = name.toLowerCase();
+            if (HOP_BY_HOP_HEADERS.contains(lower)) return;
+            // Drop Content-Length when rewriting (body size will change)
+            if (rewriting && lower.equals("content-length")) return;
+            // Drop Content-Encoding when we decompress
+            if (gzipped && lower.equals("content-encoding")) return;
+            // Rewrite Location header for redirects
+            if (rewriting && lower.equals("location") && value.startsWith("/")) {
+                response.setHeader(name, effectivePrefix + value);
+                return;
+            }
+            response.setHeader(name, value);
         });
+
         byte[] body = resp.body() != null ? Base64.getDecoder().decode(resp.body()) : new byte[0];
+
+        if (!rewriting || body.length == 0) {
+            response.getOutputStream().write(body);
+            return;
+        }
+
+        // Decompress if needed
+        if (gzipped) {
+            try (GZIPInputStream gz = new GZIPInputStream(new ByteArrayInputStream(body));
+                 ByteArrayOutputStream buf = new ByteArrayOutputStream()) {
+                gz.transferTo(buf);
+                body = buf.toByteArray();
+            }
+        }
+
+        String ct = contentType != null ? contentType.toLowerCase() : "";
+        if (ct.contains("text/html")) {
+            body = rewriteHtml(body, ct, effectivePrefix);
+        } else if (ct.contains("text/css")) {
+            body = rewriteCss(body, ct, effectivePrefix);
+        }
+
         response.getOutputStream().write(body);
+    }
+
+    private byte[] rewriteHtml(byte[] body, String contentType, String prefix) {
+        Charset charset = charsetFrom(contentType);
+        Document doc = Jsoup.parse(new String(body, charset));
+        doc.outputSettings().charset(charset).syntax(Document.OutputSettings.Syntax.html);
+
+        // Rewrite element attributes
+        for (String attr : REWRITE_ATTRIBUTES) {
+            Elements elements = doc.select("[" + attr + "]");
+            for (Element el : elements) {
+                String val = el.attr(attr);
+                if (val.startsWith("/") && !val.startsWith("//")) {
+                    el.attr(attr, prefix + val);
+                }
+            }
+        }
+
+        // Rewrite inline <style> blocks and style attributes
+        for (Element style : doc.select("style")) {
+            style.html(rewriteCssText(style.html(), prefix));
+        }
+        for (Element el : doc.select("[style]")) {
+            String inlineStyle = el.attr("style");
+            el.attr("style", rewriteCssText(inlineStyle, prefix));
+        }
+
+        return doc.outerHtml().getBytes(charset);
+    }
+
+    private byte[] rewriteCss(byte[] body, String contentType, String prefix) {
+        Charset charset = charsetFrom(contentType);
+        String text = new String(body, charset);
+        return rewriteCssText(text, prefix).getBytes(charset);
+    }
+
+    private String rewriteCssText(String css, String prefix) {
+        return CSS_ABSOLUTE_URL_PATTERN.matcher(css)
+                .replaceAll(m -> "url(" + m.group(1) + prefix + "/" + m.group(3) + m.group(1) + ")");
+    }
+
+    private static Charset charsetFrom(String contentType) {
+        if (contentType == null) return StandardCharsets.UTF_8;
+        for (String part : contentType.split(";")) {
+            String t = part.strip();
+            if (t.toLowerCase().startsWith("charset=")) {
+                try {
+                    return Charset.forName(t.substring(8).strip());
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return StandardCharsets.UTF_8;
     }
 
     private RequestPayload buildPayload(RouteDomain routeDomain, HttpServletRequest request) throws IOException {

@@ -123,6 +123,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Jsoup — HTML parsing for path-prefix response rewriting -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.18.3</version>
+        </dependency>
+
         <!-- WebJars (served from classpath, no CDN) -->
         <dependency>
             <groupId>org.webjars</groupId>
