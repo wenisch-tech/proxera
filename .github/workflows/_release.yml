@@ -143,7 +143,7 @@ jobs:
         run: |
           git clone https://$GH_TOKEN@github.com/jfwenisch/charts.git charts-repo
           mkdir -p charts-repo/proxera
-          cp ./release/*.tgz charts-repo/proxera/W
+          cp ./release/*.tgz charts-repo/proxera/
           cp ./release/*.cosign.bundle charts-repo/proxera/ 2>/dev/null || true
           cd charts-repo
           git config --global user.name 'github-actions[bot]'
