@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.2.0 - 2026-05-16
+
+## [0.2.0](https://github.com/wenisch-tech/proxera/compare/v0.1.1...v0.2.0) (2026-05-16)
+
+
+### Features
+
+* Added option to automatically rewrite dynamic paths ([133244c](https://github.com/wenisch-tech/proxera/commit/133244cc12fee7f002a1c38792c94c55ba8f2fb0))
+
+
+### Bug Fixes
+
+* updated automatic ressource rewrites ([c7bfa24](https://github.com/wenisch-tech/proxera/commit/c7bfa24ee1347619a930d15c616c0df3d5b227c4))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.2.0
+
+
 ## v0.1.1 - 2026-05-16
 
 ### [0.1.1](https://github.com/wenisch-tech/proxera/compare/v0.1.0...v0.1.1) (2026-05-16)
