@@ -16,6 +16,7 @@ import tech.wenisch.proxera.domain.Route;
 import tech.wenisch.proxera.domain.RouteDomain;
 import tech.wenisch.proxera.service.AccessLogService;
 import tech.wenisch.proxera.service.RoutingService;
+import tech.wenisch.proxera.service.SettingsService;
 import tech.wenisch.proxera.tunnel.RequestPayload;
 import tech.wenisch.proxera.tunnel.ResponsePayload;
 
@@ -49,15 +50,18 @@ public class ProxyService {
     private final MessageBus messageBus;
     private final AccessLogService accessLogService;
     private final ObjectMapper objectMapper;
+    private final SettingsService settingsService;
 
     public ProxyService(RoutingService routingService,
                         MessageBus messageBus,
                         AccessLogService accessLogService,
-                        ObjectMapper objectMapper) {
+                        ObjectMapper objectMapper,
+                        SettingsService settingsService) {
         this.routingService = routingService;
         this.messageBus = messageBus;
         this.accessLogService = accessLogService;
         this.objectMapper = objectMapper;
+        this.settingsService = settingsService;
     }
 
     public void proxy(HttpServletRequest request, HttpServletResponse response, AsyncContext asyncContext) {
@@ -130,6 +134,11 @@ public class ProxyService {
     private static final Pattern CSS_ABSOLUTE_URL_PATTERN =
             Pattern.compile("url\\(\\s*(['\"]?)(/)([^'\"()]+)\\1\\s*\\)");
 
+    // Matches absolute-path string literals in JS: "/path", '/path', `/path`
+    // Excludes protocol-relative URLs (//)
+    private static final Pattern JS_ABSOLUTE_URL_PATTERN =
+            Pattern.compile("([\"'`])(/[^/\"'`\\r\\n][^\"'`\\r\\n]*)\\1");
+
     private static final Set<String> REWRITE_ATTRIBUTES =
             Set.of("href", "src", "action", "data-src", "data-href", "data-url");
 
@@ -138,7 +147,7 @@ public class ProxyService {
 
         // Determine whether path-prefix rewriting is needed
         String prefix = null;
-        if (routeDomain.isStripPrefix()) {
+        if (routeDomain.isStripPrefix() && settingsService.get().isRewriteUrls()) {
             String raw = routeDomain.getPathPrefix();
             if (raw != null && !raw.isBlank()) {
                 prefix = "/" + raw.strip().replaceAll("^/+", "").replaceAll("/+$", "");
@@ -197,9 +206,19 @@ public class ProxyService {
             body = rewriteHtml(body, ct, effectivePrefix);
         } else if (ct.contains("text/css")) {
             body = rewriteCss(body, ct, effectivePrefix);
+        } else if (ct.contains("javascript")) {
+            body = rewriteJs(body, contentType, effectivePrefix);
         }
 
         response.getOutputStream().write(body);
+    }
+
+    private byte[] rewriteJs(byte[] body, String contentType, String prefix) {
+        Charset charset = charsetFrom(contentType);
+        String text = new String(body, charset);
+        String rewritten = JS_ABSOLUTE_URL_PATTERN.matcher(text)
+                .replaceAll(m -> m.group(1) + prefix + m.group(2) + m.group(1));
+        return rewritten.getBytes(charset);
     }
 
     private byte[] rewriteHtml(byte[] body, String contentType, String prefix) {

@@ -8,6 +8,27 @@
     </div>
 
     <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-sliders me-1"></i>Proxy Behaviour</div>
+        <div class="card-body">
+            <form th:action="@{/admin/settings}" method="post" th:object="${settings}">
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" id="rewriteUrls" th:field="*{rewriteUrls}"/>
+                    <label class="form-check-label" for="rewriteUrls">
+                        <strong>Rewrite absolute URLs in proxied responses</strong>
+                        <div class="text-muted small mt-1">When a route uses a path prefix with strip-prefix enabled,
+                            automatically prepend the prefix to absolute paths found in HTML, CSS, and JavaScript
+                            responses. Enables sub-path proxying for most web applications without app-level
+                            configuration.</div>
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-floppy me-1"></i> Save
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
         <div class="card-header"><i class="bi bi-server me-1"></i>Server Info</div>
         <div class="card-body">
             <dl class="row mb-0">
