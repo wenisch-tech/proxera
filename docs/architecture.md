@@ -9,7 +9,7 @@ The system consists of two components:
 | Component | Location | Repository |
 |-----------|----------|------------|
 | **Proxera Server** | Kubernetes / Cloud | *This repository* |
-| **Proxera Agent** | LAN / on-premise | Separate repository (future) |
+| **Proxera Agent** | LAN / on-premise | [wenisch-tech/proxera-agent](https://github.com/wenisch-tech/proxera-agent) |
 
 The server never dials into the LAN. All connectivity is initiated by the agent outbound, which makes inbound firewall rules unnecessary.
 
@@ -65,14 +65,15 @@ The server never dials into the LAN. All connectivity is initiated by the agent 
 
 ## 3. Component Architecture — Server
 
-The server is a **single Spring Boot application** (Spring MVC on embedded Tomcat) deployed as one Docker image. It listens on two TCP ports:
+The server is a **single Spring Boot application** (Spring MVC on embedded Tomcat) deployed as one Docker image. It listens on a **single TCP port** (default `8080`) and serves all traffic on that port:
 
-| Port | Purpose |
-|------|---------|
-| **8080** | **Proxy Port** — Receives public HTTP requests. Matches routes and forwards frames through the WebSocket tunnel. Also hosts the agent tunnel endpoint `/tunnel`. |
-| **8080** | **Admin Port** — Admin UI (Thymeleaf + Bootstrap 5) and REST API. Intended to be behind an internal network policy or separate ingress with authentication. |
+| Traffic | Path pattern | Notes |
+|---------|-------------|-------|
+| **Proxy** | `/**` (catch-all) | Receives public HTTP requests, matches routes, forwards frames through the WebSocket tunnel |
+| **Tunnel** | `/tunnel` | WebSocket endpoint for agent connections; validated by registration token during handshake |
+| **Admin UI / API** | `/admin/**`, `/login`, `/logout` | Thymeleaf + Bootstrap 5 admin panel and REST API; protected by Spring Security form login |
 
-The secondary port is added as an additional Tomcat connector via a `WebServerFactoryCustomizer` bean. A `OncePerRequestFilter` enforces port-level access control (admin paths only on 8080, proxy paths only on 8080).
+Path-based access control is enforced by Spring Security filter chains. The Helm chart exposes the same port via two separate `Ingress` objects — one for the public proxy domain and one for the (ideally internal) admin domain — keeping the routing concern at the ingress layer.
 
 ### 3.1 Internal Modules
 
@@ -86,24 +87,25 @@ The secondary port is added as an additional Tomcat connector via a `WebServerFa
 | **Access Log** | `service` | Persists `AccessLog` rows after each proxied request. Publishes SSE events to open admin log streams. Runs a daily cleanup job respecting the configured retention period. |
 | **Admin SSE** | `sse` | `SseEmitter` endpoints for live topology events (`/admin/sse/topology`) and per-route request logs (`/admin/sse/routes/{id}/log`). |
 
-### 3.2 Port Isolation Detail
+### 3.2 Path-Based Access Control
 
 ```
-  port 8080 ──► PortRoutingFilter ──► ProxyController (catch-all /**)
-                                  └──► /tunnel ──► TunnelWebSocketHandler
-
-  port 8080 ──► PortRoutingFilter ──► Spring Security form login
-                                  └──► AdminControllers (/admin/**)
-                                  └──► /login, /webjars/**, /css/**, /js/**
+  :8080 ──► Spring Security filter chain
+            ├──► /tunnel                   ──► TunnelWebSocketHandler (token validation)
+            ├──► /admin/**, /login, /logout ──► Form login required
+            ├──► /**                        ──► ProxyController (catch-all, no auth)
+            └──► /webjars/**, /css/**, /js/**,
+                 /actuator/**, /v3/api-docs,
+                 /swagger-ui/**            ──► Public (shared)
 ```
 
-Any request arriving on the wrong port receives `404 Not Found`.
+Admin paths are secured by Spring Security. Proxy catch-all requests pass through unauthenticated. The two domains (proxy and admin) are separated at the Ingress level — both backed by the same Kubernetes `Service` on port 8080.
 
 ---
 
 ## 4. Component Architecture — Agent
 
-> The agent is implemented in a **separate repository**. This section documents its responsibilities for complete system context.
+> The agent is implemented in a **separate repository**: [wenisch-tech/proxera-agent](https://github.com/wenisch-tech/proxera-agent). This section documents its responsibilities for complete system context.
 
 The Proxera Agent is a lightweight agent deployed within the LAN (Docker container, systemd service, or Kubernetes DaemonSet). It:
 
@@ -295,12 +297,15 @@ A single route may serve multiple domains (e.g. `api.example.com` and `api.examp
 - On first WebSocket connect: token is validated in the handshake interceptor, marked `used=true`, and the agent status is set to `CONNECTED`. Subsequent reconnects by the same agent use the same token (validated again each time) if the token is still valid and `used=true`.
 - If an agent is deleted, its registration tokens are cascade-deleted.
 
-### 8.3 Port-Level Access Control
+### 8.3 Path-Level Access Control
 
-| Port | Internet-facing | Spring Security |
-|------|----------------|----------------|
-| 8080 | Yes (proxy domain) | No auth on proxied requests; `/tunnel` WebSocket validated by registration token in handshake |
-| 8080 | Ideally restricted (admin domain) | Form login / OIDC required for all `/admin/**` paths |
+All traffic arrives on a single port (`:8080`). Separation between the public proxy domain and the admin domain is enforced at the Kubernetes Ingress level; within the application, Spring Security filter chains control path access:
+
+| Path pattern | Auth required | Notes |
+|---|---|---|
+| `/**` (catch-all proxy) | None | Public HTTP traffic forwarded to agents |
+| `/tunnel` | Registration token (WebSocket header) | Agent WebSocket connections only |
+| `/admin/**`, `/login`, `/logout` | Form login / OIDC | Admin UI and REST API |
 
 ---
 

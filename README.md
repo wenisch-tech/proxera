@@ -10,10 +10,10 @@ Please note: This application is still in an early alpha and under active develo
 
 ## How It Works
 
-1. **Proxera Server** runs in Kubernetes (this repository). It receives public HTTP requests and dispatches them through a persistent WebSocket tunnel to the registered client.
-2. **Proxera Client** (separate repository) runs in the LAN. It connects outbound to the server, awaits request frames, performs local HTTP calls, and sends the response back.
+1. **Proxera Server** runs in Kubernetes (this repository). It receives public HTTP requests and dispatches them through a persistent WebSocket tunnel to the registered agent.
+2. **Proxera Agent** ([wenisch-tech/proxera-agent](https://github.com/wenisch-tech/proxera-agent)) runs in the LAN. It connects outbound to the server, awaits request frames, performs local HTTP calls, and sends the response back.
 
-No inbound ports need to be opened in the LAN. All connectivity is client-initiated.
+No inbound ports need to be opened in the LAN. All connectivity is agent-initiated.
 
 ## Features
 
@@ -21,7 +21,7 @@ No inbound ports need to be opened in the LAN. All connectivity is client-initia
 - **Multi-domain routing** — assign one or more public domains + optional path prefixes to any local service
 - **Topology dashboard** — interactive live graph showing pods, connected clients, and active routes
 - **Live request logs** — per-route scrolling access log streamed in real time
-- **GitLab runner-style registration** — admin creates a named client slot and generates a one-time token
+- **GitLab runner-style registration** — admin creates a named agent slot and generates a one-time token
 - **Horizontal scaling** — optional Redis Pub/Sub message bus for multi-pod deployments; in-memory fallback for single-pod (no Redis required)
 - **Admin UI + REST API** — Bootstrap 5 admin panel on port 8080 (same as proxy) with Swagger UI
 - **Prometheus metrics** — at `/actuator/prometheus`
@@ -29,16 +29,24 @@ No inbound ports need to be opened in the LAN. All connectivity is client-initia
 
 ## Quick Start
 
-### Docker
+### Kubernetes with Helm
 
 ```bash
-docker run -d \
-  --name proxera \
-  -p 8080:8080 \
-  ghcr.io/wenisch-tech/proxera:latest
+helm repo add wenisch-tech https://charts.wenisch.tech
+helm repo update
+helm install proxera wenisch-tech/proxera \
+  --set ingress.proxy.enabled=true \
+  --set ingress.proxy.hosts[0].host=proxy.example.com \
+  --set ingress.admin.enabled=true \
+  --set ingress.admin.hosts[0].host=admin.proxera.example.com \
+  -n proxera --create-namespace
 ```
 
 Proxera starts with an **embedded H2 database** by default — no external services required.
+
+Access the Admin UI at `https://admin.proxera.example.com/admin` and log in with the default credentials below.
+
+> **Docker (local/dev):** `docker run -d --name proxera -p 8080:8080 ghcr.io/wenisch-tech/proxera:latest`
 
 ## Configuration
 
@@ -89,20 +97,7 @@ When `REDIS_HOST` is set, Proxera uses Redis Pub/Sub to route tunnel frames acro
 | http://localhost:8080/admin | Admin UI |
 | http://localhost:8080 | Proxy port (receives forwarded traffic) |
 
-Default credentials: **admin@proxera.local / admin** — change immediately after first login.
-
-### Kubernetes with Helm
-
-```bash
-helm repo add wenisch-tech https://charts.wenisch.tech
-helm repo update
-helm install proxera wenisch-tech/proxera \
-  --set ingress.proxy.enabled=true \
-  --set ingress.proxy.hosts[0].host=proxy.example.com \
-  --set ingress.admin.enabled=true \
-  --set ingress.admin.hosts[0].host=admin.proxera.example.com \
-  -n proxera --create-namespace
-```
+Default credentials: **admin / admin** — change immediately after first login.
 
 ## Architecture
 
