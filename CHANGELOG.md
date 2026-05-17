@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.3.1 - 2026-05-17
+
+### [0.3.1](https://github.com/wenisch-tech/proxera/compare/v0.3.0...v0.3.1) (2026-05-17)
+
+
+### Bug Fixes
+
+* added lightmode for topology canvas ([ad1d7c8](https://github.com/wenisch-tech/proxera/commit/ad1d7c84e474ae128cd2901d78db1281c12e7606))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.3.1
+
+
 ## v0.3.0 - 2026-05-17
 
 ## [0.3.0](https://github.com/wenisch-tech/proxera/compare/v0.2.2...v0.3.0) (2026-05-17)
