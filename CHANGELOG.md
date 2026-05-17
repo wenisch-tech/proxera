@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.2.2 - 2026-05-17
+
+### [0.2.2](https://github.com/wenisch-tech/proxera/compare/v0.2.1...v0.2.2) (2026-05-17)
+
+
+### Bug Fixes
+
+* disabled path setting for routes for now ([d3d2fa5](https://github.com/wenisch-tech/proxera/commit/d3d2fa50d30d51e9b858ae01b18e6976c93591e4))
+
+
+### Documentation
+
+* updated docs ([ba3a1d9](https://github.com/wenisch-tech/proxera/commit/ba3a1d9edb08bbcf9ddd953cb90782508eb44637))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.2.2
+
+
 ## v0.2.1 - 2026-05-16
 
 ### [0.2.1](https://github.com/wenisch-tech/proxera/compare/v0.2.0...v0.2.1) (2026-05-16)
