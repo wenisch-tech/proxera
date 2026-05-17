@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.3.2 - 2026-05-17
+
+### [0.3.2](https://github.com/wenisch-tech/proxera/compare/v0.3.1...v0.3.2) (2026-05-17)
+
+
+### Documentation
+
+* added landing.png ([a7bb0be](https://github.com/wenisch-tech/proxera/commit/a7bb0be24a357c5c937d429e9506d2ea288bef6d))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.3.2
+
+
 ## v0.3.1 - 2026-05-17
 
 ### [0.3.1](https://github.com/wenisch-tech/proxera/compare/v0.3.0...v0.3.1) (2026-05-17)
