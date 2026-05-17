@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(activePage='logs', pageTitle='Access Logs', content=~{::content}, extraHead=~{::extraHead}, extraScripts=~{::extraScripts})}">
+<body>
+
+<th:block th:fragment="extraHead">
+    <style>
+        #log-table tbody { font-family: monospace; font-size: 0.8rem; }
+    </style>
+</th:block>
+
+<th:block th:fragment="content">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/admin/topology}"><i class="bi bi-house"></i> Home</a></li>
+            <li class="breadcrumb-item active">Access Logs</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <h2 class="mb-0 fw-bold" style="font-size:1.45rem;">
+            <i class="bi bi-list-ul me-2" style="color:var(--px-accent);"></i>Access Logs
+        </h2>
+        <span class="px-live-badge ms-2" id="log-sse-status"><span class="px-live-dot"></span> Live</span>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0" style="overflow-x:auto;">
+            <table class="table table-sm table-hover mb-0" id="log-table">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Path</th>
+                    <th>Route</th>
+                    <th>Latency</th>
+                    <th>Remote IP</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="log : ${logs}">
+                    <td th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                    <td><span class="badge bg-secondary" th:text="${log.method}"></span></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${log.statusCode >= 500 ? 'bg-danger' : (log.statusCode >= 400 ? 'bg-warning text-dark' : 'bg-success')}"
+                              th:text="${log.statusCode}"></span>
+                    </td>
+                    <td class="text-truncate" style="max-width:320px;" th:text="${log.path}"></td>
+                    <td>
+                        <a th:if="${log.routeId != null}"
+                           th:href="@{/admin/routes/{id}(id=${log.routeId})}"
+                           class="text-decoration-none small"
+                           th:text="${log.routeId}"></a>
+                        <span th:if="${log.routeId == null}" class="text-muted">—</span>
+                    </td>
+                    <td th:text="${log.latencyMs != null ? log.latencyMs + ' ms' : '—'}"></td>
+                    <td class="text-muted small" th:text="${log.remoteIp}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(logs)}">
+                    <td colspan="7" class="text-center text-muted py-4">No log entries yet.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="extraScripts">
+    <script>
+        const tbody = document.querySelector('#log-table tbody');
+        const sseStatus = document.getElementById('log-sse-status');
+
+        // Remove "no entries" placeholder row when first live entry arrives
+        let seeded = true;
+
+        const sse = new EventSource('/admin/sse/log');
+        sse.addEventListener('log', (e) => {
+            const log = JSON.parse(e.data);
+
+            const statusClass = log.statusCode >= 500 ? 'bg-danger'
+                : (log.statusCode >= 400 ? 'bg-warning text-dark' : 'bg-success');
+            const time = log.timestamp
+                ? log.timestamp.replace('T', ' ').substring(0, 19)
+                : '';
+            const routeCell = log.routeId
+                ? `<a href="/admin/routes/${log.routeId}" class="text-decoration-none small">${log.routeId}</a>`
+                : '<span class="text-muted">—</span>';
+            const latency = log.latencyMs != null ? log.latencyMs + ' ms' : '—';
+
+            // Escape dynamic values
+            const esc = (s) => s == null ? '' : String(s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+            const row = `<tr>
+                <td>${esc(time)}</td>
+                <td><span class="badge bg-secondary">${esc(log.method)}</span></td>
+                <td><span class="badge ${statusClass}">${esc(String(log.statusCode))}</span></td>
+                <td class="text-truncate" style="max-width:320px;">${esc(log.path)}</td>
+                <td>${routeCell}</td>
+                <td>${esc(latency)}</td>
+                <td class="text-muted small">${esc(log.remoteIp)}</td>
+            </tr>`;
+
+            tbody.insertAdjacentHTML('afterbegin', row);
+
+            // Keep max 500 rows
+            while (tbody.rows.length > 500) tbody.deleteRow(-1);
+        });
+
+        sse.onerror = () => {
+            sseStatus.innerHTML = '<span class="px-live-dot" style="background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,0.2);"></span> Reconnecting';
+        };
+        sse.onopen = () => {
+            sseStatus.innerHTML = '<span class="px-live-dot"></span> Live';
+        };
+    </script>
+</th:block>
+
+</body>
+</html>

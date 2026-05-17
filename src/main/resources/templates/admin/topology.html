@@ -4,14 +4,44 @@
 <body>
 
 <th:block th:fragment="extraHead">
+    <!-- CSRF for panel forms -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_param" th:content="${_csrf.parameterName}"/>
     <style>
+        /* Full-viewport topology canvas */
         #topology-canvas {
             width: 100%;
-            height: 640px;
-            border: 1px solid var(--px-border, #dee2e6);
-            border-radius: var(--px-radius, 8px);
+            height: calc(100vh - var(--px-navbar-h));
             background: #060b14;
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: hidden;
+            display: block;
+        }
+
+        /* Topology overlay controls (top-right corner) */
+        #topo-controls {
+            position: absolute;
+            top: calc(var(--px-navbar-h) + 14px);
+            right: 14px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Legend overlay (bottom-left) */
+        #topo-legend {
+            position: absolute;
+            bottom: 18px;
+            left: 18px;
+            z-index: 100;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.36);
+            pointer-events: none;
+            letter-spacing: 0.04em;
         }
 
         /* Animated flow particles on tunnel edges */
@@ -19,75 +49,254 @@
             from { stroke-dashoffset: 70; }
             to   { stroke-dashoffset: 0; }
         }
-        .edge-flow {
-            animation: flowDash 1.8s linear infinite;
-        }
+        .edge-flow { animation: flowDash 1.8s linear infinite; }
 
         /* Link pulse on active request */
         @keyframes linkPulse {
             0%, 100% { stroke-opacity: 0.6; }
             50%       { stroke-opacity: 1.0; stroke-width: 3px; }
         }
-        .link-pulsing {
-            animation: linkPulse 0.55s ease-in-out infinite;
+        .link-pulsing { animation: linkPulse 0.55s ease-in-out infinite; }
+
+        @media (max-width: 699px) {
+            #topo-legend { display: none; }
+            #topo-log    { display: none; }
         }
 
-        /* Legend dots */
+        /* Live log overlay */
+        #topo-log {
+            position: absolute;
+            bottom: 18px;
+            right: 18px;
+            z-index: 100;
+            width: 340px;
+            background: rgba(6, 10, 20, 0.86);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, sans-serif;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+        }
+        .topo-log-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.67rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.28);
+            text-transform: uppercase;
+        }
+        .topo-log-entry {
+            display: grid;
+            grid-template-columns: 50px 42px 36px 1fr;
+            gap: 0.35rem;
+            align-items: center;
+            padding: 0.32rem 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .topo-log-entry:last-child { border-bottom: none; }
+        .topo-log-entry:hover { background: rgba(255,255,255,0.035); }
+        .topo-log-time   { font-size: 0.68rem; color: rgba(255,255,255,0.28); font-variant-numeric: tabular-nums; }
+        .topo-log-badge  { border-radius: 4px; padding: 1px 5px; font-size: 0.64rem; font-weight: 700; text-align: center; }
+        .topo-log-route  { font-size: 0.66rem; color: rgba(255,255,255,0.28); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .topo-log-path   { font-size: 0.74rem; color: rgba(255,255,255,0.52); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .topo-log-empty  { padding: 0.9rem 0.8rem; font-size: 0.76rem; color: rgba(255,255,255,0.18); text-align: center; }
+        .topo-log-footer {
+            display: block;
+            padding: 0.42rem 0.8rem;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.28);
+            text-decoration: none;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+            transition: color 0.15s, background 0.15s;
+        }
+        .topo-log-footer:hover { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.03); }
+
         .topo-legend-dot {
             display: inline-block;
-            width: 10px; height: 10px;
+            width: 9px; height: 9px;
             border-radius: 2px;
             vertical-align: middle;
-            margin-right: 5px;
+            margin-right: 4px;
         }
     </style>
 </th:block>
 
 <th:block th:fragment="content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0 fw-bold" style="font-size:1.45rem;"><i class="bi bi-diagram-3 me-2" style="color:var(--px-accent);"></i>Topology</h2>
-        <div class="d-flex align-items-center gap-2">
+    <!-- Full-viewport canvas wrapper (relative for overlays) -->
+    <div style="position:relative;">
+        <div id="topology-canvas"></div>
+
+        <!-- Top-right controls overlay -->
+        <div id="topo-controls">
             <span class="px-live-badge" id="sse-status"><span class="px-live-dot"></span> Live</span>
-            <button class="btn btn-sm btn-outline-secondary" onclick="refreshTopology()">
-                <i class="bi bi-arrow-clockwise"></i> Refresh
+            <button class="btn btn-sm btn-outline-secondary" onclick="refreshTopology()" title="Refresh">
+                <i class="bi bi-arrow-clockwise"></i>
             </button>
         </div>
-    </div>
-    <div id="topology-canvas"></div>
 
-    <!-- Legend -->
-    <div class="d-flex flex-wrap gap-4 mt-3 small text-muted">
-        <span><span class="topo-legend-dot" style="background:#818cf8;"></span> Proxy Server</span>
-        <span><span class="topo-legend-dot" style="background:#34d399;"></span> Connected Agent</span>
-        <span><span class="topo-legend-dot" style="background:#64748b;"></span> Offline Agent</span>
-        <span><span class="topo-legend-dot" style="background:#fbbf24;"></span> Route (enabled)</span>
-        <span style="margin-left:auto;" class="text-muted" style="font-size:.8rem;">
-            <i class="bi bi-info-circle me-1"></i>Edges: solid = tunnel &nbsp;·&nbsp; dashed = route mapping
-        </span>
+        <!-- Bottom-left legend overlay -->
+        <div id="topo-legend">
+            <span><span class="topo-legend-dot" style="background:#818cf8;"></span>Proxy Server</span>
+            <span><span class="topo-legend-dot" style="background:#34d399;"></span>Connected Agent</span>
+            <span><span class="topo-legend-dot" style="background:#64748b;"></span>Offline Agent</span>
+            <span><span class="topo-legend-dot" style="background:#fbbf24;"></span>Route (enabled)</span>
+            <span>Click any node to manage</span>
+        </div>
+
+        <!-- Bottom-right live log overlay -->
+        <div id="topo-log">
+            <div class="topo-log-header">
+                <span><i class="bi bi-activity me-1"></i>Live Log</span>
+                <span class="px-live-badge" id="log-live-badge" style="transform:scale(0.82); transform-origin:right center;">
+                    <span class="px-live-dot"></span>
+                </span>
+            </div>
+            <div id="topo-log-entries">
+                <div class="topo-log-empty">Waiting for requests…</div>
+            </div>
+            <a href="/admin/logs" class="topo-log-footer">
+                View full log&#8194;›
+            </a>
+        </div>
+    </div>
+
+    <!-- Slide-in side panel -->
+    <div id="px-panel" class="px-panel">
+        <div class="px-panel-header">
+            <span id="px-panel-title" class="px-panel-title">Details</span>
+            <button class="px-panel-close" onclick="closePanel()" title="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div id="px-panel-body" class="px-panel-body"></div>
+    </div>
+    <!-- Panel backdrop -->
+    <div id="px-panel-backdrop" class="px-panel-backdrop" onclick="closePanel()"></div>
+
+    <!-- New Agent Modal -->
+    <div class="modal fade" id="newAgentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/admin/agents}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-hdd-rack me-2"></i>New Agent</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="agentName" class="form-label">Agent Name</label>
+                        <input type="text" id="agentName" name="name" class="form-control" required
+                               placeholder="my-homelab-agent" autofocus/>
+                        <small class="text-muted mt-2 d-block">After creating, a registration token will be generated on the agent detail page.</small>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i>Create Agent
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </th:block>
 
 <th:block th:fragment="extraScripts">
-    <script th:src="@{/webjars/d3/d3.min.js}"></script>
+    <script th:src="@{/webjars/d3/dist/d3.min.js}"></script>
     <script th:src="@{/js/topology.js}"></script>
     <script>
-        // Load initial data, then subscribe to SSE updates
+        // Lift panel + backdrop to <body> so position:fixed is never inside a
+        // transformed ancestor (<main class="px-animate-in"> uses CSS transforms).
+        ['px-panel', 'px-panel-backdrop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) document.body.appendChild(el);
+        });
+
         refreshTopology();
 
         const sse = new EventSource('/admin/sse/topology');
-        sse.addEventListener('AGENT_CONNECTED', () => refreshTopology());
+        sse.addEventListener('AGENT_CONNECTED',    () => refreshTopology());
         sse.addEventListener('AGENT_DISCONNECTED', () => refreshTopology());
-        sse.addEventListener('ROUTE_UPDATED', () => refreshTopology());
-        sse.addEventListener('REQUEST_IN_FLIGHT', (e) => pulseLink(JSON.parse(e.data)));
-        sse.addEventListener('REQUEST_COMPLETED', (e) => clearPulse(JSON.parse(e.data)));
+        sse.addEventListener('ROUTE_UPDATED',      () => refreshTopology());
+        sse.addEventListener('REQUEST_IN_FLIGHT',  (e) => pulseLink(JSON.parse(e.data)));
+        sse.addEventListener('REQUEST_COMPLETED',  (e) => clearPulse(JSON.parse(e.data)));
         sse.onerror = () => {
-            document.getElementById('sse-status').textContent = 'Reconnecting…';
-            document.getElementById('sse-status').className = 'badge bg-warning text-dark';
+            const el = document.getElementById('sse-status');
+            el.innerHTML = '<span class="px-live-dot" style="background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,0.2);"></span> Reconnecting…';
+            el.style.borderColor = 'rgba(251,191,36,0.4)';
+            el.style.color = '#fde68a';
         };
         sse.onopen = () => {
-            document.getElementById('sse-status').textContent = 'Live';
-            document.getElementById('sse-status').className = 'badge bg-success';
+            const el = document.getElementById('sse-status');
+            el.innerHTML = '<span class="px-live-dot"></span> Live';
+            el.style.borderColor = '';
+            el.style.color = '';
         };
+
+        // Close panel on Escape
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+        // ── Global live log overlay ────────────────────────────────────────────
+        (function () {
+            const MAX_ENTRIES = 5;
+            const container   = document.getElementById('topo-log-entries');
+            const badge       = document.getElementById('log-live-badge');
+
+            function statusColor(code) {
+                return code >= 500 ? '#f87171' : code >= 400 ? '#fbbf24' : '#34d399';
+            }
+            function methodColor(method) {
+                return method === 'GET' ? '#818cf8' : method === 'POST' ? '#34d399' :
+                       method === 'DELETE' ? '#f87171' : '#fbbf24';
+            }
+
+            const logSse = new EventSource('/admin/sse/log');
+            logSse.addEventListener('log', (e) => {
+                const log = JSON.parse(e.data);
+
+                // Remove placeholder if present
+                const empty = container.querySelector('.topo-log-empty');
+                if (empty) empty.remove();
+
+                // Resolve route name from topology data already loaded
+                const routeNode = _lastNodes.find(n => n.id === log.routeId);
+                const routeName = routeNode ? routeNode.name : '';
+
+                const sc = statusColor(log.statusCode);
+                const mc = methodColor(log.method);
+                // Extract HH:mm:ss from ISO timestamp ("2026-05-17T12:34:56")
+                const time = log.timestamp ? log.timestamp.substring(11, 19) : '';
+
+                const row = document.createElement('div');
+                row.className = 'topo-log-entry';
+                if (log.routeId) row.onclick = () => { window.location = '/admin/routes/' + log.routeId; };
+                row.innerHTML =
+                    `<span class="topo-log-time">${time}</span>` +
+                    `<span class="topo-log-badge" style="background:${mc}20;color:${mc};">${escHtml(log.method)}</span>` +
+                    `<span class="topo-log-badge" style="background:${sc}20;color:${sc};">${log.statusCode}</span>` +
+                    `<span><div class="topo-log-route">${escHtml(routeName)}</div>` +
+                    `<div class="topo-log-path">${escHtml(log.path)}</div></span>`;
+
+                container.insertBefore(row, container.firstChild);
+                while (container.children.length > MAX_ENTRIES) container.removeChild(container.lastChild);
+            });
+
+            logSse.onerror = () => {
+                badge.innerHTML = '<span class="px-live-dot" style="background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,0.2);"></span>';
+            };
+            logSse.onopen = () => {
+                badge.innerHTML = '<span class="px-live-dot"></span>';
+            };
+        })();
     </script>
 </th:block>
 

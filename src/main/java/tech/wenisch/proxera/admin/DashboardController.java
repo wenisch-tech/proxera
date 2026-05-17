@@ -30,10 +30,6 @@ public class DashboardController {
 
     @GetMapping({"", "/"})
     public String dashboard(Model model) {
-        model.addAttribute("connectedAgents", agentService.countConnected());
-        model.addAttribute("activeRoutes", routeService.countEnabled());
-        model.addAttribute("activeSessions", tunnelManager.getActiveSessions().size());
-        model.addAttribute("recentLogs", accessLogService.getRecentGlobal(20));
-        return "admin/dashboard";
+        return "redirect:/admin/topology";
     }
 }

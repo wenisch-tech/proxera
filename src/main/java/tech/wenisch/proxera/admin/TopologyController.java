@@ -34,7 +34,7 @@ public class TopologyController {
 
     @GetMapping
     public String topology() {
-        return "redirect:/admin/";
+        return "admin/topology";
     }
 
     /**

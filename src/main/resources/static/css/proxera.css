@@ -20,8 +20,8 @@
     --px-border-soft: rgba(255, 255, 255, 0.06);
     --px-muted: rgba(255, 255, 255, 0.52);
     --px-text: #e2e8f0;
-    --px-sidebar-w: 220px;
     --px-navbar-h: 56px;
+    --px-panel-w: 380px;
     --px-radius: 0.875rem;
     --px-transition: 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -158,44 +158,14 @@ h1, h2, h3, h4, h5, h6 { font-weight: 600; letter-spacing: -0.012em; }
     animation: px-pulse 2.5s ease-in-out infinite;
 }
 
-/* ── Sidebar ──────────────────────────────────────────── */
-.px-sidebar {
-    width: var(--px-sidebar-w);
+/* ── Main layout (no sidebar) ─────────────────────────── */
+.px-main {
+    flex: 1;
     min-height: calc(100vh - var(--px-navbar-h));
-    background: rgba(8, 12, 18, 0.72);
-    border-right: 1px solid var(--px-border);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: 1rem 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    position: sticky;
-    top: var(--px-navbar-h);
-    height: calc(100vh - var(--px-navbar-h));
-    overflow-y: auto;
-    flex-shrink: 0;
+    display: block;
 }
 
-[data-bs-theme="light"] .px-sidebar {
-    background: rgba(255, 255, 255, 0.85);
-    border-right-color: var(--px-border);
-}
-
-.px-sidebar .nav-link {
-    color: var(--px-muted);
-    border-radius: 0.6rem;
-    padding: 0.55rem 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-weight: 500;
-    font-size: 0.875rem;
-    transition: background var(--px-transition), color var(--px-transition);
-    text-decoration: none;
-    white-space: nowrap;
-}
-
+/* ── Sidebar nav link (kept for other pages that still reference it) */
 .px-sidebar .nav-link i {
     font-size: 1rem;
     flex-shrink: 0;
@@ -216,16 +186,6 @@ h1, h2, h3, h4, h5, h6 { font-weight: 600; letter-spacing: -0.012em; }
 
 .px-sidebar .nav-link.active i {
     filter: drop-shadow(0 0 4px rgba(var(--px-accent-rgb), 0.7));
-}
-
-.px-sidebar-section {
-    font-size: 0.67rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--px-muted);
-    padding: 0.75rem 0.75rem 0.25rem;
-    margin-top: 0.5rem;
 }
 
 /* ── Cards ────────────────────────────────────────────── */
@@ -591,10 +551,246 @@ code.user-select-all {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 
-/* ── Responsive: hide sidebar text on small screens ────── */
+/* ── Navbar secondary icon buttons ───────────────────── */
+.px-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--px-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.3rem 0.65rem;
+    border-radius: 0.55rem;
+    text-decoration: none;
+    transition: background var(--px-transition), color var(--px-transition);
+    white-space: nowrap;
+}
+.px-nav-link:hover, .px-nav-link.active {
+    background: rgba(var(--px-accent-rgb), 0.1);
+    color: var(--px-accent);
+}
+
+.px-nav-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    color: var(--px-muted);
+    font-size: 1rem;
+    text-decoration: none;
+    transition: background var(--px-transition), color var(--px-transition);
+    flex-shrink: 0;
+}
+.px-nav-icon-btn:hover {
+    background: var(--px-surface-hover);
+    color: var(--px-text);
+}
+.px-nav-icon-btn.active {
+    background: rgba(var(--px-accent-rgb), 0.12);
+    color: var(--px-accent);
+}
+
+/* ── Slide-in side panel ──────────────────────────────── */
+.px-panel {
+    position: fixed;
+    right: 0;
+    top: var(--px-navbar-h);
+    bottom: 0;
+    width: var(--px-panel-w);
+    max-width: 92vw;
+    background: rgba(8, 13, 22, 0.97);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-left: 1px solid var(--px-border);
+    z-index: 700;
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.px-panel.open {
+    transform: translateX(0);
+    box-shadow: -16px 0 48px rgba(0, 0, 0, 0.55);
+}
+
+.px-panel-backdrop {
+    position: fixed;
+    inset: var(--px-navbar-h) 0 0 0;
+    z-index: 699;
+    background: rgba(0, 0, 0, 0.28);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.32s ease;
+}
+.px-panel-backdrop.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.px-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--px-border);
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: rgba(8, 13, 22, 0.97);
+    backdrop-filter: blur(12px);
+    z-index: 1;
+}
+
+.px-panel-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--px-text);
+    letter-spacing: -0.01em;
+}
+
+.px-panel-close {
+    background: transparent;
+    border: none;
+    color: var(--px-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.4rem;
+    line-height: 1;
+    transition: color var(--px-transition), background var(--px-transition);
+}
+.px-panel-close:hover {
+    color: var(--px-text);
+    background: var(--px-surface-hover);
+}
+
+.px-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 2rem;
+}
+
+.px-panel-section {
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--px-border-soft);
+}
+.px-panel-section:last-child {
+    border-bottom: none;
+}
+
+.px-panel-section-label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--px-muted);
+    margin-bottom: 0.65rem;
+}
+
+.px-panel-status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.px-panel-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.px-panel-status-text {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--px-text);
+}
+
+.px-panel-badge {
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.18em 0.55em;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+}
+
+.px-panel-meta {
+    font-size: 0.8rem;
+    color: var(--px-muted);
+}
+
+.px-panel-item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.55rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--px-text);
+    transition: background var(--px-transition);
+    margin-bottom: 0.25rem;
+}
+.px-panel-item:hover {
+    background: var(--px-surface-hover);
+}
+
+.px-panel-item-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Panel action buttons */
+.px-panel-action {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.6rem;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: var(--px-muted);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--px-border);
+    text-decoration: none;
+    transition: background var(--px-transition), color var(--px-transition), border-color var(--px-transition);
+    cursor: pointer;
+}
+.px-panel-action:hover {
+    background: rgba(255,255,255,0.07);
+    color: var(--px-text);
+    border-color: rgba(255,255,255,0.15);
+}
+.px-panel-action-warn {
+    color: #ffd35a;
+    border-color: rgba(255,193,7,0.25);
+}
+.px-panel-action-warn:hover {
+    background: rgba(255,193,7,0.08);
+    color: #ffe68a;
+    border-color: rgba(255,193,7,0.45);
+}
+.px-panel-action-danger {
+    color: #ff838e;
+    border-color: rgba(220,53,69,0.25);
+}
+.px-panel-action-danger:hover {
+    background: rgba(220,53,69,0.08);
+    color: #ffaab2;
+    border-color: rgba(220,53,69,0.45);
+}
+
+/* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 768px) {
-    :root { --px-sidebar-w: 56px; }
-    .px-sidebar .nav-link span { display: none; }
-    .px-sidebar-section { display: none; }
+    :root { --px-panel-w: 100vw; }
 }
 

@@ -20,7 +20,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Slf4j
 public class AdminSseController {
 
-    private final CopyOnWriteArrayList<SseEmitter> topologyEmitters = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<SseEmitter> topologyEmitters  = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<SseEmitter> globalLogEmitters  = new CopyOnWriteArrayList<>();
     private final ConcurrentHashMap<UUID, CopyOnWriteArrayList<SseEmitter>> routeLogEmitters = new ConcurrentHashMap<>();
 
     private final MessageBus messageBus;
@@ -71,23 +72,50 @@ public class AdminSseController {
     }
 
     /**
+     * SSE stream for all access log entries across all routes (global live log).
+     */
+    @GetMapping("/log")
+    public SseEmitter globalLogStream() {
+        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        globalLogEmitters.add(emitter);
+        emitter.onCompletion(() -> globalLogEmitters.remove(emitter));
+        emitter.onTimeout(() -> globalLogEmitters.remove(emitter));
+        return emitter;
+    }
+
+    /**
      * Called by AccessLogService to push new log entries to subscribed route SSE clients.
      */
     public void pushLogEntry(UUID routeId, Object logEntry) {
+        // Route-specific subscribers
         CopyOnWriteArrayList<SseEmitter> emitters = routeLogEmitters.get(routeId);
-        if (emitters == null || emitters.isEmpty()) return;
-
-        var dead = new CopyOnWriteArrayList<SseEmitter>();
-        emitters.forEach(emitter -> {
-            try {
-                emitter.send(SseEmitter.event()
-                        .name("log")
-                        .data(logEntry, MediaType.APPLICATION_JSON));
-            } catch (IOException e) {
-                dead.add(emitter);
-            }
-        });
-        emitters.removeAll(dead);
+        if (emitters != null && !emitters.isEmpty()) {
+            var dead = new CopyOnWriteArrayList<SseEmitter>();
+            emitters.forEach(emitter -> {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("log")
+                            .data(logEntry, MediaType.APPLICATION_JSON));
+                } catch (IOException e) {
+                    dead.add(emitter);
+                }
+            });
+            emitters.removeAll(dead);
+        }
+        // Global log subscribers (topology live log overlay)
+        if (!globalLogEmitters.isEmpty()) {
+            var dead = new CopyOnWriteArrayList<SseEmitter>();
+            globalLogEmitters.forEach(emitter -> {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("log")
+                            .data(logEntry, MediaType.APPLICATION_JSON));
+                } catch (IOException e) {
+                    dead.add(emitter);
+                }
+            });
+            globalLogEmitters.removeAll(dead);
+        }
     }
 
     private void removeRouteEmitter(UUID routeId, SseEmitter emitter) {

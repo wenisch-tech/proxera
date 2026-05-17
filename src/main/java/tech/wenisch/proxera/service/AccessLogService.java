@@ -45,9 +45,7 @@ public class AccessLogService {
     }
 
     public List<AccessLog> getRecentGlobal(int limit) {
-        return accessLogRepository.findTop50ByOrderByTimestampDesc().stream()
-                .limit(limit)
-                .toList();
+        return accessLogRepository.findRecentLogs(PageRequest.of(0, limit));
     }
 
     /**

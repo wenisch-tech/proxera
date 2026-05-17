@@ -16,6 +16,9 @@ public interface AccessLogRepository extends JpaRepository<AccessLog, Long> {
 
     List<AccessLog> findTop50ByOrderByTimestampDesc();
 
+    @Query("SELECT a FROM AccessLog a ORDER BY a.timestamp DESC")
+    List<AccessLog> findRecentLogs(Pageable pageable);
+
     @Query("SELECT COUNT(a) FROM AccessLog a WHERE a.routeId = :routeId AND a.timestamp >= :since")
     long countByRouteIdSince(UUID routeId, LocalDateTime since);
 

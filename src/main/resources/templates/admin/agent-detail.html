@@ -3,10 +3,17 @@
       th:replace="~{fragments/layout :: layout(activePage='agents', pageTitle='Agent Detail', content=~{::content}, extraHead=~{}, extraScripts=~{})}">
 <body>
 <th:block th:fragment="content">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/admin/topology}"><i class="bi bi-house"></i> Home</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/admin/agents}">Agents</a></li>
+            <li class="breadcrumb-item active" th:text="${agent.name}">Agent</li>
+        </ol>
+    </nav>
+
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a th:href="@{/admin/agents}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i>
-        </a>
         <h2 class="mb-0 fw-bold" style="font-size:1.45rem;" th:text="${agent.name}">Agent</h2>
         <span class="badge ms-2"
               th:classappend="${agent.status.name() == 'CONNECTED' ? 'bg-success' : (agent.status.name() == 'REGISTERED' ? 'bg-info' : 'bg-secondary')}"

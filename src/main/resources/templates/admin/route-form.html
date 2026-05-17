@@ -3,6 +3,16 @@
       th:replace="~{fragments/layout :: layout(activePage='routes', pageTitle='New Route', content=~{::content}, extraHead=~{}, extraScripts=~{::extraScripts})}">
 <body>
 <th:block th:fragment="content">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/admin/topology}"><i class="bi bi-house"></i> Home</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/admin/routes}">Routes</a></li>
+            <li class="breadcrumb-item active">New Route</li>
+        </ol>
+    </nav>
+
     <div class="d-flex align-items-center gap-2 mb-4">
         <a th:href="@{/admin/routes}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left"></i>

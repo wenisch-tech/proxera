@@ -10,10 +10,17 @@
 </th:block>
 
 <th:block th:fragment="content">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/admin/topology}"><i class="bi bi-house"></i> Home</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/admin/routes}">Routes</a></li>
+            <li class="breadcrumb-item active" th:text="${route.name}">Route</li>
+        </ol>
+    </nav>
+
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a th:href="@{/admin/routes}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i>
-        </a>
         <h2 class="mb-0 fw-bold" style="font-size:1.45rem;" th:text="${route.name}">Route</h2>
         <span th:if="${route.enabled}" class="badge bg-success ms-2">Enabled</span>
         <span th:unless="${route.enabled}" class="badge bg-secondary ms-2">Disabled</span>
