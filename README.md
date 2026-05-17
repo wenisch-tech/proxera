@@ -39,7 +39,7 @@ Before deploying, ensure your DNS is configured:
 
 | Domain | Target | Purpose |
 |--------|--------|---------|
-| `*.proxy.example.com` | Proxera proxy ingress IP / CNAME | Public hostname for all routed services and agent WebSocket tunnel |
+| `myapp.proxy.example.com` | Proxera proxy ingress IP / CNAME | Public hostname for all routed services and agent WebSocket tunnel |
 | `admin.proxera.example.com` | Proxera admin ingress IP / CNAME | Admin UI and REST API access |
 
 > Both records must resolve before the agent can connect and before routed domains become reachable.
@@ -54,7 +54,7 @@ helm repo add wenisch-tech https://charts.wenisch.tech
 helm repo update
 helm install proxera wenisch-tech/proxera \
   --set ingress.proxy.enabled=true \
-  --set ingress.proxy.hosts[0].host=*.proxy.example.com \
+  --set ingress.proxy.hosts[0].host=myapp.proxy.example.com \
   --set ingress.admin.enabled=true \
   --set ingress.admin.hosts[0].host=admin.proxera.example.com \
   -n proxera --create-namespace
@@ -198,7 +198,7 @@ You can add multiple routes per agent — each with a different domain or path p
 
 ### Step 7 — Use It
 
-With DNS already pointing `*.proxy.example.com` to the proxy ingress (see Prerequisites), `myapp.proxy.example.com` is immediately reachable. For local Docker testing, pass `Host: myapp.proxy.example.com` explicitly: `curl -H "Host: myapp.proxy.example.com" http://localhost:8080`.
+With DNS already pointing `myapp.proxy.example.com` to the proxy ingress (see Prerequisites), the route is immediately reachable. For local Docker testing, pass the host header explicitly: `curl -H "Host: myapp.proxy.example.com" http://localhost:8080`.
 
 Any HTTP request to `https://myapp.proxy.example.com` is now:
 
