@@ -245,6 +245,16 @@
         // Close panel on Escape
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 
+        // Re-render topology when the Bootstrap theme (data-bs-theme) changes
+        new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                if (m.attributeName === 'data-bs-theme') {
+                    reinitAndRender();
+                    break;
+                }
+            }
+        }).observe(document.documentElement, { attributes: true });
+
         // ── Global live log overlay ────────────────────────────────────────────
         (function () {
             const MAX_ENTRIES = 5;

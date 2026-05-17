@@ -11,6 +11,11 @@ const CH = 82;    // card height (px)
 const CR = 11;    // corner radius
 const IW = 52;    // left icon-zone width
 
+// ── CSS-var reader: picks up current theme at render time ────────────────────
+function tv(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 // ── Column fractions of canvas width ──────────────────────────────────────────
 const COL_X     = { server: 0.12, agent: 0.45, route: 0.80 };
 const ROW_Y     = { server: 0.15, agent: 0.48, route: 0.82 };  // portrait fractions of canvasH
@@ -22,9 +27,10 @@ function isPortrait() { return canvasW < 700; }
 
 let svg, _defs, linkLayer, nodeLayer, canvasW, canvasH;
 
-// Keep the last topology data for panel usage
+// Keep the last topology data for panel usage and theme re-rendering
 let _lastNodes = [];
 let _lastLinks = [];
+let _lastData  = { nodes: [], links: [] };
 
 // ── Color palette per node state ───────────────────────────────────────────────
 function palette(d) {
@@ -182,7 +188,7 @@ function initGraph() {
     const sh = _defs.append('filter').attr('id', 'card-shadow')
         .attr('x', '-25%').attr('y', '-45%').attr('width', '150%').attr('height', '190%');
     sh.append('feDropShadow').attr('dx', 0).attr('dy', 6).attr('stdDeviation', 14)
-        .attr('flood-color', '#000').attr('flood-opacity', 0.70);
+        .attr('flood-color', '#000').attr('flood-opacity', parseFloat(tv('--topo-shadow-opacity')) || 0.70);
 
     // Ambient glow (applied to blurred ellipse behind card)
     const ag = _defs.append('filter').attr('id', 'amb-glow')
@@ -201,14 +207,16 @@ function initGraph() {
     const grid = _defs.append('pattern').attr('id', 'bg-grid')
         .attr('width', 36).attr('height', 36).attr('patternUnits', 'userSpaceOnUse');
     grid.append('path').attr('d', 'M 36 0 L 0 0 0 36')
-        .attr('fill', 'none').attr('stroke', 'rgba(255,255,255,0.030)').attr('stroke-width', 1);
+        .attr('fill', 'none').attr('stroke', tv('--topo-grid-stroke')).attr('stroke-width', 1);
+    // Base canvas fill (themed) + grid overlay
+    svg.append('rect').attr('width', '100%').attr('height', '100%').attr('fill', tv('--topo-canvas-bg'));
     svg.append('rect').attr('width', '100%').attr('height', '100%').attr('fill', 'url(#bg-grid)');
 
     // Radial vignette with subtle blue center warmth
     const vig = _defs.append('radialGradient').attr('id', 'bg-vig')
         .attr('cx', '50%').attr('cy', '50%').attr('r', '68%');
     vig.append('stop').attr('offset', '0%').attr('stop-color', 'rgba(59,130,246,0.022)');
-    vig.append('stop').attr('offset', '100%').attr('stop-color', 'rgba(0,0,0,0.38)');
+    vig.append('stop').attr('offset', '100%').attr('stop-color', tv('--topo-vig-edge'));
     svg.append('rect').attr('width', '100%').attr('height', '100%').attr('fill', 'url(#bg-vig)');
 
     linkLayer = svg.append('g').attr('class', 'links');
@@ -220,6 +228,8 @@ function initGraph() {
 
 // ── Main render ───────────────────────────────────────────────────────────────
 function renderGraph(data) {
+    _lastData = data;
+
     // Inject placeholder nodes
     const addAgent = { id: 'add-agent', type: 'add-agent', name: 'Add Agent' };
     const addRoute = { id: 'add-route', type: 'add-route', name: 'Add Route' };
@@ -262,7 +272,7 @@ function renderGraph(data) {
                 .attr('x', 12).attr('y', ROW_Y[type] * canvasH - CH / 2 - 8)
                 .attr('text-anchor', 'start')
                 .attr('font-size', '7.5px').attr('font-weight', '700').attr('letter-spacing', '.20em')
-                .attr('fill', 'rgba(255,255,255,0.14)').attr('font-family', 'Inter, system-ui, sans-serif')
+                .attr('fill', tv('--topo-col-label')).attr('font-family', 'Inter, system-ui, sans-serif')
                 .text(label);
         });
         // Horizontal row dividers
@@ -270,7 +280,7 @@ function renderGraph(data) {
             .forEach(y => {
                 svg.append('line').attr('class', 'col-div')
                     .attr('x1', 24).attr('y1', y).attr('x2', canvasW - 24).attr('y2', y)
-                    .attr('stroke', 'rgba(255,255,255,0.04)').attr('stroke-width', 1)
+                    .attr('stroke', tv('--topo-col-div')).attr('stroke-width', 1)
                     .attr('stroke-dasharray', '3,9');
             });
     } else {
@@ -281,7 +291,7 @@ function renderGraph(data) {
                 .attr('x', COL_X[type] * canvasW).attr('y', 24)
                 .attr('text-anchor', 'middle')
                 .attr('font-size', '7.5px').attr('font-weight', '700').attr('letter-spacing', '.20em')
-                .attr('fill', 'rgba(255,255,255,0.14)').attr('font-family', 'Inter, system-ui, sans-serif')
+                .attr('fill', tv('--topo-col-label')).attr('font-family', 'Inter, system-ui, sans-serif')
                 .text(label);
         });
         // Vertical column dividers
@@ -289,7 +299,7 @@ function renderGraph(data) {
             .forEach(x => {
                 svg.append('line').attr('class', 'col-div')
                     .attr('x1', x).attr('y1', 40).attr('x2', x).attr('y2', canvasH - 24)
-                    .attr('stroke', 'rgba(255,255,255,0.04)').attr('stroke-width', 1)
+                    .attr('stroke', tv('--topo-col-div')).attr('stroke-width', 1)
                     .attr('stroke-dasharray', '3,9');
             });
     }
@@ -354,8 +364,8 @@ function renderGraph(data) {
         if (isPlaceholder) {
             // Dashed placeholder card
             g.append('rect').attr('width', CW).attr('height', CH).attr('rx', CR)
-                .attr('fill', 'rgba(255,255,255,0.018)')
-                .attr('stroke', 'rgba(255,255,255,0.10)')
+                .attr('fill', tv('--topo-ph-fill'))
+                .attr('stroke', tv('--topo-ph-stroke'))
                 .attr('stroke-width', 1.2)
                 .attr('stroke-dasharray', '6,4');
 
@@ -363,35 +373,35 @@ function renderGraph(data) {
             const cx = CW / 2, cy = CH / 2;
             const ps = 9;
             g.append('line').attr('x1', cx).attr('y1', cy - ps).attr('x2', cx).attr('y2', cy + ps)
-                .attr('stroke', 'rgba(255,255,255,0.20)').attr('stroke-width', 1.8).attr('stroke-linecap', 'round');
+                .attr('stroke', tv('--topo-ph-icon')).attr('stroke-width', 1.8).attr('stroke-linecap', 'round');
             g.append('line').attr('x1', cx - ps).attr('y1', cy).attr('x2', cx + ps).attr('y2', cy)
-                .attr('stroke', 'rgba(255,255,255,0.20)').attr('stroke-width', 1.8).attr('stroke-linecap', 'round');
+                .attr('stroke', tv('--topo-ph-icon')).attr('stroke-width', 1.8).attr('stroke-linecap', 'round');
 
             // Label below the "+"
             g.append('text')
                 .attr('x', CW / 2).attr('y', CH - 10).attr('text-anchor', 'middle')
                 .attr('font-size', '8px').attr('font-weight', '600').attr('letter-spacing', '.10em')
                 .attr('font-family', 'Inter, system-ui, sans-serif')
-                .attr('fill', 'rgba(255,255,255,0.18)')
+                .attr('fill', tv('--topo-ph-label'))
                 .text(d.name.toUpperCase());
 
             // Hover effect
             g.on('mouseenter', function() {
                 d3.select(this).select('rect')
-                    .attr('fill', 'rgba(255,255,255,0.05)')
-                    .attr('stroke', 'rgba(255,255,255,0.22)');
+                    .attr('fill', tv('--topo-ph-hover-fill'))
+                    .attr('stroke', tv('--topo-ph-hover-stroke'));
                 d3.select(this).selectAll('line')
-                    .attr('stroke', 'rgba(255,255,255,0.38)');
+                    .attr('stroke', tv('--topo-ph-hover-icon'));
                 d3.select(this).select('text')
-                    .attr('fill', 'rgba(255,255,255,0.38)');
+                    .attr('fill', tv('--topo-ph-hover-label'));
             }).on('mouseleave', function() {
                 d3.select(this).select('rect')
-                    .attr('fill', 'rgba(255,255,255,0.018)')
-                    .attr('stroke', 'rgba(255,255,255,0.10)');
+                    .attr('fill', tv('--topo-ph-fill'))
+                    .attr('stroke', tv('--topo-ph-stroke'));
                 d3.select(this).selectAll('line')
-                    .attr('stroke', 'rgba(255,255,255,0.20)');
+                    .attr('stroke', tv('--topo-ph-icon'));
                 d3.select(this).select('text')
-                    .attr('fill', 'rgba(255,255,255,0.18)');
+                    .attr('fill', tv('--topo-ph-label'));
             });
 
         } else {
@@ -399,12 +409,12 @@ function renderGraph(data) {
             g.append('ellipse')
                 .attr('cx', CW / 2).attr('cy', CH / 2)
                 .attr('rx', CW * 0.52).attr('ry', CH * 0.65)
-                .attr('fill', col.glow).attr('opacity', 0.30)
+                .attr('fill', col.glow).attr('opacity', parseFloat(tv('--topo-amb-glow-opacity')) || 0.30)
                 .attr('filter', 'url(#amb-glow)');
 
             // ② Card dark background
             g.append('rect').attr('width', CW).attr('height', CH).attr('rx', CR)
-                .attr('fill', 'rgba(8,14,26,0.90)').attr('filter', 'url(#card-shadow)');
+                .attr('fill', tv('--topo-card-bg')).attr('filter', 'url(#card-shadow)');
 
             // ③ Icon zone: gradient fading from accent color to transparent
             const izgId  = `izg${i}`;
@@ -435,7 +445,7 @@ function renderGraph(data) {
                 || (d.type === 'agent' && d.connected)
                 || (d.type === 'route'  && d.enabled !== false);
             g.append('circle').attr('cx', CW - 15).attr('cy', 15).attr('r', 3.5)
-                .attr('fill', active ? col.accent : '#334155').attr('opacity', 0.95);
+                .attr('fill', active ? col.accent : tv('--topo-inactive-dot')).attr('opacity', 0.95);
             if (active) {
                 g.append('circle').attr('cx', CW - 15).attr('cy', 15).attr('r', 6.5)
                     .attr('fill', 'none').attr('stroke', col.accent).attr('stroke-width', 1)
@@ -451,7 +461,7 @@ function renderGraph(data) {
             g.append('text')
                 .attr('x', IW + 12).attr('y', CH / 2 - 6)
                 .attr('font-size', '11.5px').attr('font-weight', '600')
-                .attr('font-family', 'Inter, system-ui, sans-serif').attr('fill', '#e2e8f0')
+                .attr('font-family', 'Inter, system-ui, sans-serif').attr('fill', tv('--topo-node-text'))
                 .text(name);
 
             // ⑨ Meta label (status / target)
@@ -466,19 +476,19 @@ function renderGraph(data) {
                 .attr('x', CW - 10).attr('y', CH - 8).attr('text-anchor', 'end')
                 .attr('font-size', '7px').attr('letter-spacing', '.10em')
                 .attr('font-family', 'Inter, system-ui, sans-serif')
-                .attr('fill', 'rgba(255,255,255,0.16)')
+                .attr('fill', tv('--topo-type-badge'))
                 .text(d.type.toUpperCase());
 
             // Hover highlight for clickable nodes
             if (d.type !== 'server') {
                 g.on('mouseenter', function() {
                     d3.select(this).select('rect:nth-child(2)')
-                        .transition().duration(120).attr('fill', 'rgba(15,25,45,0.96)');
+                        .transition().duration(120).attr('fill', tv('--topo-card-hover-bg'));
                     d3.select(this).select('rect:nth-child(5)')
                         .transition().duration(120).attr('stroke-opacity', 0.82);
                 }).on('mouseleave', function() {
                     d3.select(this).select('rect:nth-child(2)')
-                        .transition().duration(180).attr('fill', 'rgba(8,14,26,0.90)');
+                        .transition().duration(180).attr('fill', tv('--topo-card-bg'));
                     d3.select(this).select('rect:nth-child(5)')
                         .transition().duration(180).attr('stroke-opacity', 0.52);
                 });
@@ -689,6 +699,17 @@ function refreshTopology() {
         });
 }
 
+// Re-initialise the SVG and re-render with cached data (used when theme changes)
+function reinitAndRender() {
+    const el = document.getElementById('topology-canvas');
+    if (!el) return;
+    // Clear existing SVG
+    while (el.firstChild) el.removeChild(el.firstChild);
+    svg = null; linkLayer = null; nodeLayer = null; _defs = null;
+    initGraph();
+    if (_lastData.nodes.length) renderGraph(_lastData);
+}
+
 function pulseLink(event) {
     linkLayer.selectAll('path.topo-link')
         .filter(function(d) {
@@ -712,8 +733,5 @@ window.addEventListener('resize', () => {
     canvasW = el.clientWidth;
     canvasH = el.clientHeight;
     svg.attr('height', canvasH);
-    const rawNodes = _lastNodes.filter(n => n.type !== 'add-agent' && n.type !== 'add-route');
-    if (rawNodes.length) {
-        renderGraph({ nodes: rawNodes, links: _lastLinks });
-    }
+    if (_lastData.nodes.length) renderGraph(_lastData);
 });

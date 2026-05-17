@@ -56,6 +56,30 @@
     --bs-table-border-color: rgba(255, 255, 255, 0.08);
 }
 
+/* ── Topology SVG theme variables (read by topology.js via getComputedStyle) ── */
+:root {
+    --topo-canvas-bg:       #0c1117;
+    --topo-grid-stroke:     rgba(255,255,255,0.030);
+    --topo-vig-edge:        rgba(0,0,0,0.38);
+    --topo-shadow-opacity:  0.70;
+    --topo-col-label:       rgba(255,255,255,0.14);
+    --topo-col-div:         rgba(255,255,255,0.04);
+    --topo-card-bg:         rgba(8,14,26,0.90);
+    --topo-card-hover-bg:   rgba(15,25,45,0.96);
+    --topo-node-text:       #e2e8f0;
+    --topo-type-badge:      rgba(255,255,255,0.16);
+    --topo-inactive-dot:    #334155;
+    --topo-amb-glow-opacity: 0.30;
+    --topo-ph-fill:         rgba(255,255,255,0.018);
+    --topo-ph-stroke:       rgba(255,255,255,0.10);
+    --topo-ph-icon:         rgba(255,255,255,0.20);
+    --topo-ph-label:        rgba(255,255,255,0.18);
+    --topo-ph-hover-fill:   rgba(255,255,255,0.05);
+    --topo-ph-hover-stroke: rgba(255,255,255,0.22);
+    --topo-ph-hover-icon:   rgba(255,255,255,0.38);
+    --topo-ph-hover-label:  rgba(255,255,255,0.38);
+}
+
 /* ── Light mode overrides ────────────────────────────── */
 [data-bs-theme="light"] {
     --px-surface: rgba(255, 255, 255, 0.88);
@@ -64,6 +88,27 @@
     --px-border-soft: rgba(27, 43, 59, 0.09);
     --px-muted: rgba(27, 43, 59, 0.55);
     --px-text: #1b2b3b;
+
+    --topo-canvas-bg:       #eef1f6;
+    --topo-grid-stroke:     rgba(0,0,0,0.07);
+    --topo-vig-edge:        rgba(0,0,0,0.05);
+    --topo-shadow-opacity:  0.12;
+    --topo-col-label:       rgba(0,0,0,0.40);
+    --topo-col-div:         rgba(0,0,0,0.10);
+    --topo-card-bg:         rgba(248,250,255,0.96);
+    --topo-card-hover-bg:   rgba(240,245,255,0.98);
+    --topo-node-text:       #1e293b;
+    --topo-type-badge:      rgba(0,0,0,0.28);
+    --topo-inactive-dot:    #94a3b8;
+    --topo-amb-glow-opacity: 0.14;
+    --topo-ph-fill:         rgba(0,0,0,0.035);
+    --topo-ph-stroke:       rgba(0,0,0,0.16);
+    --topo-ph-icon:         rgba(0,0,0,0.22);
+    --topo-ph-label:        rgba(0,0,0,0.25);
+    --topo-ph-hover-fill:   rgba(0,0,0,0.06);
+    --topo-ph-hover-stroke: rgba(0,0,0,0.30);
+    --topo-ph-hover-icon:   rgba(0,0,0,0.40);
+    --topo-ph-hover-label:  rgba(0,0,0,0.40);
 }
 
 /* ── Base ────────────────────────────────────────────── */
