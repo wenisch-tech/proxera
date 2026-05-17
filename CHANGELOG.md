@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.0 - 2026-05-17
+
+## [0.3.0](https://github.com/wenisch-tech/proxera/compare/v0.2.2...v0.3.0) (2026-05-17)
+
+
+### Features
+
+* Added dedicated page vor fiewing all logs ([07bfb70](https://github.com/wenisch-tech/proxera/commit/07bfb70386a1f7a4beaaabd45076f2ce1445aad9))
+* switched to full topology view  per default ([3883af0](https://github.com/wenisch-tech/proxera/commit/3883af0b6c7849085841c3e79b95ffa485e87a3e))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.3.0
+
+
 ## v0.2.2 - 2026-05-17
 
 ### [0.2.2](https://github.com/wenisch-tech/proxera/compare/v0.2.1...v0.2.2) (2026-05-17)
