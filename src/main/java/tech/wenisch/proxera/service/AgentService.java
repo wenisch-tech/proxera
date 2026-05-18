@@ -62,10 +62,11 @@ public class AgentService {
     }
 
     @Transactional
-    public void markConnected(UUID agentId) {
+    public void markConnected(UUID agentId, String remoteIp) {
         agentRepository.findById(agentId).ifPresent(agent -> {
             agent.setStatus(AgentStatus.CONNECTED);
             agent.setLastSeenAt(LocalDateTime.now());
+            agent.setRemoteIp(remoteIp);
             agentRepository.save(agent);
         });
     }
@@ -75,6 +76,7 @@ public class AgentService {
         agentRepository.findById(agentId).ifPresent(agent -> {
             agent.setStatus(AgentStatus.DISCONNECTED);
             agent.setConnectedPodId(null);
+            agent.setRemoteIp(null);
             agentRepository.save(agent);
         });
     }

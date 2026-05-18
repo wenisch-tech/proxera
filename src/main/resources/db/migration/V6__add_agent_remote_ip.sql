@@ -1,0 +1,1 @@
+ALTER TABLE agents ADD COLUMN remote_ip VARCHAR(64);

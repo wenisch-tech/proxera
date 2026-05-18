@@ -8,7 +8,7 @@
 
 Proxera is a self-hosted reverse tunnel that lets HTTP services running in a private LAN be exposed to the internet — without opening any inbound firewall rules. It is similar in concept to Cloudflare Tunnel, but you don't have to route your traffic unencrypted through some 3rd party datacenters.
 
-Please note: This application is still in an early alpha and under active development. Breaking changes to the API might be introduce anytime until a v1 Release.
+Please note: This application is still in an early alpha and under active development. Breaking changes to the API might be introduced anytime until a v1 Release.
 
 
 ## How It Works

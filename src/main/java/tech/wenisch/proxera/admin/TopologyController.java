@@ -1,5 +1,6 @@
 package tech.wenisch.proxera.admin;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +49,14 @@ public class TopologyController {
 
         // Add server (this pod) as a node
         String podId = System.getenv().getOrDefault("HOSTNAME", "server");
-        nodes.add(Map.of("id", podId, "type", "server", "name", "Proxera Server"));
+        Map<String, Object> serverNode = new HashMap<>();
+        serverNode.put("id", podId);
+        serverNode.put("type", "server");
+        serverNode.put("name", "Proxera Server");
+        serverNode.put("internalIp", getServerLocalIp());
+        String externalIp = System.getenv("EXTERNAL_IP");
+        if (externalIp != null && !externalIp.isBlank()) serverNode.put("externalIp", externalIp);
+        nodes.add(serverNode);
 
         for (Agent agent : agentService.findAll()) {
             boolean connected = tunnelManager.isConnected(agent.getId());
@@ -58,6 +66,7 @@ public class TopologyController {
             node.put("name", agent.getName());
             node.put("status", agent.getStatus().name());
             node.put("connected", connected);
+            if (agent.getRemoteIp() != null) node.put("remoteIp", agent.getRemoteIp());
             nodes.add(node);
 
             if (connected) {
@@ -77,5 +86,13 @@ public class TopologyController {
         }
 
         return ResponseEntity.ok(Map.of("nodes", nodes, "links", links));
+    }
+
+    private String getServerLocalIp() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -32,6 +32,9 @@ public class Agent {
     @Column(name = "connected_pod_id")
     private String connectedPodId;
 
+    @Column(name = "remote_ip")
+    private String remoteIp;
+
     @Column(name = "last_seen_at")
     private LocalDateTime lastSeenAt;
 

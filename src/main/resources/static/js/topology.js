@@ -362,7 +362,7 @@ function renderGraph(data) {
         const g = nodeLayer.append('g').attr('class', 'node' + (isPlaceholder ? ' node-placeholder' : ''))
             .attr('transform', `translate(${d.x - CW / 2},${d.y - CH / 2})`)
             .style('opacity', 0)
-            .style('cursor', d.type === 'server' ? 'default' : 'pointer');
+            .style('cursor', 'pointer');
 
         g.transition().duration(420).delay(i * 40).style('opacity', 1);
 
@@ -490,8 +490,43 @@ function renderGraph(data) {
                 .attr('fill', tv('--topo-type-badge'))
                 .text(d.type.toUpperCase());
 
+            // ⑪ IP labels floating below the card
+            //    external / source IP → left edge  (◂ prefix)
+            //    internal IP          → right edge (▸ suffix)
+            {
+                const extIp = d.externalIp || d.remoteIp;
+                const intIp = d.internalIp;
+                if (extIp || intIp) {
+                    const tickY2 = CH + 5;
+                    const ipY    = CH + 13;
+                    const ipFont = '"Courier New", Courier, monospace';
+                    if (extIp) {
+                        g.append('line')
+                            .attr('x1', 16).attr('y1', CH).attr('x2', 16).attr('y2', tickY2)
+                            .attr('stroke', col.muted).attr('stroke-width', 0.7).attr('opacity', 0.42);
+                        g.append('text')
+                            .attr('x', 4).attr('y', ipY)
+                            .attr('font-size', '7px').attr('font-family', ipFont)
+                            .attr('fill', col.muted).attr('opacity', 0.78)
+                            .attr('text-anchor', 'start')
+                            .text('\u25c2 ' + extIp);
+                    }
+                    if (intIp) {
+                        g.append('line')
+                            .attr('x1', CW - 16).attr('y1', CH).attr('x2', CW - 16).attr('y2', tickY2)
+                            .attr('stroke', col.muted).attr('stroke-width', 0.7).attr('opacity', 0.42);
+                        g.append('text')
+                            .attr('x', CW - 4).attr('y', ipY)
+                            .attr('font-size', '7px').attr('font-family', ipFont)
+                            .attr('fill', col.muted).attr('opacity', 0.78)
+                            .attr('text-anchor', 'end')
+                            .text(intIp + ' \u25b8');
+                    }
+                }
+            }
+
             // Hover highlight for clickable nodes
-            if (d.type !== 'server') {
+            if (true) {
                 g.on('mouseenter', function() {
                     d3.select(this).select('rect:nth-child(2)')
                         .transition().duration(120).attr('fill', tv('--topo-card-hover-bg'));
@@ -506,13 +541,11 @@ function renderGraph(data) {
             }
         }
 
-        // Click handler (all nodes except server)
-        if (d.type !== 'server') {
-            g.on('click', function(event) {
-                event.stopPropagation();
-                openPanel(d, _lastNodes, _lastLinks);
-            });
-        }
+        // Click handler (all nodes)
+        g.on('click', function(event) {
+            event.stopPropagation();
+            openPanel(d, _lastNodes, _lastLinks);
+        });
     });
 }
 
@@ -534,6 +567,9 @@ function openPanel(d, allNodes, allLinks) {
     if (d.type === 'add-route') {
         title.textContent = 'New Route';
         body.innerHTML = buildAddRoutePanel();
+    } else if (d.type === 'server') {
+        title.textContent = d.name;
+        body.innerHTML = buildServerPanel(d);
     } else if (d.type === 'agent') {
         title.textContent = d.name;
         const agentRoutes = allNodes.filter(n => {
@@ -588,6 +624,10 @@ function buildAgentPanel(d, routes, csrf, csrfParam) {
                 <span style="color:var(--px-muted);">ID</span>&nbsp;
                 <code style="font-size:.72rem; color:var(--px-text);">${escHtml(d.id)}</code>
             </div>
+            ${d.remoteIp ? `<div class="px-panel-meta mt-1">
+                <span style="color:var(--px-muted);">Source IP</span>&nbsp;
+                <code style="font-size:.72rem; color:var(--px-text);">${escHtml(d.remoteIp)}</code>
+            </div>` : ''}
         </div>
 
         <div class="px-panel-section">
@@ -617,6 +657,51 @@ function buildAgentPanel(d, routes, csrf, csrfParam) {
                         <i class="bi bi-trash"></i>Delete Agent
                     </button>
                 </form>
+            </div>
+        </div>`;
+}
+
+function buildServerPanel(d) {
+    const networkRows = [];
+    if (d.internalIp) {
+        networkRows.push(`<div class="px-panel-meta">
+            <span style="color:var(--px-muted);">Internal IP</span>&nbsp;
+            <code style="font-size:.72rem; color:var(--px-text);">${escHtml(d.internalIp)}</code>
+        </div>`);
+    }
+    if (d.externalIp) {
+        networkRows.push(`<div class="px-panel-meta mt-1">
+            <span style="color:var(--px-muted);">External IP</span>&nbsp;
+            <code style="font-size:.72rem; color:var(--px-text);">${escHtml(d.externalIp)}</code>
+        </div>`);
+    }
+    if (!networkRows.length) {
+        networkRows.push(`<p class="mb-0" style="color:var(--px-muted); font-size:.83rem;">No IP information available.</p>`);
+    }
+
+    return `
+        <div class="px-panel-section">
+            <div class="px-panel-status-row">
+                <span class="px-panel-status-dot" style="background:#34d399;
+                    box-shadow:0 0 0 4px #34d39922;"></span>
+                <span class="px-panel-status-text">Active</span>
+            </div>
+        </div>
+
+        <div class="px-panel-section">
+            <div class="px-panel-section-label">Network</div>
+            ${networkRows.join('')}
+        </div>
+
+        <div class="px-panel-section">
+            <div class="px-panel-section-label">Actions</div>
+            <div class="d-flex flex-column gap-2 mt-2">
+                <a href="/admin/agents" class="px-panel-action">
+                    <i class="bi bi-hdd-rack"></i>Manage Agents
+                </a>
+                <a href="/admin/routes" class="px-panel-action">
+                    <i class="bi bi-signpost-split"></i>Manage Routes
+                </a>
             </div>
         </div>`;
 }

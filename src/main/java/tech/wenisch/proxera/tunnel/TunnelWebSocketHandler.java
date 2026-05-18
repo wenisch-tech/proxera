@@ -46,7 +46,13 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
 
         tunnelManager.register(agentId, session);
         session.setTextMessageSizeLimit(64 * 1024 * 1024);
-        agentService.markConnected(agentId);
+        String remoteIp = null;
+        java.net.InetSocketAddress ra = session.getRemoteAddress();
+        if (ra != null) {
+            java.net.InetAddress addr = ra.getAddress();
+            if (addr != null) remoteIp = addr.getHostAddress();
+        }
+        agentService.markConnected(agentId, remoteIp);
         messageBus.publishTopology(new TopologyEvent("AGENT_CONNECTED", agentId.toString(), agentName));
 
         // Send REGISTER_ACK
