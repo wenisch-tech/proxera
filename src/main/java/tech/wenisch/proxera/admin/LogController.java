@@ -1,5 +1,7 @@
 package tech.wenisch.proxera.admin;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,8 +11,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import tech.wenisch.proxera.domain.AccessLog;
 import tech.wenisch.proxera.service.AccessLogService;
-
-import java.util.List;
 
 @Controller
 @RequestMapping("/admin/logs")
