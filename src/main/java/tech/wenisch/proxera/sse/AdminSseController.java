@@ -1,6 +1,7 @@
 package tech.wenisch.proxera.sse;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import tech.wenisch.proxera.bus.MessageBus;
-import tech.wenisch.proxera.service.AccessLogService;
+import tech.wenisch.proxera.domain.AccessLog;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -25,11 +26,9 @@ public class AdminSseController {
     private final ConcurrentHashMap<UUID, CopyOnWriteArrayList<SseEmitter>> routeLogEmitters = new ConcurrentHashMap<>();
 
     private final MessageBus messageBus;
-    private final AccessLogService accessLogService;
 
-    public AdminSseController(MessageBus messageBus, AccessLogService accessLogService) {
+    public AdminSseController(MessageBus messageBus) {
         this.messageBus = messageBus;
-        this.accessLogService = accessLogService;
 
         // Subscribe to topology events and broadcast to all topology SSE emitters
         messageBus.subscribeTopology(event -> {
@@ -81,6 +80,14 @@ public class AdminSseController {
         emitter.onCompletion(() -> globalLogEmitters.remove(emitter));
         emitter.onTimeout(() -> globalLogEmitters.remove(emitter));
         return emitter;
+    }
+
+    /**
+     * Called when a new AccessLog entry is saved — pushes it to all SSE log subscribers.
+     */
+    @EventListener
+    public void onAccessLog(AccessLog logEntry) {
+        pushLogEntry(logEntry.getRouteId(), logEntry);
     }
 
     /**

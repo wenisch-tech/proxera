@@ -271,7 +271,19 @@
 
             const logSse = new EventSource('/admin/sse/log');
             logSse.addEventListener('log', (e) => {
-                const log = JSON.parse(e.data);
+                appendLogEntry(JSON.parse(e.data));
+            });
+
+            // Seed with recent entries on load
+            fetch('/admin/logs/recent')
+                .then(r => r.json())
+                .then(entries => {
+                    // entries are newest-first; display oldest-first so newest ends up on top
+                    entries.slice().reverse().forEach(appendLogEntry);
+                })
+                .catch(() => {});
+
+            function appendLogEntry(log) {
 
                 // Remove placeholder if present
                 const empty = container.querySelector('.topo-log-empty');
@@ -298,7 +310,7 @@
 
                 container.insertBefore(row, container.firstChild);
                 while (container.children.length > MAX_ENTRIES) container.removeChild(container.lastChild);
-            });
+            }
 
             logSse.onerror = () => {
                 badge.innerHTML = '<span class="px-live-dot" style="background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,0.2);"></span>';

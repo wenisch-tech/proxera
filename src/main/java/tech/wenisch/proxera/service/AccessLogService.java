@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -21,9 +22,12 @@ import tech.wenisch.proxera.tunnel.ResponsePayload;
 public class AccessLogService {
 
     private final AccessLogRepository accessLogRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public AccessLogService(AccessLogRepository accessLogRepository) {
+    public AccessLogService(AccessLogRepository accessLogRepository,
+                            ApplicationEventPublisher eventPublisher) {
         this.accessLogRepository = accessLogRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -37,7 +41,9 @@ public class AccessLogService {
                 .latencyMs(response.latencyMs())
                 .remoteIp(getClientAddress(request))
                 .build();
-        return accessLogRepository.save(entry);
+        AccessLog saved = accessLogRepository.save(entry);
+        eventPublisher.publishEvent(saved);
+        return saved;
     }
 
     public List<AccessLog> getRecentForRoute(UUID routeId, int limit) {
