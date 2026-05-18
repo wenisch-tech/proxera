@@ -29,7 +29,8 @@ No inbound ports need to be opened in the LAN. All connectivity is agent-initiat
 - **Horizontal scaling** — optional Redis Pub/Sub message bus for multi-pod deployments; in-memory fallback for single-pod (no Redis required)
 - **Admin UI + REST API** — Bootstrap 5 admin panel on port 8080 (same as proxy) with Swagger UI
 - **Prometheus metrics** — at `/actuator/prometheus`
-- **Helm chart** — production-ready Kubernetes deployment with separate ingress objects for proxy and admin
+- **Kubernetes Ingress management** — create, edit, and delete Ingress resources directly from the Topology view when running in-cluster
+- **Helm chart** — production-ready Kubernetes deployment with RBAC, service account, and admin ingress
 
 ## Quick Start
 
@@ -53,8 +54,6 @@ Before deploying, ensure your DNS is configured:
 helm repo add wenisch-tech https://charts.wenisch.tech
 helm repo update
 helm install proxera wenisch-tech/proxera \
-  --set ingress.proxy.enabled=true \
-  --set ingress.proxy.hosts[0].host=myapp.proxy.example.com \
   --set ingress.admin.enabled=true \
   --set ingress.admin.hosts[0].host=admin.proxera.example.com \
   -n proxera --create-namespace
@@ -196,7 +195,27 @@ You can add multiple routes per agent — each with a different domain or path p
 
 ---
 
-### Step 7 — Use It
+### Step 7 — Create a Proxy Ingress (Kubernetes)
+
+When running in Kubernetes, Proxera manages Kubernetes Ingress resources directly — no additional Helm values required. In the **Topology view**, click the **+** button in the **INGRESS** column to open the creation dialog.
+
+| Field | Example | Description |
+|-------|---------|-------------|
+| **Name** | `proxera-proxy` | Name of the Kubernetes Ingress resource |
+| **Class Name** | `nginx` | Ingress class (e.g. `nginx`, `traefik`) |
+| **Annotations** | `cert-manager.io/cluster-issuer: letsencrypt-prod` | Any additional Ingress annotations |
+| **Host** | `myapp.proxy.example.com` | Public hostname that routes to Proxera |
+| **Path** | `/` | Path prefix (use `/` to match all traffic) |
+| **Path Type** | `ImplementationSpecific` | Kubernetes path type |
+| **TLS** | ✓ | Enable TLS and reference a cert-manager secret |
+
+The ingress is created immediately in the same Kubernetes namespace as Proxera. Existing ingresses appear in the topology and can be edited or deleted from the same side panel.
+
+> **Local / Docker:** Ingress management is only available when running in-cluster. The topology shows an *Ingress — Not available* node when running outside Kubernetes.
+
+---
+
+### Step 8 — Use It
 
 With DNS already pointing `myapp.proxy.example.com` to the proxy ingress (see Prerequisites), the route is immediately reachable. For local Docker testing, pass the host header explicitly: `curl -H "Host: myapp.proxy.example.com" http://localhost:8080`.
 

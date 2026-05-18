@@ -111,68 +111,6 @@
                             "type": "array"
                         }
                     }
-                },
-                "proxy": {
-                    "type": "object",
-                    "properties": {
-                        "annotations": {
-                            "type": "object",
-                            "properties": {
-                                "nginx.ingress.kubernetes.io/proxy-body-size": {
-                                    "type": "string"
-                                },
-                                "nginx.ingress.kubernetes.io/proxy-buffering": {
-                                    "type": "string"
-                                },
-                                "nginx.ingress.kubernetes.io/proxy-connect-timeout": {
-                                    "type": "string"
-                                },
-                                "nginx.ingress.kubernetes.io/proxy-http-version": {
-                                    "type": "string"
-                                },
-                                "nginx.ingress.kubernetes.io/proxy-read-timeout": {
-                                    "type": "string"
-                                },
-                                "nginx.ingress.kubernetes.io/proxy-send-timeout": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "className": {
-                            "type": "string"
-                        },
-                        "enabled": {
-                            "type": "boolean"
-                        },
-                        "hosts": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "host": {
-                                        "type": "string"
-                                    },
-                                    "paths": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "path": {
-                                                    "type": "string"
-                                                },
-                                                "pathType": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        "tls": {
-                            "type": "array"
-                        }
-                    }
                 }
             }
         },

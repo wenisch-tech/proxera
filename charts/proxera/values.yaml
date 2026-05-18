@@ -30,22 +30,9 @@ service:
   type: ClusterIP
   port: 8080
 ingress:
-  proxy:
-    enabled: false
-    className: nginx
-    annotations:
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-      nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
-      nginx.ingress.kubernetes.io/proxy-buffering: "off"
-      nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-    hosts:
-      - host: proxy.example.com
-        paths:
-          - path: /
-            pathType: Prefix
-    tls: []
+  # Proxy ingress (the wildcard ingress that routes public traffic into Proxera)
+  # is managed at runtime by Proxera itself via the Topology UI when running in-cluster.
+  # Configure it there after deployment.
   admin:
     enabled: false
     className: nginx
