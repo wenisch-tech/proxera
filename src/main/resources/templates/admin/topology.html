@@ -194,6 +194,15 @@
         <!-- Top-right controls overlay -->
         <div id="topo-controls">
             <span class="px-live-badge" id="sse-status"><span class="px-live-dot"></span> Live</span>
+            <button class="btn btn-sm btn-outline-secondary" onclick="zoomOut()" title="Zoom Out">
+                <i class="bi bi-dash"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="zoomFit()" title="Fit to view">
+                <i class="bi bi-fullscreen"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="zoomIn()" title="Zoom In">
+                <i class="bi bi-plus"></i>
+            </button>
             <button class="btn btn-sm btn-outline-secondary" onclick="refreshTopology()" title="Refresh">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>

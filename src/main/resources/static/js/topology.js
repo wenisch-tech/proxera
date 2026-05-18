@@ -30,6 +30,7 @@ const MIN_GAP_H = 188;   // horizontal pitch between nodes in portrait (px)
 function isPortrait() { return canvasW < 700; }
 
 let svg, _defs, linkLayer, nodeLayer, canvasW, canvasH;
+let _zoom, _zoomG, _zoomInitialized = false;
 
 // Keep the last topology data for panel usage and theme re-rendering
 let _lastNodes = [];
@@ -280,8 +281,16 @@ function initGraph() {
     vig.append('stop').attr('offset', '100%').attr('stop-color', tv('--topo-vig-edge'));
     svg.append('rect').attr('width', '100%').attr('height', '100%').attr('fill', 'url(#bg-vig)');
 
-    linkLayer = svg.append('g').attr('class', 'links');
-    nodeLayer = svg.append('g').attr('class', 'nodes');
+    // Zoomable/pannable container — everything rendered inside here
+    _zoomG = svg.append('g').attr('class', 'zoom-root');
+
+    _zoom = d3.zoom()
+        .scaleExtent([0.12, 4])
+        .on('zoom', (e) => _zoomG.attr('transform', e.transform));
+    svg.call(_zoom).on('dblclick.zoom', null);
+
+    linkLayer = _zoomG.append('g').attr('class', 'links');
+    nodeLayer  = _zoomG.append('g').attr('class', 'nodes');
 
     // Click on SVG background closes panel
     svg.on('click', () => closePanel());
@@ -323,6 +332,7 @@ function renderGraph(data) {
     linkLayer.selectAll('*').remove();
     nodeLayer.selectAll('*').remove();
     svg.selectAll('.col-label, .col-div').remove();
+    _zoomG.selectAll('.col-label, .col-div').remove();
 
     // ── Column / row labels ────────────────────────────────────────────────────
     const seen = new Set(data.nodes.map(n => n.type));
@@ -331,7 +341,7 @@ function renderGraph(data) {
         // Row labels: left-aligned, above each row
         Object.entries(COL_LABEL).forEach(([type, label]) => {
             if (!seen.has(type)) return;
-            svg.append('text').attr('class', 'col-label')
+            _zoomG.append('text').attr('class', 'col-label')
                 .attr('x', 12).attr('y', ROW_Y[type] * canvasH - CH / 2 - 8)
                 .attr('text-anchor', 'start')
                 .attr('font-size', '7.5px').attr('font-weight', '700').attr('letter-spacing', '.20em')
@@ -341,7 +351,7 @@ function renderGraph(data) {
         // Horizontal row dividers
         [(ROW_Y.ingress + ROW_Y.server) / 2 * canvasH, (ROW_Y.server + ROW_Y.agent) / 2 * canvasH, (ROW_Y.agent + ROW_Y.route) / 2 * canvasH]
             .forEach(y => {
-                svg.append('line').attr('class', 'col-div')
+                _zoomG.append('line').attr('class', 'col-div')
                     .attr('x1', 24).attr('y1', y).attr('x2', canvasW - 24).attr('y2', y)
                     .attr('stroke', tv('--topo-col-div')).attr('stroke-width', 1)
                     .attr('stroke-dasharray', '3,9');
@@ -350,7 +360,7 @@ function renderGraph(data) {
         // Vertical column labels (landscape)
         Object.entries(COL_LABEL).forEach(([type, label]) => {
             if (!seen.has(type)) return;
-            svg.append('text').attr('class', 'col-label')
+            _zoomG.append('text').attr('class', 'col-label')
                 .attr('x', COL_X[type] * canvasW).attr('y', 24)
                 .attr('text-anchor', 'middle')
                 .attr('font-size', '7.5px').attr('font-weight', '700').attr('letter-spacing', '.20em')
@@ -360,7 +370,7 @@ function renderGraph(data) {
         // Vertical column dividers
         [(COL_X.ingress + COL_X.server) / 2 * canvasW, (COL_X.server + COL_X.agent) / 2 * canvasW, (COL_X.agent + COL_X.route) / 2 * canvasW]
             .forEach(x => {
-                svg.append('line').attr('class', 'col-div')
+                _zoomG.append('line').attr('class', 'col-div')
                     .attr('x1', x).attr('y1', 40).attr('x2', x).attr('y2', canvasH - 24)
                     .attr('stroke', tv('--topo-col-div')).attr('stroke-width', 1)
                     .attr('stroke-dasharray', '3,9');
@@ -606,6 +616,12 @@ function renderGraph(data) {
             openPanel(d, _lastNodes, _lastLinks);
         });
     });
+
+    // Auto-fit all nodes into view on the very first render
+    if (!_zoomInitialized) {
+        _zoomInitialized = true;
+        fitToView(false);
+    }
 }
 
 // ── Panel management ───────────────────────────────────────────────────────────
@@ -998,7 +1014,7 @@ function reinitAndRender() {
     if (!el) return;
     // Clear existing SVG
     while (el.firstChild) el.removeChild(el.firstChild);
-    svg = null; linkLayer = null; nodeLayer = null; _defs = null;
+    svg = null; linkLayer = null; nodeLayer = null; _defs = null; _zoomG = null; _zoomInitialized = false;
     initGraph();
     if (_lastData.nodes.length) renderGraph(_lastData);
 }
@@ -1028,3 +1044,38 @@ window.addEventListener('resize', () => {
     svg.attr('height', canvasH);
     if (_lastData.nodes.length) renderGraph(_lastData);
 });
+
+// ── Zoom controls ──────────────────────────────────────────────────────────────
+function fitToView(animate) {
+    const positioned = _lastNodes.filter(n => n.x && n.y);
+    if (!positioned.length || !_zoom || !svg) return;
+    const pad = 20;
+    let x0 = Math.min(...positioned.map(n => n.x)) - CW / 2 - pad;
+    let y0 = Math.min(...positioned.map(n => n.y)) - CH / 2 - pad;
+    let x1 = Math.max(...positioned.map(n => n.x)) + CW / 2 + pad;
+    let y1 = Math.max(...positioned.map(n => n.y)) + CH / 2 + pad + 20; // +20 for IP labels
+
+    // Expand to include column/row labels which live outside the node bounding box
+    if (isPortrait()) {
+        // Row labels sit at x=12, y = ROW_Y[type]*canvasH - CH/2 - 8
+        x0 = Math.min(x0, 0);
+        y0 = Math.min(y0, ROW_Y.ingress * canvasH - CH / 2 - 20);
+        y1 = Math.max(y1, ROW_Y.route * canvasH + CH / 2 + pad);
+    } else {
+        // Col labels sit at y=24; span from ingress col to route col
+        y0 = Math.min(y0, 8);
+        x0 = Math.min(x0, COL_X.ingress * canvasW - CW / 2 - pad);
+        x1 = Math.max(x1, COL_X.route  * canvasW + CW / 2 + pad);
+    }
+
+    const bw = x1 - x0, bh = y1 - y0;
+    const scale = Math.min(canvasW / bw, canvasH / bh, 2);
+    const tx = (canvasW - scale * (x0 + x1)) / 2;
+    const ty = (canvasH - scale * (y0 + y1)) / 2;
+    const transform = d3.zoomIdentity.translate(tx, ty).scale(scale);
+    (animate ? svg.transition().duration(480) : svg).call(_zoom.transform, transform);
+}
+
+function zoomIn()  { if (_zoom && svg) svg.transition().duration(260).call(_zoom.scaleBy, 1.4); }
+function zoomOut() { if (_zoom && svg) svg.transition().duration(260).call(_zoom.scaleBy, 1 / 1.4); }
+function zoomFit() { fitToView(true); }
