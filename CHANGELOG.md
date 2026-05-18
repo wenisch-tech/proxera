@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.4.0 - 2026-05-18
+
+## [0.4.0](https://github.com/wenisch-tech/proxera/compare/v0.3.4...v0.4.0) (2026-05-18)
+
+
+### Features
+
+* Added support for renaming an agent ([daad054](https://github.com/wenisch-tech/proxera/commit/daad054a9706b26d6205e924bab019a2c96d9af5))
+
+
+### Bug Fixes
+
+* Strip path option is disabled per default ([d51a9c2](https://github.com/wenisch-tech/proxera/commit/d51a9c2eeb65ddef5497661c4f482ffdbf1e30ea))
+* update color scheme for light view ([ee17c28](https://github.com/wenisch-tech/proxera/commit/ee17c28810f58dd4c22c124a65b9781eeabfa637))
+* Updated live log entries not properly shown on topology view ([99e95f7](https://github.com/wenisch-tech/proxera/commit/99e95f779527483e7ec7da619169b3a67f4b8d60))
+* updated unused imports in LogController ([4806733](https://github.com/wenisch-tech/proxera/commit/4806733ba69b8f7206221deb10c21e5e4aeeef85))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.4.0
+
+
 ## v0.3.4 - 2026-05-17
 
 ### [0.3.4](https://github.com/wenisch-tech/proxera/compare/v0.3.3...v0.3.4) (2026-05-17)
