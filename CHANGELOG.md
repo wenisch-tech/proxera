@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.6.0 - 2026-05-18
+
+## [0.6.0](https://github.com/wenisch-tech/proxera/compare/v0.5.2...v0.6.0) (2026-05-18)
+
+
+### Features
+
+* added functionality to minimize / maximize live log on topology ([3432d6c](https://github.com/wenisch-tech/proxera/commit/3432d6c258e6e89f497b13826a24a7bcc00a97a9))
+* Added Highlight function when hovering elements in topology ([28c8604](https://github.com/wenisch-tech/proxera/commit/28c8604f9dcd99a8b3b3d08162fe6cd62a28dbab))
+* added zoom functionality for topology ([c4fc796](https://github.com/wenisch-tech/proxera/commit/c4fc796ac45ad7d218437f65bcf7020be9365a3a))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.6.0
+
+
 ## v0.5.2 - 2026-05-18
 
 ### [0.5.2](https://github.com/wenisch-tech/proxera/compare/v0.5.1...v0.5.2) (2026-05-18)
