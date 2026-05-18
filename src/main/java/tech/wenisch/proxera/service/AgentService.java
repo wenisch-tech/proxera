@@ -46,6 +46,17 @@ public class AgentService {
     }
 
     @Transactional
+    public void rename(UUID id, String newName) {
+        if (agentRepository.existsByName(newName)) {
+            throw new IllegalArgumentException("Agent name already exists: " + newName);
+        }
+        agentRepository.findById(id).ifPresent(agent -> {
+            agent.setName(newName);
+            agentRepository.save(agent);
+        });
+    }
+
+    @Transactional
     public void delete(UUID id) {
         agentRepository.deleteById(id);
     }

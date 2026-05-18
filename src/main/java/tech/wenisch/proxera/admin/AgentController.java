@@ -59,6 +59,17 @@ public class AgentController {
         }
     }
 
+    @PostMapping("/{id}/rename")
+    public String rename(@PathVariable UUID id, @RequestParam String name, RedirectAttributes ra) {
+        try {
+            agentService.rename(id, name);
+            ra.addFlashAttribute("success", "Agent renamed to '" + name + "'.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/agents/" + id;
+    }
+
     @PostMapping("/{id}/token")
     public String generateToken(@PathVariable UUID id, RedirectAttributes ra) {
         try {
