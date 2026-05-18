@@ -7,6 +7,7 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
+      - '.github/workflows/docs-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -14,12 +15,13 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout
@@ -41,6 +43,45 @@ jobs:
         with:
           path: site/
 
+      - name: Upload site as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-docs
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Checkout website repository
+        uses: actions/checkout@v6
+        with:
+          repository: wenisch-tech/proxera-website
+          token: ${{ secrets.GITHUBTOKEN }}
+          path: proxera-website
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-docs
+          path: ./site
+
+      - name: Copy documentation to website repository
+        run: |
+          cp -r ./site/* ./proxera-website/docs/
+
+      - name: Commit and push to website repository
+        run: |
+          cd proxera-website
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --quiet && git diff --staged --quiet || (git commit -m "docs: update documentation from proxera repo" && git push)
