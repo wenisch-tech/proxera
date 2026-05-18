@@ -839,3 +839,55 @@ code.user-select-all {
     :root { --px-panel-w: 100vw; }
 }
 
+/* ── Panel: light mode overrides ─────────────────────────────────────── */
+[data-bs-theme="light"] .px-panel {
+    background: #ffffff;
+    border-left-color: rgba(0, 0, 0, 0.12);
+}
+[data-bs-theme="light"] .px-panel.open {
+    box-shadow: -16px 0 48px rgba(0, 0, 0, 0.10);
+}
+[data-bs-theme="light"] .px-panel-header {
+    background: #f8fafc;
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+[data-bs-theme="light"] .px-panel-badge {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.10);
+    color: rgba(0, 0, 0, 0.50);
+}
+[data-bs-theme="light"] .px-panel-section {
+    border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+[data-bs-theme="light"] .px-panel-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+[data-bs-theme="light"] .px-panel-action {
+    color: #475569;
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+[data-bs-theme="light"] .px-panel-action:hover {
+    color: #1e293b;
+    background: rgba(0, 0, 0, 0.07);
+    border-color: rgba(0, 0, 0, 0.22);
+}
+[data-bs-theme="light"] .px-panel-action-warn {
+    color: #b45309;
+    border-color: rgba(180, 83, 9, 0.25);
+}
+[data-bs-theme="light"] .px-panel-action-warn:hover {
+    color: #92400e;
+    background: rgba(180, 83, 9, 0.07);
+    border-color: rgba(180, 83, 9, 0.40);
+}
+[data-bs-theme="light"] .px-panel-action-danger {
+    color: #dc2626;
+    border-color: rgba(220, 38, 38, 0.25);
+}
+[data-bs-theme="light"] .px-panel-action-danger:hover {
+    color: #b91c1c;
+    background: rgba(220, 38, 38, 0.07);
+    border-color: rgba(220, 38, 38, 0.40);
+}
+

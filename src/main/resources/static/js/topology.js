@@ -16,6 +16,10 @@ function tv(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+function isLightMode() {
+    return document.documentElement.getAttribute('data-bs-theme') === 'light';
+}
+
 // ── Column fractions of canvas width ──────────────────────────────────────────
 const COL_X     = { server: 0.12, agent: 0.45, route: 0.80 };
 const ROW_Y     = { server: 0.15, agent: 0.48, route: 0.82 };  // portrait fractions of canvasH
@@ -34,17 +38,18 @@ let _lastData  = { nodes: [], links: [] };
 
 // ── Color palette per node state ───────────────────────────────────────────────
 function palette(d) {
+    const lm = isLightMode();
     if (d.type === 'server')
-        return { accent: '#818cf8', glow: '#4338ca', border: 'rgba(129,140,248,0.55)', muted: '#c7d2fe' };
+        return { accent: '#818cf8', glow: '#4338ca', border: 'rgba(129,140,248,0.55)', muted: lm ? '#4338ca' : '#c7d2fe' };
     if (d.type === 'agent' && d.connected)
-        return { accent: '#34d399', glow: '#059669', border: 'rgba(52,211,153,0.50)', muted: '#a7f3d0' };
+        return { accent: '#34d399', glow: '#059669', border: 'rgba(52,211,153,0.50)', muted: lm ? '#047857' : '#a7f3d0' };
     if (d.type === 'agent')
-        return { accent: '#64748b', glow: '#1e293b', border: 'rgba(100,116,139,0.38)', muted: '#94a3b8' };
+        return { accent: '#64748b', glow: '#1e293b', border: 'rgba(100,116,139,0.38)', muted: lm ? '#475569' : '#94a3b8' };
     if (d.type === 'add-agent' || d.type === 'add-route')
-        return { accent: '#475569', glow: '#1e293b', border: 'rgba(71,85,105,0.35)', muted: '#64748b' };
+        return { accent: '#475569', glow: '#1e293b', border: 'rgba(71,85,105,0.35)', muted: lm ? '#475569' : '#64748b' };
     if (d.enabled !== false)
-        return { accent: '#fbbf24', glow: '#b45309', border: 'rgba(251,191,36,0.45)', muted: '#fde68a' };
-    return { accent: '#64748b', glow: '#1e293b', border: 'rgba(100,116,139,0.38)', muted: '#94a3b8' };
+        return { accent: '#fbbf24', glow: '#b45309', border: 'rgba(251,191,36,0.45)', muted: lm ? '#92400e' : '#fde68a' };
+    return { accent: '#64748b', glow: '#1e293b', border: 'rgba(100,116,139,0.38)', muted: lm ? '#475569' : '#94a3b8' };
 }
 
 function metaLabel(d) {
@@ -416,19 +421,25 @@ function renderGraph(data) {
             g.append('rect').attr('width', CW).attr('height', CH).attr('rx', CR)
                 .attr('fill', tv('--topo-card-bg')).attr('filter', 'url(#card-shadow)');
 
-            // ③ Icon zone: gradient fading from accent color to transparent
-            const izgId  = `izg${i}`;
+            // ③ Icon zone: solid fill in light mode, left-to-right gradient in dark mode
             const clipId = `clip${i}`;
             _defs.append('clipPath').attr('class', 'dyn').attr('id', clipId)
                 .append('rect').attr('width', CW).attr('height', CH).attr('rx', CR);
-            _defs.append('linearGradient').attr('class', 'dyn').attr('id', izgId)
-                .attr('x1', '0%').attr('x2', '100%').attr('y1', '0%').attr('y2', '0%')
-                .call(gr => {
-                    gr.append('stop').attr('offset', '0%').attr('stop-color', col.glow).attr('stop-opacity', 0.32);
-                    gr.append('stop').attr('offset', '100%').attr('stop-color', col.glow).attr('stop-opacity', 0);
-                });
-            g.append('rect').attr('width', IW).attr('height', CH)
-                .attr('fill', `url(#${izgId})`).attr('clip-path', `url(#${clipId})`);
+            if (isLightMode()) {
+                g.append('rect').attr('width', IW).attr('height', CH)
+                    .attr('fill', col.accent).attr('fill-opacity', 0.18)
+                    .attr('clip-path', `url(#${clipId})`);
+            } else {
+                const izgId = `izg${i}`;
+                _defs.append('linearGradient').attr('class', 'dyn').attr('id', izgId)
+                    .attr('x1', '0%').attr('x2', '100%').attr('y1', '0%').attr('y2', '0%')
+                    .call(gr => {
+                        gr.append('stop').attr('offset', '0%').attr('stop-color', col.glow).attr('stop-opacity', 0.32);
+                        gr.append('stop').attr('offset', '100%').attr('stop-color', col.glow).attr('stop-opacity', 0);
+                    });
+                g.append('rect').attr('width', IW).attr('height', CH)
+                    .attr('fill', `url(#${izgId})`).attr('clip-path', `url(#${clipId})`);
+            }
 
             // ④ Vertical separator between icon zone and text zone
             g.append('line')
@@ -561,9 +572,9 @@ function buildAgentPanel(d, routes, csrf, csrfParam) {
             <div class="px-panel-item" onclick="window.location='/admin/routes/${r.id}'" style="cursor:pointer;">
                 <span class="px-panel-item-dot" style="background:${r.enabled !== false ? '#fbbf24' : '#64748b'};"></span>
                 <span>${escHtml(r.name)}</span>
-                <span class="ms-auto" style="color:rgba(255,255,255,0.30); font-size:.78rem;">${escHtml(r.target || '')}</span>
+                <span class="ms-auto" style="color:var(--px-muted); font-size:.78rem;">${escHtml(r.target || '')}</span>
             </div>`).join('')
-        : '<p class="mb-0" style="color:rgba(255,255,255,0.3); font-size:.83rem;">No routes assigned.</p>';
+        : '<p class="mb-0" style="color:var(--px-muted); font-size:.83rem;">No routes assigned.</p>';
 
     return `
         <div class="px-panel-section">
@@ -574,8 +585,8 @@ function buildAgentPanel(d, routes, csrf, csrfParam) {
                 <span class="px-panel-badge ms-2">${escHtml(d.status || '')}</span>
             </div>
             <div class="px-panel-meta mt-2">
-                <span style="color:rgba(255,255,255,0.3);">ID</span>&nbsp;
-                <code style="font-size:.72rem; color:rgba(255,255,255,0.55);">${escHtml(d.id)}</code>
+                <span style="color:var(--px-muted);">ID</span>&nbsp;
+                <code style="font-size:.72rem; color:var(--px-text);">${escHtml(d.id)}</code>
             </div>
         </div>
 
@@ -621,7 +632,7 @@ function buildRoutePanel(d, agentNode, csrf, csrfParam) {
                      style="background:${agentNode.connected ? '#34d399' : '#64748b'};"></span>
                <span>${escHtml(agentNode.name)}</span>
            </div>`
-        : '<p class="mb-0" style="color:rgba(255,255,255,0.3); font-size:.83rem;">No agent assigned.</p>';
+        : '<p class="mb-0" style="color:var(--px-muted); font-size:.83rem;">No agent assigned.</p>';
 
     return `
         <div class="px-panel-section">
@@ -631,12 +642,12 @@ function buildRoutePanel(d, agentNode, csrf, csrfParam) {
                 <span class="px-panel-status-text">${enabledText}</span>
             </div>
             <div class="px-panel-meta mt-2">
-                <i class="bi bi-arrow-right-circle me-1" style="color:rgba(255,255,255,0.3);"></i>
-                <code style="font-size:.8rem; color:rgba(255,255,255,0.6);">${escHtml(d.target || '—')}</code>
+                <i class="bi bi-arrow-right-circle me-1" style="color:var(--px-muted);"></i>
+                <code style="font-size:.8rem; color:var(--px-text);">${escHtml(d.target || '—')}</code>
             </div>
             <div class="px-panel-meta mt-1">
-                <span style="color:rgba(255,255,255,0.3);">ID</span>&nbsp;
-                <code style="font-size:.72rem; color:rgba(255,255,255,0.55);">${escHtml(d.id)}</code>
+                <span style="color:var(--px-muted);">ID</span>&nbsp;
+                <code style="font-size:.72rem; color:var(--px-text);">${escHtml(d.id)}</code>
             </div>
         </div>
 
@@ -671,7 +682,7 @@ function buildAddRoutePanel() {
             <div style="font-size:3rem; color:rgba(251,191,36,0.45); margin-bottom:1rem;">
                 <i class="bi bi-signpost-split"></i>
             </div>
-            <p style="color:rgba(255,255,255,0.45); font-size:.88rem; line-height:1.6; margin-bottom:1.75rem;">
+            <p style="color:var(--px-muted); font-size:.88rem; line-height:1.6; margin-bottom:1.75rem;">
                 Create a new route to expose a LAN service through an agent tunnel.
             </p>
             <a href="/admin/routes/new" class="px-panel-action" style="display:block; text-align:center; justify-content:center;">

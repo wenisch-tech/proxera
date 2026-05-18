@@ -127,6 +127,33 @@
             vertical-align: middle;
             margin-right: 4px;
         }
+
+        /* ── Light mode overrides ── */
+        [data-bs-theme="light"] #topology-canvas { background: #eef1f6; }
+        [data-bs-theme="light"] #topo-legend { color: rgba(0,0,0,0.55); }
+        [data-bs-theme="light"] #topo-log {
+            background: rgba(255,255,255,0.95);
+            border-color: rgba(0,0,0,0.12);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        }
+        [data-bs-theme="light"] .topo-log-header {
+            border-bottom-color: rgba(0,0,0,0.07);
+            color: rgba(0,0,0,0.45);
+        }
+        [data-bs-theme="light"] .topo-log-entry { border-bottom-color: rgba(0,0,0,0.05); }
+        [data-bs-theme="light"] .topo-log-entry:hover { background: rgba(0,0,0,0.03); }
+        [data-bs-theme="light"] .topo-log-time { color: rgba(0,0,0,0.40); }
+        [data-bs-theme="light"] .topo-log-route { color: rgba(0,0,0,0.40); }
+        [data-bs-theme="light"] .topo-log-path { color: rgba(0,0,0,0.65); }
+        [data-bs-theme="light"] .topo-log-empty { color: rgba(0,0,0,0.30); }
+        [data-bs-theme="light"] .topo-log-footer {
+            border-top-color: rgba(0,0,0,0.07);
+            color: rgba(0,0,0,0.40);
+        }
+        [data-bs-theme="light"] .topo-log-footer:hover {
+            color: rgba(0,0,0,0.70);
+            background: rgba(0,0,0,0.03);
+        }
     </style>
 </th:block>
 
