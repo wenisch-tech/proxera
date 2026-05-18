@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.5.2 - 2026-05-18
+
+### [0.5.2](https://github.com/wenisch-tech/proxera/compare/v0.5.1...v0.5.2) (2026-05-18)
+
+
+### Documentation
+
+* updated getting-started guide ([6d1631e](https://github.com/wenisch-tech/proxera/commit/6d1631e6d8bb1f66205422ac809961055a20e738))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.5.2
+
+
 ## v0.5.1 - 2026-05-18
 
 ### [0.5.1](https://github.com/wenisch-tech/proxera/compare/v0.5.0...v0.5.1) (2026-05-18)
