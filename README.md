@@ -40,10 +40,12 @@ Before deploying, ensure your DNS is configured:
 
 | Domain | Target | Purpose |
 |--------|--------|---------|
-| `myapp.proxy.example.com` | Proxera proxy ingress IP / CNAME | Public hostname for all routed services and agent WebSocket tunnel |
-| `admin.proxera.example.com` | Proxera admin ingress IP / CNAME | Admin UI and REST API access |
+| `app.intranet.example.com` | Proxera proxy ingress IP / CNAME | Public hostname for all routed services |
+| `admin.proxera.example.com` | Proxera admin ingress IP / CNAME | Admin UI, REST API access and agent WebSocket tunnel |
 
 > Both records must resolve before the agent can connect and before routed domains become reachable.
+
+> **Tip — Wildcard DNS:** Proxera supports dynamic Ingress creation directly from the Topology UI. To avoid adding a new DNS record for every service you expose, configure a wildcard entry `*.intranet.example.com` pointing to the proxy ingress IP / CNAME. Any subdomain you later create as an Ingress host will resolve automatically.
 
 ---
 
@@ -122,14 +124,14 @@ helm repo update
 helm upgrade --install proxera-agent wenisch-tech/proxera-agent \
   --namespace proxera \
   --create-namespace \
-  --set config.serverUrl="wss://tunnel.proxy.example.com/tunnel" \
+  --set config.serverUrl="wss://admin.proxera.example.com/tunnel" \
   --set secret.apiKey="<registration-token>"
 ```
 
 **Docker:**
 ```bash
 docker run -d --name proxera-agent \
-  -e PROXERA_SERVER_URL=wss://tunnel.proxy.example.com/tunnel \
+  -e PROXERA_SERVER_URL=wss://admin.proxera.example.com/tunnel \
   -e PROXERA_API_KEY=<registration-token> \
   ghcr.io/wenisch-tech/proxera-agent:latest
 ```
@@ -146,7 +148,7 @@ sha256sum -c SHA256SUMS --ignore-missing
 # Run
 chmod +x proxera-agent-linux-amd64
 ./proxera-agent-linux-amd64 \
-  --server-url wss://tunnel.proxy.example.com/tunnel \
+  --server-url wss://admin.proxera.example.com/tunnel \
   --api-key "<registration-token>"
 ```
 
@@ -157,7 +159,7 @@ Invoke-WebRequest -Uri "https://github.com/wenisch-tech/proxera-agent/releases/l
 
 # Run
 .\proxera-agent.exe `
-  --server-url wss://tunnel.proxy.example.com/tunnel `
+  --server-url wss://admin.proxera.example.com/tunnel `
   --api-key "<registration-token>"
 ```
 
@@ -204,7 +206,7 @@ When running in Kubernetes, Proxera manages Kubernetes Ingress resources directl
 | **Name** | `proxera-proxy` | Name of the Kubernetes Ingress resource |
 | **Class Name** | `nginx` | Ingress class (e.g. `nginx`, `traefik`) |
 | **Annotations** | `cert-manager.io/cluster-issuer: letsencrypt-prod` | Any additional Ingress annotations |
-| **Host** | `myapp.proxy.example.com` | Public hostname that routes to Proxera |
+| **Host** | `app.intranet.example.com` | Public hostname that routes to Proxera |
 | **Path** | `/` | Path prefix (use `/` to match all traffic) |
 | **Path Type** | `ImplementationSpecific` | Kubernetes path type |
 | **TLS** | ✓ | Enable TLS and reference a cert-manager secret |
@@ -217,9 +219,9 @@ The ingress is created immediately in the same Kubernetes namespace as Proxera. 
 
 ### Step 8 — Use It
 
-With DNS already pointing `myapp.proxy.example.com` to the proxy ingress (see Prerequisites), the route is immediately reachable. For local Docker testing, pass the host header explicitly: `curl -H "Host: myapp.proxy.example.com" http://localhost:8080`.
+With DNS already pointing `app.intranet.example.com` to the proxy ingress (see Prerequisites), the route is immediately reachable. For local Docker testing, pass the host header explicitly: `curl -H "Host: myapp.proxy.example.com" http://localhost:8080`.
 
-Any HTTP request to `https://myapp.proxy.example.com` is now:
+Any HTTP request to `https://app.intranet.example.com` is now:
 
 1. Received by the **Proxera Server**
 2. Matched against your routes by domain + path prefix
