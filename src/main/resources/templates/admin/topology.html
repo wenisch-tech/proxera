@@ -162,6 +162,15 @@
     <div style="position:relative;">
         <div id="topology-canvas"></div>
 
+        <!-- Error alert overlay (from redirect flash attribute) -->
+        <div th:if="${error}" style="position:fixed; top:calc(var(--px-navbar-h) + 14px); left:50%; transform:translateX(-50%); z-index:9999; max-width:480px; width:90%;">
+            <div class="alert alert-danger alert-dismissible fade show mb-0" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+
         <!-- Top-right controls overlay -->
         <div id="topo-controls">
             <span class="px-live-badge" id="sse-status"><span class="px-live-dot"></span> Live</span>
@@ -172,6 +181,7 @@
 
         <!-- Bottom-left legend overlay -->
         <div id="topo-legend">
+            <span><span class="topo-legend-dot" style="background:#22d3ee;"></span>Ingress</span>
             <span><span class="topo-legend-dot" style="background:#818cf8;"></span>Proxy Server</span>
             <span><span class="topo-legend-dot" style="background:#34d399;"></span>Connected Agent</span>
             <span><span class="topo-legend-dot" style="background:#64748b;"></span>Offline Agent</span>
@@ -229,6 +239,77 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-plus-lg me-1"></i>Create Agent
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Ingress Modal -->
+    <div class="modal fade" id="newIngressModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form th:action="@{/admin/ingresses}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-cloud-arrow-up me-2"></i>New Ingress</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required placeholder="my-ingress"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Class Name</label>
+                            <input type="text" name="className" class="form-control" placeholder="nginx"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label d-flex justify-content-between">
+                                Annotations
+                                <button type="button" class="btn btn-link btn-sm p-0"
+                                        onclick="addIngressAnnotationRow('newIngress-annotations')">
+                                    <i class="bi bi-plus-circle"></i> Add
+                                </button>
+                            </label>
+                            <div id="newIngress-annotations"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Host</label>
+                            <input type="text" name="host" class="form-control" placeholder="example.com"/>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col">
+                                <label class="form-label">Path</label>
+                                <input type="text" name="path" class="form-control" value="/" placeholder="/"/>
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Path Type</label>
+                                <select name="pathType" class="form-select">
+                                    <option value="ImplementationSpecific" selected>ImplementationSpecific</option>
+                                    <option value="Prefix">Prefix</option>
+                                    <option value="Exact">Exact</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tlsEnabled" value="true"
+                                       id="newIngress-tls"
+                                       onchange="document.getElementById('newIngress-tls-secret').classList.toggle('d-none', !this.checked)">
+                                <label class="form-check-label" for="newIngress-tls">Enable TLS</label>
+                            </div>
+                        </div>
+                        <div class="mb-3 d-none" id="newIngress-tls-secret">
+                            <label class="form-label">TLS Secret Name</label>
+                            <input type="text" name="tlsSecretName" class="form-control" placeholder="my-tls-secret"/>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i>Create Ingress
                         </button>
                     </div>
                 </form>

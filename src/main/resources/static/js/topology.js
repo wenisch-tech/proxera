@@ -21,9 +21,9 @@ function isLightMode() {
 }
 
 // ── Column fractions of canvas width ──────────────────────────────────────────
-const COL_X     = { server: 0.12, agent: 0.45, route: 0.80 };
-const ROW_Y     = { server: 0.15, agent: 0.48, route: 0.82 };  // portrait fractions of canvasH
-const COL_LABEL = { server: 'PROXY SERVER', agent: 'AGENTS', route: 'ROUTES' };
+const COL_X     = { ingress: 0.07, server: 0.27, agent: 0.52, route: 0.80 };
+const ROW_Y     = { ingress: 0.09, server: 0.30, agent: 0.57, route: 0.82 };  // portrait fractions of canvasH
+const COL_LABEL = { ingress: 'INGRESS', server: 'PROXY SERVER', agent: 'AGENTS', route: 'ROUTES' };
 const MIN_GAP   = 118;   // vertical pitch between nodes in landscape (px)
 const MIN_GAP_H = 188;   // horizontal pitch between nodes in portrait (px)
 
@@ -45,8 +45,12 @@ function palette(d) {
         return { accent: '#34d399', glow: '#059669', border: 'rgba(52,211,153,0.50)', muted: lm ? '#047857' : '#a7f3d0' };
     if (d.type === 'agent')
         return { accent: '#64748b', glow: '#1e293b', border: 'rgba(100,116,139,0.38)', muted: lm ? '#475569' : '#94a3b8' };
-    if (d.type === 'add-agent' || d.type === 'add-route')
+    if (d.type === 'add-agent' || d.type === 'add-route' || d.type === 'add-ingress')
         return { accent: '#475569', glow: '#1e293b', border: 'rgba(71,85,105,0.35)', muted: lm ? '#475569' : '#64748b' };
+    if (d.type === 'ingress')
+        return { accent: '#22d3ee', glow: '#0891b2', border: 'rgba(34,211,238,0.50)', muted: lm ? '#0e7490' : '#a5f3fc' };
+    if (d.type === 'ingress-unavailable')
+        return { accent: '#475569', glow: '#1e293b', border: 'rgba(71,85,105,0.30)', muted: lm ? '#64748b' : '#64748b' };
     if (d.enabled !== false)
         return { accent: '#fbbf24', glow: '#b45309', border: 'rgba(251,191,36,0.45)', muted: lm ? '#92400e' : '#fde68a' };
     return { accent: '#64748b', glow: '#1e293b', border: 'rgba(100,116,139,0.38)', muted: lm ? '#475569' : '#94a3b8' };
@@ -54,11 +58,14 @@ function palette(d) {
 
 function metaLabel(d) {
     const trim = (s, n) => s.length > n ? s.slice(0, n - 1) + '\u2026' : s;
-    if (d.type === 'server')    return 'Reverse Proxy  \u00b7  Active';
-    if (d.type === 'add-agent') return 'Click to create';
-    if (d.type === 'add-route') return 'Click to create';
-    if (d.type === 'agent')     return d.connected ? '\u25cf Online' : '\u25cb Offline';
-    if (d.target)               return '\u2192 ' + trim(String(d.target), 18);
+    if (d.type === 'server')             return 'Reverse Proxy  \u00b7  Active';
+    if (d.type === 'add-agent')          return 'Click to create';
+    if (d.type === 'add-route')          return 'Click to create';
+    if (d.type === 'add-ingress')        return 'Click to create';
+    if (d.type === 'ingress')            return d.host ? trim(d.host, 20) : '\u25cf Active';
+    if (d.type === 'ingress-unavailable') return 'Not available';
+    if (d.type === 'agent')             return d.connected ? '\u25cf Online' : '\u25cb Offline';
+    if (d.target)                        return '\u2192 ' + trim(String(d.target), 18);
     return d.enabled !== false ? '\u25cf Enabled' : '\u25cb Disabled';
 }
 
@@ -66,12 +73,36 @@ function metaLabel(d) {
 function drawIcon(g, d) {
     const c = palette(d).accent;
 
-    if (d.type === 'add-agent' || d.type === 'add-route') {
+    if (d.type === 'add-agent' || d.type === 'add-route' || d.type === 'add-ingress') {
         // Big "+" icon
         g.append('line').attr('x1', 0).attr('y1', -9).attr('x2', 0).attr('y2', 9)
             .attr('stroke', c).attr('stroke-width', 2.2).attr('stroke-linecap', 'round');
         g.append('line').attr('x1', -9).attr('y1', 0).attr('x2', 9).attr('y2', 0)
             .attr('stroke', c).attr('stroke-width', 2.2).attr('stroke-linecap', 'round');
+        return;
+    }
+
+    if (d.type === 'ingress' || d.type === 'ingress-unavailable') {
+        const op = d.type === 'ingress-unavailable' ? 0.45 : 1;
+        // Cloud outline
+        g.append('path')
+            .attr('d', 'M-10,3 A6,6 0 0,1 -4,-3 A5,5 0 0,1 5,-6 A5,5 0 0,1 10,0 A4,4 0 0,1 10,8 L-10,8 A4,4 0 0,1 -10,3 Z')
+            .attr('fill', 'none').attr('stroke', c).attr('stroke-width', 1.5)
+            .attr('stroke-linejoin', 'round').attr('opacity', op);
+        if (d.type === 'ingress') {
+            // Arrow pointing down (traffic coming in)
+            g.append('line').attr('x1', 0).attr('y1', -10).attr('x2', 0).attr('y2', -6)
+                .attr('stroke', c).attr('stroke-width', 1.5).attr('stroke-linecap', 'round');
+            g.append('path').attr('d', 'M-3,-8 L0,-5 L3,-8')
+                .attr('fill', 'none').attr('stroke', c).attr('stroke-width', 1.5)
+                .attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round');
+        } else {
+            // X mark for unavailable
+            g.append('line').attr('x1', -3).attr('y1', -10).attr('x2', 3).attr('y2', -5)
+                .attr('stroke', c).attr('stroke-width', 1.5).attr('stroke-linecap', 'round').attr('opacity', op);
+            g.append('line').attr('x1', 3).attr('y1', -10).attr('x2', -3).attr('y2', -5)
+                .attr('stroke', c).attr('stroke-width', 1.5).attr('stroke-linecap', 'round').attr('opacity', op);
+        }
         return;
     }
 
@@ -109,26 +140,31 @@ function drawIcon(g, d) {
 
 // ── Column layout (includes placeholder nodes) ─────────────────────────────────
 function computeLayout(nodes) {
-    const groups = { server: [], agent: [], route: [], 'add-agent': [], 'add-route': [] };
+    const groups = {
+        server: [], agent: [], route: [],
+        'add-agent': [], 'add-route': [],
+        ingress: [], 'ingress-unavailable': [], 'add-ingress': []
+    };
     nodes.forEach(n => { if (groups[n.type]) groups[n.type].push(n); });
 
     if (isPortrait()) {
         // Portrait: rows (top → bottom), nodes spread horizontally within each row
-        ['server', 'agent', 'route'].forEach(type => {
+        ['ingress', 'ingress-unavailable', 'server', 'agent', 'route'].forEach(type => {
+            const rowKey = (type === 'ingress-unavailable') ? 'ingress' : type;
             const group = groups[type];
             if (!group.length) return;
-            const cy   = ROW_Y[type] * canvasH;
+            const cy   = ROW_Y[rowKey] * canvasH;
             const span = (group.length - 1) * MIN_GAP_H;
             const left = canvasW / 2 - span / 2;
             group.forEach((n, i) => { n.x = left + i * MIN_GAP_H; n.y = cy; });
         });
         // Placeholder nodes to the right of the last real node in their row
-        ['add-agent', 'add-route'].forEach(type => {
-            const rowType = type === 'add-agent' ? 'agent' : 'route';
+        ['add-agent', 'add-route', 'add-ingress'].forEach(type => {
+            const rowType = type === 'add-agent' ? 'agent' : type === 'add-route' ? 'route' : 'ingress';
             const real = groups[rowType];
             const placeholder = groups[type];
             if (!placeholder.length) return;
-            const cy   = ROW_Y[rowType] * canvasH;
+            const cy    = ROW_Y[rowType] * canvasH;
             const lastX = real.length ? real[real.length - 1].x + MIN_GAP_H : canvasW / 2;
             placeholder.forEach((n, i) => { n.x = lastX + i * MIN_GAP_H; n.y = cy; });
         });
@@ -136,6 +172,15 @@ function computeLayout(nodes) {
     }
 
     // Landscape: columns (left → right)
+    // Ingress column (real ingresses + unavailable node share the same x)
+    [...groups.ingress, ...groups['ingress-unavailable']].forEach((n, i, arr) => {
+        const cx   = COL_X.ingress * canvasW;
+        const span = (arr.length - 1) * MIN_GAP;
+        const top  = canvasH / 2 - span / 2;
+        n.x = cx;
+        n.y = top + i * MIN_GAP;
+    });
+
     ['server', 'agent', 'route'].forEach(type => {
         const group = groups[type];
         if (!group.length) return;
@@ -160,6 +205,17 @@ function computeLayout(nodes) {
             n.y = lastY + i * MIN_GAP;
         });
     });
+
+    // add-ingress placeholder below last ingress/unavailable node
+    {
+        const real = [...groups.ingress, ...groups['ingress-unavailable']];
+        const placeholder = groups['add-ingress'];
+        if (placeholder.length) {
+            const cx    = COL_X.ingress * canvasW;
+            const lastY = real.length ? real[real.length - 1].y + MIN_GAP : canvasH / 2;
+            placeholder.forEach((n, i) => { n.x = cx; n.y = lastY + i * MIN_GAP; });
+        }
+    }
 }
 
 // ── Edge S-curve ──────────────────────────────────────────────────────────────
@@ -238,8 +294,10 @@ function renderGraph(data) {
     // Inject placeholder nodes
     const addAgent = { id: 'add-agent', type: 'add-agent', name: 'Add Agent' };
     const addRoute = { id: 'add-route', type: 'add-route', name: 'Add Route' };
+    const addIngress = { id: 'add-ingress', type: 'add-ingress', name: 'Add Ingress' };
 
-    const nodes = [...data.nodes, addAgent, addRoute];
+    const ingressPlaceholders = data.kubernetesAvailable === true ? [addIngress] : [];
+    const nodes = [...data.nodes, addAgent, addRoute, ...ingressPlaceholders];
     const links = data.links;
 
     // Store for panel usage
@@ -268,7 +326,7 @@ function renderGraph(data) {
 
     // ── Column / row labels ────────────────────────────────────────────────────
     const seen = new Set(data.nodes.map(n => n.type));
-    seen.add('agent'); seen.add('route'); // always show
+    seen.add('agent'); seen.add('route'); seen.add('ingress'); // always show
     if (isPortrait()) {
         // Row labels: left-aligned, above each row
         Object.entries(COL_LABEL).forEach(([type, label]) => {
@@ -281,7 +339,7 @@ function renderGraph(data) {
                 .text(label);
         });
         // Horizontal row dividers
-        [(ROW_Y.server + ROW_Y.agent) / 2 * canvasH, (ROW_Y.agent + ROW_Y.route) / 2 * canvasH]
+        [(ROW_Y.ingress + ROW_Y.server) / 2 * canvasH, (ROW_Y.server + ROW_Y.agent) / 2 * canvasH, (ROW_Y.agent + ROW_Y.route) / 2 * canvasH]
             .forEach(y => {
                 svg.append('line').attr('class', 'col-div')
                     .attr('x1', 24).attr('y1', y).attr('x2', canvasW - 24).attr('y2', y)
@@ -300,7 +358,7 @@ function renderGraph(data) {
                 .text(label);
         });
         // Vertical column dividers
-        [(COL_X.server + COL_X.agent) / 2 * canvasW, (COL_X.agent + COL_X.route) / 2 * canvasW]
+        [(COL_X.ingress + COL_X.server) / 2 * canvasW, (COL_X.server + COL_X.agent) / 2 * canvasW, (COL_X.agent + COL_X.route) / 2 * canvasW]
             .forEach(x => {
                 svg.append('line').attr('class', 'col-div')
                     .attr('x1', x).attr('y1', 40).attr('x2', x).attr('y2', canvasH - 24)
@@ -312,6 +370,7 @@ function renderGraph(data) {
     // ── Edges ──────────────────────────────────────────────────────────────────
     edges.forEach((e, i) => {
         const isTunnel = e.type === 'tunnel';
+        const isIngress = e.type === 'ingress';
         const sc = palette(e.src).accent;
         const tc = palette(e.tgt).accent;
         const gid = `eg${i}`;
@@ -340,7 +399,7 @@ function renderGraph(data) {
         linkLayer.append('path').datum(e).attr('class', 'topo-link')
             .attr('d', d).attr('fill', 'none')
             .attr('stroke', `url(#${gid})`).attr('stroke-width', 1.6)
-            .attr('stroke-dasharray', isTunnel ? null : '6,5')
+            .attr('stroke-dasharray', (isTunnel || isIngress) ? null : '6,5')
             .attr('stroke-linecap', 'round').attr('stroke-opacity', 0.88);
 
         // Animated particle dot (tunnel only)
@@ -357,7 +416,7 @@ function renderGraph(data) {
     nodes.forEach((d, i) => {
         if (!d.x || !d.y) return; // skip unpositioned
 
-        const isPlaceholder = d.type === 'add-agent' || d.type === 'add-route';
+        const isPlaceholder = d.type === 'add-agent' || d.type === 'add-route' || d.type === 'add-ingress';
         const col = palette(d);
         const g = nodeLayer.append('g').attr('class', 'node' + (isPlaceholder ? ' node-placeholder' : ''))
             .attr('transform', `translate(${d.x - CW / 2},${d.y - CH / 2})`)
@@ -564,7 +623,16 @@ function openPanel(d, allNodes, allLinks) {
         return;
     }
 
-    if (d.type === 'add-route') {
+    if (d.type === 'add-ingress') {
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('newIngressModal'));
+        modal.show();
+        return;
+    }
+
+    if (d.type === 'ingress-unavailable') {
+        title.textContent = 'Ingress';
+        body.innerHTML = buildIngressUnavailablePanel();
+    } else if (d.type === 'add-route') {
         title.textContent = 'New Route';
         body.innerHTML = buildAddRoutePanel();
     } else if (d.type === 'server') {
@@ -581,6 +649,9 @@ function openPanel(d, allNodes, allLinks) {
             });
         });
         body.innerHTML = buildAgentPanel(d, agentRoutes, csrf, csrfParam);
+    } else if (d.type === 'ingress') {
+        title.textContent = d.name;
+        body.innerHTML = buildIngressPanel(d, csrf, csrfParam);
     } else if (d.type === 'route') {
         title.textContent = d.name;
         const link = allLinks.find(l => (l.target.id || l.target) === d.id);
@@ -774,6 +845,132 @@ function buildAddRoutePanel() {
                 <i class="bi bi-plus-lg"></i>Create New Route
             </a>
         </div>`;
+}
+
+function buildIngressUnavailablePanel() {
+    return `
+        <div class="px-panel-section" style="padding-top:2.5rem; text-align:center;">
+            <div style="font-size:3rem; color:rgba(100,116,139,0.45); margin-bottom:1rem;">
+                <i class="bi bi-cloud-slash"></i>
+            </div>
+            <p style="color:var(--px-muted); font-size:.88rem; line-height:1.6;">
+                Ingress management is only available when Proxera is running inside a Kubernetes cluster.
+            </p>
+        </div>`;
+}
+
+function buildIngressPanel(d, csrf, csrfParam) {
+    const annotationsHtml = Object.entries(d.annotations || {}).map(([k, v], idx) => `
+        <div class="row g-1 mb-1 annotation-row" id="ig-ann-row-${idx}">
+            <div class="col">
+                <input type="text" class="form-control form-control-sm" name="annotationKeys"
+                       value="${escHtml(k)}" placeholder="annotation key">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control form-control-sm" name="annotationValues"
+                       value="${escHtml(v)}" placeholder="value">
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        onclick="this.closest('.annotation-row').remove()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>`).join('');
+
+    return `
+        <form method="POST" action="/admin/ingresses/${escHtml(d.name)}">
+            <input type="hidden" name="${escHtml(csrfParam)}" value="${escHtml(csrf)}">
+            <div class="px-panel-section">
+                <div class="mb-3">
+                    <label class="form-label form-label-sm">Class Name</label>
+                    <input type="text" class="form-control form-control-sm" name="className"
+                           value="${escHtml(d.className || '')}" placeholder="nginx">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label form-label-sm d-flex justify-content-between">
+                        Annotations
+                        <button type="button" class="btn btn-link btn-sm p-0"
+                                onclick="addIngressAnnotationRow('ig-annotations')">
+                            <i class="bi bi-plus-circle"></i> Add
+                        </button>
+                    </label>
+                    <div id="ig-annotations">
+                        ${annotationsHtml}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label form-label-sm">Host</label>
+                    <input type="text" class="form-control form-control-sm" name="host"
+                           value="${escHtml(d.host || '')}" placeholder="example.com">
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col">
+                        <label class="form-label form-label-sm">Path</label>
+                        <input type="text" class="form-control form-control-sm" name="path"
+                               value="${escHtml(d.path || '/')}" placeholder="/">
+                    </div>
+                    <div class="col">
+                        <label class="form-label form-label-sm">Path Type</label>
+                        <select class="form-select form-select-sm" name="pathType">
+                            <option value="ImplementationSpecific" ${d.pathType === 'ImplementationSpecific' ? 'selected' : ''}>ImplementationSpecific</option>
+                            <option value="Prefix" ${d.pathType === 'Prefix' ? 'selected' : ''}>Prefix</option>
+                            <option value="Exact" ${d.pathType === 'Exact' ? 'selected' : ''}>Exact</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tlsEnabled" value="true"
+                               id="ig-tls-edit" ${d.tlsEnabled ? 'checked' : ''}
+                               onchange="document.getElementById('ig-tls-secret-edit').classList.toggle('d-none', !this.checked)">
+                        <label class="form-check-label" for="ig-tls-edit">Enable TLS</label>
+                    </div>
+                </div>
+                <div class="mb-3 ${d.tlsEnabled ? '' : 'd-none'}" id="ig-tls-secret-edit">
+                    <label class="form-label form-label-sm">TLS Secret Name</label>
+                    <input type="text" class="form-control form-control-sm" name="tlsSecretName"
+                           value="${escHtml(d.tlsSecretName || '')}" placeholder="my-tls-secret">
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="px-panel-action flex-grow-1 justify-content-center">
+                        <i class="bi bi-save"></i> Save
+                    </button>
+                </div>
+            </div>
+        </form>
+        <form method="POST" action="/admin/ingresses/${escHtml(d.name)}/delete">
+            <input type="hidden" name="${escHtml(csrfParam)}" value="${escHtml(csrf)}">
+            <div class="px-panel-section" style="padding-top:0;">
+                <button type="submit" class="px-panel-action px-panel-danger w-100 justify-content-center"
+                        onclick="return confirm('Delete ingress ${escHtml(d.name)}?')">
+                    <i class="bi bi-trash"></i> Delete Ingress
+                </button>
+            </div>
+        </form>`;
+}
+
+function addIngressAnnotationRow(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const idx = container.querySelectorAll('.annotation-row').length;
+    const row = document.createElement('div');
+    row.className = 'row g-1 mb-1 annotation-row';
+    row.id = `ig-ann-row-${idx}`;
+    row.innerHTML = `
+        <div class="col">
+            <input type="text" class="form-control form-control-sm" name="annotationKeys" placeholder="annotation key">
+        </div>
+        <div class="col">
+            <input type="text" class="form-control form-control-sm" name="annotationValues" placeholder="value">
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    onclick="this.closest('.annotation-row').remove()">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>`;
+    container.appendChild(row);
 }
 
 function escHtml(s) {

@@ -10,8 +10,10 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 serviceAccount:
-  create: false
+  create: true
   name: ""
+rbac:
+  create: true
 podAnnotations: {}
 podLabels: {}
 podSecurityContext:

@@ -1,0 +1,17 @@
+{{- if and .Values.serviceAccount.create .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "proxera.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "proxera.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "proxera.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.serviceAccount.name | default (include "proxera.fullname" .) }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

@@ -3,6 +3,7 @@ package tech.wenisch.proxera.admin;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,8 +13,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import tech.wenisch.proxera.domain.Agent;
+import tech.wenisch.proxera.domain.IngressSpec;
 import tech.wenisch.proxera.domain.Route;
 import tech.wenisch.proxera.service.AgentService;
+import tech.wenisch.proxera.service.IngressService;
 import tech.wenisch.proxera.service.RouteService;
 import tech.wenisch.proxera.tunnel.TunnelManager;
 
@@ -24,13 +27,16 @@ public class TopologyController {
     private final AgentService agentService;
     private final RouteService routeService;
     private final TunnelManager tunnelManager;
+    private final IngressService ingressService;
 
     public TopologyController(AgentService agentService,
                               RouteService routeService,
-                              TunnelManager tunnelManager) {
+                              TunnelManager tunnelManager,
+                              IngressService ingressService) {
         this.agentService = agentService;
         this.routeService = routeService;
         this.tunnelManager = tunnelManager;
+        this.ingressService = ingressService;
     }
 
     @GetMapping
@@ -85,7 +91,36 @@ public class TopologyController {
             }
         }
 
-        return ResponseEntity.ok(Map.of("nodes", nodes, "links", links));
+        // Add ingress nodes — from K8s API when running in-cluster, unavailable placeholder otherwise
+        if (ingressService.isAvailable()) {
+            for (IngressSpec ingress : ingressService.listIngresses()) {
+                Map<String, Object> node = new HashMap<>();
+                node.put("id", "ingress-" + ingress.getName());
+                node.put("type", "ingress");
+                node.put("name", ingress.getName());
+                node.put("className", ingress.getClassName());
+                node.put("host", ingress.getHost());
+                node.put("annotations", ingress.getAnnotations());
+                node.put("path", ingress.getPath());
+                node.put("pathType", ingress.getPathType());
+                node.put("tlsEnabled", ingress.isTlsEnabled());
+                node.put("tlsSecretName", ingress.getTlsSecretName());
+                nodes.add(node);
+                links.add(Map.of("source", "ingress-" + ingress.getName(), "target", podId, "type", "ingress"));
+            }
+        } else {
+            Map<String, Object> unavailableNode = new HashMap<>();
+            unavailableNode.put("id", "ingress-unavailable");
+            unavailableNode.put("type", "ingress-unavailable");
+            unavailableNode.put("name", "Ingress");
+            nodes.add(unavailableNode);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("nodes", nodes);
+        result.put("links", links);
+        result.put("kubernetesAvailable", ingressService.isAvailable());
+        return ResponseEntity.ok(result);
     }
 
     private String getServerLocalIp() {

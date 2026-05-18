@@ -55,6 +55,9 @@ spec:
                 name: {{ include "proxera.fullname" . }}
             - secretRef:
                 name: {{ include "proxera.fullname" . }}
+          env:
+            - name: PROXERA_K8S_SERVICE_NAME
+              value: {{ include "proxera.fullname" . | quote }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
