@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.5.0 - 2026-05-18
+
+## [0.5.0](https://github.com/wenisch-tech/proxera/compare/v0.4.0...v0.5.0) (2026-05-18)
+
+
+### Features
+
+* initial commit adding ingress handling ([aac0305](https://github.com/wenisch-tech/proxera/commit/aac0305719a87e9ce4db3e4d14f95afe1ceb2981))
+* IP Information are displayed for components ([dde9165](https://github.com/wenisch-tech/proxera/commit/dde9165ec3cdc69ec24e05c46db945b330c5d92f))
+
+
+### Bug Fixes
+
+* add missing ingressService classes ([46dc93b](https://github.com/wenisch-tech/proxera/commit/46dc93b1ea37f1a50241f7eedd86a000f2316600))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.5.0
+
+
 ## v0.4.0 - 2026-05-18
 
 ## [0.4.0](https://github.com/wenisch-tech/proxera/compare/v0.3.4...v0.4.0) (2026-05-18)
