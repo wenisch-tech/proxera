@@ -79,13 +79,16 @@ public class TopologyController {
                 links.add(Map.of("source", podId, "target", agent.getId().toString(), "type", "tunnel"));
             }
 
-            for (Route route : routeService.findByAgentId(agent.getId())) {
+            for (Route route : routeService.findByAgentIdWithDomains(agent.getId())) {
                 Map<String, Object> routeNode = new HashMap<>();
                 routeNode.put("id", route.getId().toString());
                 routeNode.put("type", "route");
                 routeNode.put("name", route.getName());
                 routeNode.put("enabled", route.isEnabled());
                 routeNode.put("target", route.getLocalHost() + ":" + route.getLocalPort());
+                routeNode.put("domains", route.getDomains().stream()
+                        .map(d -> d.getDomain())
+                        .collect(java.util.stream.Collectors.toList()));
                 nodes.add(routeNode);
                 links.add(Map.of("source", agent.getId().toString(), "target", route.getId().toString(), "type", "route"));
             }

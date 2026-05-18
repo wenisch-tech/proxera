@@ -400,13 +400,16 @@ function renderGraph(data) {
 
         const d = edgePath(e.src, e.tgt);
 
+        // Group all paths for this edge so we can dim/highlight it as a unit
+        const edgeG = linkLayer.append('g').attr('data-edge', e.id);
+
         // Broad glow halo
-        linkLayer.append('path').attr('d', d).attr('fill', 'none')
+        edgeG.append('path').attr('d', d).attr('fill', 'none')
             .attr('stroke', `url(#${gid})`).attr('stroke-width', 10).attr('stroke-opacity', 0.12)
             .attr('stroke-linecap', 'round');
 
         // Main line
-        linkLayer.append('path').datum(e).attr('class', 'topo-link')
+        edgeG.append('path').datum(e).attr('class', 'topo-link')
             .attr('d', d).attr('fill', 'none')
             .attr('stroke', `url(#${gid})`).attr('stroke-width', 1.6)
             .attr('stroke-dasharray', (isTunnel || isIngress) ? null : '6,5')
@@ -414,7 +417,7 @@ function renderGraph(data) {
 
         // Animated particle dot (tunnel only)
         if (isTunnel) {
-            linkLayer.append('path').datum(e).attr('class', 'edge-flow')
+            edgeG.append('path').datum(e).attr('class', 'edge-flow')
                 .attr('d', d).attr('fill', 'none')
                 .attr('stroke', tc).attr('stroke-width', 2.5)
                 .attr('stroke-dasharray', '5,65').attr('stroke-linecap', 'round')
@@ -429,6 +432,7 @@ function renderGraph(data) {
         const isPlaceholder = d.type === 'add-agent' || d.type === 'add-route' || d.type === 'add-ingress';
         const col = palette(d);
         const g = nodeLayer.append('g').attr('class', 'node' + (isPlaceholder ? ' node-placeholder' : ''))
+            .attr('data-node-id', d.id)
             .attr('transform', `translate(${d.x - CW / 2},${d.y - CH / 2})`)
             .style('opacity', 0)
             .style('cursor', 'pointer');
@@ -601,11 +605,15 @@ function renderGraph(data) {
                         .transition().duration(120).attr('fill', tv('--topo-card-hover-bg'));
                     d3.select(this).select('rect:nth-child(5)')
                         .transition().duration(120).attr('stroke-opacity', 0.82);
+                    if (d.type === 'route')   highlightRouteChain(d);
+                    else if (d.type === 'agent')   highlightAgentChain(d);
+                    else if (d.type === 'ingress') highlightIngressChain(d);
                 }).on('mouseleave', function() {
                     d3.select(this).select('rect:nth-child(2)')
                         .transition().duration(180).attr('fill', tv('--topo-card-bg'));
                     d3.select(this).select('rect:nth-child(5)')
                         .transition().duration(180).attr('stroke-opacity', 0.52);
+                    if (d.type === 'route' || d.type === 'agent' || d.type === 'ingress') clearHighlight();
                 });
             }
         }
@@ -1044,6 +1052,121 @@ window.addEventListener('resize', () => {
     svg.attr('height', canvasH);
     if (_lastData.nodes.length) renderGraph(_lastData);
 });
+
+// ── Topology hover highlights ──────────────────────────────────────────────────
+
+// Return ingress nodes whose host matches any of routeNode.domains
+function ingressesForRoute(routeNode) {
+    const domains = (routeNode.domains || []).map(d => d.toLowerCase());
+    return _lastNodes.filter(n => n.type === 'ingress' && domains.includes((n.host || '').toLowerCase()));
+}
+
+// Return route nodes where any of their domains matches ingressNode.host
+function routesForIngress(ingressNode) {
+    const host = (ingressNode.host || '').toLowerCase();
+    if (!host) return [];
+    return _lastNodes.filter(n => n.type === 'route' &&
+        (n.domains || []).some(d => d.toLowerCase() === host));
+}
+
+// Apply dim-all-then-restore-selected to nodes and edges
+function applyHighlight(highlightedNodes, highlightedEdges) {
+    nodeLayer.selectAll('.node').style('opacity', 0.10).style('filter', 'grayscale(60%)');
+    linkLayer.selectAll('[data-edge]').style('opacity', 0.06);
+    highlightedNodes.forEach(id =>
+        nodeLayer.select(`[data-node-id="${id}"]`).style('opacity', 1).style('filter', null));
+    highlightedEdges.forEach(id =>
+        linkLayer.select(`[data-edge="${id}"]`).style('opacity', 1));
+}
+
+function clearHighlight() {
+    nodeLayer.selectAll('.node').style('opacity', 1).style('filter', null);
+    linkLayer.selectAll('[data-edge]').style('opacity', 1);
+}
+
+// Highlight: route + its agent + server + only the ingresses whose host matches a route domain
+function highlightRouteChain(routeNode) {
+    const nodes = new Set([routeNode.id]);
+    const edges = new Set();
+
+    const routeLink = _lastLinks.find(l => (l.target.id || l.target) === routeNode.id);
+    if (routeLink) {
+        const agentId = routeLink.source.id || routeLink.source;
+        nodes.add(agentId);
+        edges.add(`${agentId}-${routeNode.id}`);
+
+        const agentLink = _lastLinks.find(l => (l.target.id || l.target) === agentId);
+        if (agentLink) {
+            const serverId = agentLink.source.id || agentLink.source;
+            nodes.add(serverId);
+            edges.add(`${serverId}-${agentId}`);
+
+            // Only ingresses whose host matches one of this route's domains
+            ingressesForRoute(routeNode).forEach(ingress => {
+                nodes.add(ingress.id);
+                edges.add(`${ingress.id}-${serverId}`);
+            });
+        }
+    }
+    applyHighlight(nodes, edges);
+}
+
+// Highlight: agent + server + all its routes + only ingresses matching those routes' domains
+function highlightAgentChain(agentNode) {
+    const nodes = new Set([agentNode.id]);
+    const edges = new Set();
+
+    const agentLink = _lastLinks.find(l => (l.target.id || l.target) === agentNode.id);
+    let serverId = null;
+    if (agentLink) {
+        serverId = agentLink.source.id || agentLink.source;
+        nodes.add(serverId);
+        edges.add(`${serverId}-${agentNode.id}`);
+    }
+
+    _lastLinks.filter(l => (l.source.id || l.source) === agentNode.id).forEach(l => {
+        const routeId = l.target.id || l.target;
+        nodes.add(routeId);
+        edges.add(`${agentNode.id}-${routeId}`);
+
+        if (serverId) {
+            const routeNode = _lastNodes.find(n => n.id === routeId);
+            if (routeNode) {
+                ingressesForRoute(routeNode).forEach(ingress => {
+                    nodes.add(ingress.id);
+                    edges.add(`${ingress.id}-${serverId}`);
+                });
+            }
+        }
+    });
+    applyHighlight(nodes, edges);
+}
+
+// Highlight: ingress + server + only routes whose domains match this ingress host + their agents
+function highlightIngressChain(ingressNode) {
+    const nodes = new Set([ingressNode.id]);
+    const edges = new Set();
+
+    const ingressLink = _lastLinks.find(l => (l.source.id || l.source) === ingressNode.id);
+    let serverId = null;
+    if (ingressLink) {
+        serverId = ingressLink.target.id || ingressLink.target;
+        nodes.add(serverId);
+        edges.add(`${ingressNode.id}-${serverId}`);
+    }
+
+    routesForIngress(ingressNode).forEach(routeNode => {
+        nodes.add(routeNode.id);
+        const routeLink = _lastLinks.find(l => (l.target.id || l.target) === routeNode.id);
+        if (routeLink) {
+            const agentId = routeLink.source.id || routeLink.source;
+            nodes.add(agentId);
+            edges.add(`${agentId}-${routeNode.id}`);
+            if (serverId) edges.add(`${serverId}-${agentId}`);
+        }
+    });
+    applyHighlight(nodes, edges);
+}
 
 // ── Zoom controls ──────────────────────────────────────────────────────────────
 function fitToView(animate) {

@@ -18,4 +18,7 @@ public interface RouteRepository extends JpaRepository<Route, UUID> {
     Optional<Route> findByIdWithDetails(UUID id);
 
     List<Route> findByAgentId(UUID agentId);
+
+    @Query("SELECT DISTINCT r FROM Route r LEFT JOIN FETCH r.domains WHERE r.agent.id = :agentId")
+    List<Route> findByAgentIdWithDomains(UUID agentId);
 }

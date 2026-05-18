@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.domain.Agent;
 import tech.wenisch.proxera.domain.Route;
@@ -45,6 +45,10 @@ public class RouteService {
 
     public List<Route> findByAgentId(UUID agentId) {
         return routeRepository.findByAgentId(agentId);
+    }
+
+    public List<Route> findByAgentIdWithDomains(UUID agentId) {
+        return routeRepository.findByAgentIdWithDomains(agentId);
     }
 
     @Transactional
