@@ -120,6 +120,26 @@
         }
         .topo-log-footer:hover { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.03); }
 
+        /* Minimize button in log header */
+        .topo-log-minimize {
+            background: none;
+            border: none;
+            padding: 0 2px;
+            cursor: pointer;
+            color: rgba(255,255,255,0.35);
+            line-height: 1;
+            font-size: 0.9rem;
+            transition: color 0.15s;
+        }
+        .topo-log-minimize:hover { color: rgba(255,255,255,0.75); }
+        [data-bs-theme="light"] .topo-log-minimize { color: rgba(0,0,0,0.35); }
+        [data-bs-theme="light"] .topo-log-minimize:hover { color: rgba(0,0,0,0.70); }
+
+        /* Minimized state: collapse body and footer */
+        #topo-log.topo-log-minimized #topo-log-entries,
+        #topo-log.topo-log-minimized .topo-log-footer { display: none; }
+        #topo-log.topo-log-minimized { border-radius: 12px; }
+
         .topo-legend-dot {
             display: inline-block;
             width: 9px; height: 9px;
@@ -193,9 +213,9 @@
         <div id="topo-log">
             <div class="topo-log-header">
                 <span><i class="bi bi-activity me-1"></i>Live Log</span>
-                <span class="px-live-badge" id="log-live-badge" style="transform:scale(0.82); transform-origin:right center;">
-                    <span class="px-live-dot"></span>
-                </span>
+                <button class="topo-log-minimize" id="topo-log-toggle" onclick="toggleTopoLog()" title="Minimize">
+                    <i class="bi bi-dash" id="topo-log-toggle-icon"></i>
+                </button>
             </div>
             <div id="topo-log-entries">
                 <div class="topo-log-empty">Waiting for requests…</div>
@@ -363,11 +383,20 @@
             }
         }).observe(document.documentElement, { attributes: true });
 
+        // ── Minimize / restore live log ────────────────────────────────────────
+        function toggleTopoLog() {
+            const log    = document.getElementById('topo-log');
+            const icon   = document.getElementById('topo-log-toggle-icon');
+            const btn    = document.getElementById('topo-log-toggle');
+            const minimized = log.classList.toggle('topo-log-minimized');
+            icon.className = minimized ? 'bi bi-window' : 'bi bi-dash';
+            btn.title      = minimized ? 'Restore' : 'Minimize';
+        }
+
         // ── Global live log overlay ────────────────────────────────────────────
         (function () {
             const MAX_ENTRIES = 5;
             const container   = document.getElementById('topo-log-entries');
-            const badge       = document.getElementById('log-live-badge');
 
             function statusColor(code) {
                 return code >= 500 ? '#f87171' : code >= 400 ? '#fbbf24' : '#34d399';
@@ -420,12 +449,8 @@
                 while (container.children.length > MAX_ENTRIES) container.removeChild(container.lastChild);
             }
 
-            logSse.onerror = () => {
-                badge.innerHTML = '<span class="px-live-dot" style="background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,0.2);"></span>';
-            };
-            logSse.onopen = () => {
-                badge.innerHTML = '<span class="px-live-dot"></span>';
-            };
+            logSse.onerror = () => {};
+            logSse.onopen  = () => {};
         })();
     </script>
 </th:block>
