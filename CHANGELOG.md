@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.6.2 - 2026-05-18
+
+### [0.6.2](https://github.com/wenisch-tech/proxera/compare/v0.6.1...v0.6.2) (2026-05-18)
+
+
+### Documentation
+
+* added new logo ([2c195f9](https://github.com/wenisch-tech/proxera/commit/2c195f943f96f13fc12734e8db91a0175206ecdc))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.6.2
+
+
 ## v0.6.1 - 2026-05-18
 
 ### [0.6.1](https://github.com/wenisch-tech/proxera/compare/v0.6.0...v0.6.1) (2026-05-18)
