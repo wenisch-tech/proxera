@@ -8,6 +8,8 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  logo: img/proxera.png
+  favicon: img/proxera.png
   palette:
     - scheme: default
       primary: indigo

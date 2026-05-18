@@ -18,6 +18,7 @@
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" />
     <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}" />
     <link rel="stylesheet" th:href="@{/css/proxera.css}" />
+    <link rel="icon" type="image/png" th:href="@{/img/proxera.png}" />
 
     <th:block th:replace="${extraHead}"></th:block>
 </head>
@@ -26,7 +27,7 @@
 <!-- Navbar -->
 <nav class="navbar px-navbar px-3 d-flex align-items-center">
     <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/admin/topology}">
-        <i class="bi bi-hdd-network"></i>
+        <img th:src="@{/img/proxera.png}" alt="Proxera" style="height:28px;width:28px;border-radius:6px;" />
         <span>Proxera</span>
         <span class="brand-dot ms-1"></span>
     </a>

@@ -16,3 +16,10 @@ keywords:
   - kubernetes
   - self-hosted
   - websocket
+annotations:
+  artifacthub.io/logoURL: https://raw.githubusercontent.com/wenisch-tech/proxera/main/docs/img/proxera.png
+  artifacthub.io/links: |
+    - name: Website
+      url: https://proxera.wenisch.tech
+    - name: Documentation
+      url: https://proxera.wenisch.tech/docs

@@ -13,6 +13,7 @@
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}"/>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}"/>
     <link rel="stylesheet" th:href="@{/css/proxera.css}"/>
+    <link rel="icon" type="image/png" th:href="@{/img/proxera.png}" />
     <style>
         body {
             display: flex;
@@ -46,17 +47,13 @@
         }
 
         .login-logo {
-            width: 52px;
-            height: 52px;
+            width: 64px;
+            height: 64px;
             border-radius: 14px;
-            background: rgba(13, 202, 240, 0.14);
-            border: 1px solid rgba(13, 202, 240, 0.3);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            color: #0dcaf0;
-            box-shadow: 0 0 24px rgba(13, 202, 240, 0.2);
+            overflow: hidden;
         }
     </style>
 </head>
@@ -65,7 +62,7 @@
 <div class="login-card">
     <div class="text-center mb-4">
         <div class="login-logo mx-auto mb-3">
-            <i class="bi bi-hdd-network"></i>
+            <img th:src="@{/img/proxera.png}" alt="Proxera" style="width:64px;height:64px;border-radius:14px;" />
         </div>
         <h4 class="fw-700 mb-0" style="letter-spacing:-0.02em;">Proxera</h4>
         <p class="text-muted small mt-1 mb-0">Admin Console</p>
