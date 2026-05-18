@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.6.1 - 2026-05-18
+
+### [0.6.1](https://github.com/wenisch-tech/proxera/compare/v0.6.0...v0.6.1) (2026-05-18)
+
+
+### Bug Fixes
+
+* docs are deployed to website on build ([b5b83bf](https://github.com/wenisch-tech/proxera/commit/b5b83bfef623987186e865f2011f4449934caed8))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.6.1
+
+
 ## v0.6.0 - 2026-05-18
 
 ## [0.6.0](https://github.com/wenisch-tech/proxera/compare/v0.5.2...v0.6.0) (2026-05-18)
