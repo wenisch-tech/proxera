@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.5.1 - 2026-05-18
+
+### [0.5.1](https://github.com/wenisch-tech/proxera/compare/v0.5.0...v0.5.1) (2026-05-18)
+
+
+### Bug Fixes
+
+* removed proxy ingress from the chart as they are created within the application ([10b4639](https://github.com/wenisch-tech/proxera/commit/10b4639220021defca03db5ad20c108bc1a9b96a))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.5.1
+
+
 ## v0.5.0 - 2026-05-18
 
 ## [0.5.0](https://github.com/wenisch-tech/proxera/compare/v0.4.0...v0.5.0) (2026-05-18)
