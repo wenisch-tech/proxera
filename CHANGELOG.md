@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.6.4 - 2026-05-19
+
+### [0.6.4](https://github.com/wenisch-tech/proxera/compare/v0.6.3...v0.6.4) (2026-05-19)
+
+
+### Documentation
+
+* Added Information about Homeassistant integratio ([be5797c](https://github.com/wenisch-tech/proxera/commit/be5797cdfd32bf666587390ee72e37010675cc9e))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.6.4
+
+
 ## v0.6.3 - 2026-05-19
 
 ### [0.6.3](https://github.com/wenisch-tech/proxera/compare/v0.6.2...v0.6.3) (2026-05-19)
