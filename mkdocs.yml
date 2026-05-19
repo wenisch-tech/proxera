@@ -35,6 +35,7 @@ nav:
   - Architecture: architecture.md
   - Configuration: configuration.md
   - API Reference: api.md
+  - Home Assistant: homeassistant.md
 
 markdown_extensions:
   - admonition
