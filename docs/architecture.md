@@ -440,11 +440,11 @@ The Proxy Engine adds the following headers to every forwarded request before se
 
 | Header | Value |
 |--------|-------|
-| `X-Forwarded-For` | Original client IP (appended if already present) |
-| `X-Forwarded-Proto` | `https` or `http` |
-| `X-Forwarded-Host` | Original `Host` header value |
+| `X-Forwarded-For` | Client IP appended to any existing chain (multi-hop safe) |
+| `X-Forwarded-Proto` | `https` or `http` (scheme as seen by Proxera, honoring upstream `X-Forwarded-Proto` via Tomcat RemoteIpValve) |
+| `X-Forwarded-Host` | Full `Host` header including port (e.g. `ha.example.com:8123`) |
+| `X-Forwarded-Port` | Server port number (required by HA OIDC/OAuth to construct redirect URIs) |
 | `X-Real-IP` | Original client IP (first value only) |
-| `Via` | `proxera/1.0` |
 
 **Hop-by-hop headers** are stripped before forwarding (`Connection`, `Transfer-Encoding`, `Upgrade`, `Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `TE`, `Trailers`).
 

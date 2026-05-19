@@ -302,10 +302,22 @@ public class ProxyService {
             }
         }
 
-        headers.put("x-forwarded-for", request.getRemoteAddr());
-        headers.put("x-forwarded-host", request.getServerName());
+        // X-Forwarded-For: append client IP to any existing chain (multi-hop proxy support).
+        String clientIp = request.getRemoteAddr();
+        String existingXff = headers.get("x-forwarded-for");
+        headers.put("x-forwarded-for",
+                existingXff != null && !existingXff.isBlank()
+                        ? existingXff + ", " + clientIp
+                        : clientIp);
+
+        // X-Forwarded-Host: use the full Host header including port.
+        String hostHeader = request.getHeader("Host");
+        headers.put("x-forwarded-host", hostHeader != null ? hostHeader : request.getServerName());
+
         headers.put("x-forwarded-proto", request.getScheme());
-        headers.put("x-real-ip", request.getRemoteAddr());
+        headers.put("x-forwarded-port", String.valueOf(request.getServerPort()));
+
+        headers.put("x-real-ip", clientIp);
 
         byte[] bodyBytes = request.getInputStream().readAllBytes();
         String body = bodyBytes.length > 0 ? Base64.getEncoder().encodeToString(bodyBytes) : null;
