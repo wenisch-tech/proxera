@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.6.5 - 2026-05-19
+
+### [0.6.5](https://github.com/wenisch-tech/proxera/compare/v0.6.4...v0.6.5) (2026-05-19)
+
+
+### Bug Fixes
+
+* Fixed X-Forwarded for headers due to chaining of proxies when exposing proxera itself via ingress ([06b0291](https://github.com/wenisch-tech/proxera/commit/06b029166d4bb7c3670bd72009dc90a7409c3483))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.6.5
+
+
 ## v0.6.4 - 2026-05-19
 
 ### [0.6.4](https://github.com/wenisch-tech/proxera/compare/v0.6.3...v0.6.4) (2026-05-19)
