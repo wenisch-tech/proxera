@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.6.3 - 2026-05-19
+
+### [0.6.3](https://github.com/wenisch-tech/proxera/compare/v0.6.2...v0.6.3) (2026-05-19)
+
+
+### Documentation
+
+* added banner ([eda5aba](https://github.com/wenisch-tech/proxera/commit/eda5aba00d1e342ae21c90dfea1eac0e440f1eb0))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.6.3
+
+
 ## v0.6.2 - 2026-05-18
 
 ### [0.6.2](https://github.com/wenisch-tech/proxera/compare/v0.6.1...v0.6.2) (2026-05-18)
