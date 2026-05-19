@@ -1,14 +1,20 @@
-# Proxera
+<div align="center">
+
+  <h1>Proxera</h1>
+  <img src="docs/img/proxera-banner.png" alt="Proxera"  />
 
 [![GitHub Release](https://img.shields.io/github/v/release/wenisch-tech/proxera)](https://github.com/wenisch-tech/proxera/releases)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://github.com/wenisch-tech/proxera/blob/main/LICENSE)
 [![Container](https://img.shields.io/badge/ghcr.io-proxera-blue)](https://github.com/wenisch-tech/proxera/pkgs/container/proxera)
 
-![Topology View](docs/img/landing.png)
+</div>
+
+
 
 Proxera is a self-hosted reverse tunnel that lets HTTP services running in a private LAN be exposed to the internet — without opening any inbound firewall rules. It is similar in concept to Cloudflare Tunnel, but you don't have to route your traffic unencrypted through some 3rd party datacenters.
 
-Please note: This application is still in an early alpha and under active development. Breaking changes to the API might be introduced anytime until a v1 Release.
+![Topology View](docs/img/landing.png)
+<small>Please note: This application is still in an early alpha and under active development. Breaking changes to the API might be introduced anytime until a v1 Release.</small>
 
 
 ## How It Works
