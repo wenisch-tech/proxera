@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.bus.MessageBus;
 import tech.wenisch.proxera.bus.TopologyEvent;
+import tech.wenisch.proxera.proxy.WsProxyRegistry;
 import tech.wenisch.proxera.service.AgentService;
 
 @Component
@@ -24,15 +25,18 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
     private final MessageBus messageBus;
     private final AgentService agentService;
     private final ObjectMapper objectMapper;
+    private final WsProxyRegistry wsProxyRegistry;
 
     public TunnelWebSocketHandler(TunnelManager tunnelManager,
                                    MessageBus messageBus,
                                    AgentService agentService,
-                                   ObjectMapper objectMapper) {
+                                   ObjectMapper objectMapper,
+                                   WsProxyRegistry wsProxyRegistry) {
         this.tunnelManager = tunnelManager;
         this.messageBus = messageBus;
         this.agentService = agentService;
         this.objectMapper = objectMapper;
+        this.wsProxyRegistry = wsProxyRegistry;
     }
 
     @Override
@@ -45,6 +49,7 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
         }
 
         tunnelManager.register(agentId, session);
+        messageBus.onAgentConnected(agentId);
         session.setTextMessageSizeLimit(64 * 1024 * 1024);
         String remoteIp = null;
         java.net.InetSocketAddress ra = session.getRemoteAddress();
@@ -80,6 +85,32 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
                 }
             }
             case PONG -> tunnelManager.recordPong(agentId);
+            case WS_OPEN_ACK -> {
+                String wsSessionId = frame.correlationId();
+                // Subscribe to c2a on this pod, then notify the client's pod via a2c
+                wsProxyRegistry.registerAgentSession(wsSessionId, agentId);
+                wsProxyRegistry.publishAgentOpenAck(wsSessionId);
+            }
+            case WS_OPEN_REJECT -> {
+                String wsSessionId = frame.correlationId();
+                int code = frame.payload().containsKey("code")
+                        ? ((Number) frame.payload().get("code")).intValue() : 1011;
+                String reason = (String) frame.payload().getOrDefault("reason", "Upstream rejected");
+                wsProxyRegistry.publishAgentOpenReject(wsSessionId, code, reason);
+            }
+            case WS_DATA -> {
+                String wsSessionId = (String) frame.payload().get("wsSessionId");
+                String data = (String) frame.payload().get("data");
+                boolean binary = Boolean.TRUE.equals(frame.payload().get("binary"));
+                wsProxyRegistry.publishFromAgent(wsSessionId, data, binary);
+            }
+            case WS_CLOSE -> {
+                String wsSessionId = (String) frame.payload().get("wsSessionId");
+                int code = frame.payload().containsKey("code")
+                        ? ((Number) frame.payload().get("code")).intValue() : 1000;
+                String reason = (String) frame.payload().getOrDefault("reason", "");
+                wsProxyRegistry.publishAgentClose(wsSessionId, code, reason);
+            }
             default -> log.warn("Unexpected frame type from agent {}: {}", agentId, frame.type());
         }
     }
@@ -89,6 +120,8 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
         UUID agentId = (UUID) session.getAttributes().get("agentId");
         String agentName = (String) session.getAttributes().getOrDefault("agentName", "unknown");
         if (agentId != null) {
+            wsProxyRegistry.closeAllForAgent(agentId);
+            messageBus.onAgentDisconnected(agentId);
             tunnelManager.unregister(agentId);
             agentService.markDisconnected(agentId);
             messageBus.publishTopology(new TopologyEvent("AGENT_DISCONNECTED", agentId.toString(), agentName));

@@ -525,7 +525,249 @@ resources:
 
 ---
 
-## 13. Technology Stack
+## 13. WebSocket Proxy Protocol
+
+Proxera transparently forwards WebSocket upgrades from public clients through the tunnel to the local service running in the agent's LAN. The feature works in both **single-pod** (in-memory) and **multi-pod** (Redis Pub/Sub) deployments.
+
+### 13.1 Frame Types
+
+Five new frame types are added to the tunnel protocol:
+
+| Frame | Direction | `correlationId` | Payload fields |
+|-------|-----------|-----------------|----------------|
+| `WS_OPEN` | Server → Agent | `wsSessionId` | `wsSessionId`, `localHost`, `localPort`, `path`, `queryString`, `headers` |
+| `WS_OPEN_ACK` | Agent → Server | `wsSessionId` | _(empty)_ |
+| `WS_OPEN_REJECT` | Agent → Server | `wsSessionId` | `code` (int), `reason` (string) |
+| `WS_DATA` | Bidirectional | — | `wsSessionId`, `data` (Base64), `binary` (bool) |
+| `WS_CLOSE` | Bidirectional | — | `wsSessionId`, `code` (int), `reason` (string) |
+
+> **Note**: For `WS_OPEN` / `WS_OPEN_ACK` / `WS_OPEN_REJECT` the `correlationId` field **is** the `wsSessionId`, matching the existing `REQUEST`/`RESPONSE` pattern.
+> For `WS_DATA` and `WS_CLOSE` the `wsSessionId` is a top-level payload field (correlationId is not used).
+
+### 13.2 End-to-End Sequence
+
+```
+Client             Proxera (ProxyController)        WsProxyRegistry          Agent
+  │                        │                              │                    │
+  │── HTTP Upgrade ────────►│                              │                    │
+  │                        │── doHandshake() ────────────►│                    │
+  │◄── 101 Switching ──────│  (WebSocket established)     │                    │
+  │                        │── registerClientSession() ──►│                    │
+  │                        │── sendToAgent(WS_OPEN) ──────────────────────────►│
+  │                        │                              │                    │── dial local WS
+  │                        │                              │◄── WS_OPEN_ACK ───│
+  │                        │◄── registerAgentSession() ──│                    │
+  │                        │◄── publishAgentOpenAck() ───│                    │
+  │  (connection ready)    │                              │                    │
+  │                        │                              │                    │
+  │── WS text/binary ──────►│                              │                    │
+  │                        │── publishFromClient(DATA) ──►│── WS_DATA ────────►│
+  │                        │                              │                    │── forward to local WS
+  │                        │                              │◄── WS_DATA ───────│
+  │◄── WS text/binary ─────│◄── publishFromAgent(DATA) ──│                    │
+  │                        │                              │                    │
+  │── close ───────────────►│                              │                    │
+  │                        │── publishClientClose() ──────►│── WS_CLOSE ───────►│
+  │                        │                              │                    │── close local WS
+```
+
+### 13.3 Multi-Pod Redis Flow
+
+When multiple Proxera pods are running with Redis enabled, the client and the agent may be connected to **different pods**. The `WsRelayBus` abstraction handles this transparently:
+
+```
+  Pod A (client connected)            Redis              Pod B (agent connected)
+         │                              │                        │
+         │── publishC2A(DATA) ──────── ►│── proxera:ws:<id>:c2a─►│
+         │                              │                        │── WS_DATA frame ──► Agent
+         │                              │                        │
+  Agent ─►│── WS_DATA frame ────────────│─────────────────────── ►│
+         │◄─ proxera:ws:<id>:a2c ───── ─│◄── publishA2C(DATA) ───│
+         │── send to client             │                        │
+```
+
+### 13.4 Redis Channel Reference
+
+| Channel | Publisher | Subscriber | Content |
+|---------|-----------|-----------|---------|
+| `proxera:agent:<agentId>` | Any pod | Agent's pod (via `onAgentConnected`) | `TunnelFrame` JSON |
+| `proxera:corr:<correlationId>` | Agent's pod | Requesting pod | `ResponsePayload` JSON |
+| `proxera:ws:<wsSessionId>:a2c` | Agent's pod | Client's pod | `WsRelayMessage` JSON |
+| `proxera:ws:<wsSessionId>:c2a` | Client's pod | Agent's pod | `WsRelayMessage` JSON |
+| `proxera:topology` | Any pod | All pods | `TopologyEvent` JSON |
+
+### 13.5 Go Agent Implementation Guide
+
+This section describes how to implement WebSocket proxying in the Proxera Agent (Go).
+
+#### Data Structures
+
+```go
+// Track one proxied WebSocket connection to a local service
+type wsSession struct {
+    conn   *websocket.Conn // local WS connection
+    sendCh chan wsOutbound  // buffered channel to local WS
+}
+
+type wsOutbound struct {
+    data   []byte
+    binary bool
+    close  bool
+    code   int
+    reason string
+}
+
+var wsSessions sync.Map // wsSessionId (string) → *wsSession
+```
+
+#### Handling `WS_OPEN`
+
+```go
+func handleWsOpen(frame TunnelFrame, tunnelConn *websocket.Conn) {
+    payload := frame.Payload
+    wsSessionId := payload["wsSessionId"].(string)
+    localHost := payload["localHost"].(string)
+    localPort := int(payload["localPort"].(float64))
+    path := payload["path"].(string)
+    query := payload["queryString"].(string)
+    headers := buildHeaders(payload["headers"].(map[string]interface{}))
+
+    targetURL := fmt.Sprintf("ws://%s:%d%s", localHost, localPort, path)
+    if query != "" {
+        targetURL += "?" + query
+    }
+
+    localConn, resp, err := websocket.DefaultDialer.Dial(targetURL, headers)
+    if err != nil {
+        code := 1011
+        if resp != nil {
+            code = resp.StatusCode
+        }
+        sendFrame(tunnelConn, TunnelFrame{
+            Type:          "WS_OPEN_REJECT",
+            CorrelationId: wsSessionId,
+            Payload:       map[string]any{"code": code, "reason": err.Error()},
+        })
+        return
+    }
+
+    session := &wsSession{
+        conn:   localConn,
+        sendCh: make(chan wsOutbound, 64),
+    }
+    wsSessions.Store(wsSessionId, session)
+
+    // Acknowledge the open
+    sendFrame(tunnelConn, TunnelFrame{
+        Type:          "WS_OPEN_ACK",
+        CorrelationId: wsSessionId,
+        Payload:       map[string]any{},
+    })
+
+    // Goroutine: local WS → tunnel (agent-to-cloud direction)
+    go func() {
+        defer wsSessions.Delete(wsSessionId)
+        defer localConn.Close()
+        for {
+            msgType, data, err := localConn.ReadMessage()
+            if err != nil {
+                code, reason := websocket.CloseNormalClosure, ""
+                if ce, ok := err.(*websocket.CloseError); ok {
+                    code, reason = ce.Code, ce.Text
+                }
+                sendFrame(tunnelConn, TunnelFrame{
+                    Type:    "WS_CLOSE",
+                    Payload: map[string]any{"wsSessionId": wsSessionId, "code": code, "reason": reason},
+                })
+                return
+            }
+            binary := msgType == websocket.BinaryMessage
+            sendFrame(tunnelConn, TunnelFrame{
+                Type:    "WS_DATA",
+                Payload: map[string]any{
+                    "wsSessionId": wsSessionId,
+                    "data":        base64.StdEncoding.EncodeToString(data),
+                    "binary":      binary,
+                },
+            })
+        }
+    }()
+
+    // Goroutine: sendCh → local WS (cloud-to-agent direction)
+    go func() {
+        for out := range session.sendCh {
+            if out.close {
+                localConn.WriteMessage(websocket.CloseMessage,
+                    websocket.FormatCloseMessage(out.code, out.reason))
+                localConn.Close()
+                return
+            }
+            msgType := websocket.TextMessage
+            if out.binary {
+                msgType = websocket.BinaryMessage
+            }
+            if err := localConn.WriteMessage(msgType, out.data); err != nil {
+                return
+            }
+        }
+    }()
+}
+```
+
+#### Handling `WS_DATA` (cloud → local)
+
+```go
+case "WS_DATA":
+    wsSessionId := frame.Payload["wsSessionId"].(string)
+    dataB64 := frame.Payload["data"].(string)
+    binary := frame.Payload["binary"].(bool)
+    data, _ := base64.StdEncoding.DecodeString(dataB64)
+    if v, ok := wsSessions.Load(wsSessionId); ok {
+        v.(*wsSession).sendCh <- wsOutbound{data: data, binary: binary}
+    }
+```
+
+#### Handling `WS_CLOSE` (cloud → local)
+
+```go
+case "WS_CLOSE":
+    wsSessionId := frame.Payload["wsSessionId"].(string)
+    code := int(frame.Payload["code"].(float64))
+    reason, _ := frame.Payload["reason"].(string)
+    if v, ok := wsSessions.LoadAndDelete(wsSessionId); ok {
+        v.(*wsSession).sendCh <- wsOutbound{close: true, code: code, reason: reason}
+    }
+```
+
+#### Header Forwarding (`buildHeaders`)
+
+The `WS_OPEN` payload includes all non-hop-by-hop headers already set by Proxera (including `X-Forwarded-*`). The agent should forward them to the local service, skipping WebSocket handshake headers that the dialer manages itself:
+
+```go
+var wsHandshakeHeaders = map[string]bool{
+    "upgrade":              true,
+    "connection":           true,
+    "sec-websocket-key":    true,
+    "sec-websocket-version": true,
+    "sec-websocket-extensions": true,
+}
+
+func buildHeaders(raw map[string]interface{}) http.Header {
+    h := http.Header{}
+    for k, v := range raw {
+        lower := strings.ToLower(k)
+        if wsHandshakeHeaders[lower] {
+            continue
+        }
+        h.Set(k, fmt.Sprintf("%v", v))
+    }
+    return h
+}
+```
+
+---
+
+## 14. Technology Stack
 
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
@@ -549,7 +791,7 @@ resources:
 
 ---
 
-## 14. CI/CD Workflow
+## 15. CI/CD Workflow
 
 Follows the same orchestrator + reusable-workflow pattern as the Kairos project:
 
@@ -581,12 +823,12 @@ ci.yml (orchestrator, triggers on push/PR/workflow_dispatch)
 
 ---
 
-## 15. Future Work
+## 16. Future Work
 
 | Item | Priority | Description |
 |------|----------|-------------|
 | **Binary frame protocol** | High | Replace JSON+Base64 for request/response bodies with binary WebSocket frames (~33% payload reduction) |
-| **WebSocket proxying** | High | Forward WebSocket upgrade requests through the tunnel (HTTP/1.1 only in Phase 1) |
+| **WebSocket proxying** | ~~High~~ | ~~Forward WebSocket upgrade requests through the tunnel~~ **Done** — see Section 13 |
 | **mTLS for tunnel** | Medium | Mutual TLS on `/tunnel` endpoint for hardware-bound agent authentication |
 | **Rate limiting per route** | Medium | Configurable per-route request rate limits with burst allowance |
 | **Multi-agent load balancing** | Low | A route pointing to multiple agents with round-robin or least-connections |

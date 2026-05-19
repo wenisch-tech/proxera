@@ -1,10 +1,12 @@
 package tech.wenisch.proxera.bus;
 
-import tech.wenisch.proxera.tunnel.ResponsePayload;
-
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+
+import tech.wenisch.proxera.tunnel.ResponsePayload;
+import tech.wenisch.proxera.tunnel.TunnelFrame;
 
 /**
  * Abstracted message bus for dispatching request frames to tunnel agents
@@ -42,4 +44,27 @@ public interface MessageBus {
      * Subscribe to topology events from any pod.
      */
     void subscribeTopology(Consumer<TopologyEvent> handler);
+
+    /**
+     * Route any TunnelFrame directly to a specific agent.
+     * In InMemory mode: calls TunnelManager.sendFrame() directly.
+     * In Redis mode: publishes the frame JSON to proxera:agent:{agentId} so that
+     * the pod holding the agent's WebSocket session can forward it.
+     *
+     * Used for WS_OPEN routing and any future server-initiated frames.
+     */
+    void sendToAgent(UUID agentId, TunnelFrame frame) throws IOException;
+
+    /**
+     * Called by TunnelWebSocketHandler when an agent's tunnel WebSocket connects.
+     * In Redis mode: sets up a dedicated subscription to proxera:agent:{agentId}
+     * that forwards received TunnelFrames to the agent via TunnelManager.
+     */
+    default void onAgentConnected(UUID agentId) {}
+
+    /**
+     * Called by TunnelWebSocketHandler when an agent's tunnel WebSocket disconnects.
+     * In Redis mode: tears down the proxera:agent:{agentId} subscription.
+     */
+    default void onAgentDisconnected(UUID agentId) {}
 }
