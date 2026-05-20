@@ -1,19 +1,21 @@
 package tech.wenisch.proxera.bus;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import tech.wenisch.proxera.tunnel.FrameType;
-import tech.wenisch.proxera.tunnel.ResponsePayload;
-import tech.wenisch.proxera.tunnel.TunnelFrame;
-import tech.wenisch.proxera.tunnel.TunnelManager;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+
+import org.springframework.context.ApplicationEventPublisher;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
+import tech.wenisch.proxera.tunnel.FrameType;
+import tech.wenisch.proxera.tunnel.ResponsePayload;
+import tech.wenisch.proxera.tunnel.TunnelFrame;
+import tech.wenisch.proxera.tunnel.TunnelManager;
 
 /**
  * In-memory MessageBus for single-pod deployments.
@@ -85,4 +87,11 @@ public class InMemoryMessageBus implements MessageBus {
     public void subscribeTopology(Consumer<TopologyEvent> handler) {
         topologySubscribers.put(UUID.randomUUID().toString(), handler);
     }
+
+    @Override
+    public void sendToAgent(UUID agentId, TunnelFrame frame) throws IOException {
+        tunnelManager.sendFrame(agentId, frame);
+    }
+
+    // onAgentConnected / onAgentDisconnected: no-op (TunnelManager already holds the session in-process)
 }

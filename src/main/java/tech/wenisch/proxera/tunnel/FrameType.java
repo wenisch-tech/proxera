@@ -6,5 +6,10 @@ public enum FrameType {
     RESPONSE,
     PING,
     PONG,
-    ERROR
+    ERROR,
+    WS_OPEN,
+    WS_OPEN_ACK,
+    WS_OPEN_REJECT,
+    WS_DATA,
+    WS_CLOSE
 }
