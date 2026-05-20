@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.7.0 - 2026-05-20
+
+## [0.7.0](https://github.com/wenisch-tech/proxera/compare/v0.6.5...v0.7.0) (2026-05-20)
+
+
+### Features
+
+* initial commit websocket support ([cda487f](https://github.com/wenisch-tech/proxera/commit/cda487f060bd81133344c00c7c3c3415ac0cb0d1))
+* initial commit websocket support ([a072611](https://github.com/wenisch-tech/proxera/commit/a072611a51572a98cc2254c3a088ee3fcd6cf831))
+
+
+### Build Systems
+
+* **deps:** bump org.jsoup:jsoup from 1.18.3 to 1.22.2 ([#15](https://github.com/wenisch-tech/proxera/issues/15)) ([f1b6d3b](https://github.com/wenisch-tech/proxera/commit/f1b6d3b65cd29f7d5f06ae4760df1f189bc4a7e1))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.7.0
+
+
 ## v0.6.5 - 2026-05-19
 
 ### [0.6.5](https://github.com/wenisch-tech/proxera/compare/v0.6.4...v0.6.5) (2026-05-19)
