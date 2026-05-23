@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.7.2 - 2026-05-23
+
+### [0.7.2](https://github.com/wenisch-tech/proxera/compare/v0.7.1...v0.7.2) (2026-05-23)
+
+
+### Build Systems
+
+* **deps:** bump actions/deploy-pages from 4 to 5 ([7b3ccc1](https://github.com/wenisch-tech/proxera/commit/7b3ccc1e1a5a4d24dc2842f6570fba5dbf23a236))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.7.2
+
+
 ## v0.7.0 - 2026-05-20
 
 ## [0.7.0](https://github.com/wenisch-tech/proxera/compare/v0.6.5...v0.7.0) (2026-05-20)
