@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.0 - 2026-05-26
+
+## [0.8.0](https://github.com/wenisch-tech/proxera/compare/v0.7.2...v0.8.0) (2026-05-26)
+
+
+### Features
+
+* Added support for redirect and setting of multiple headers ([7c92e8d](https://github.com/wenisch-tech/proxera/commit/7c92e8d06d073f836738398b704cf8095c2ed823))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.8.0
+
+
 ## v0.7.2 - 2026-05-23
 
 ### [0.7.2](https://github.com/wenisch-tech/proxera/compare/v0.7.1...v0.7.2) (2026-05-23)
