@@ -1,5 +1,6 @@
 package tech.wenisch.proxera.tunnel;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Map;
  */
 public record ResponsePayload(
         int status,
-        Map<String, String> headers,
+        Map<String, List<String>> headers,
         String body,       // Base64-encoded, nullable
         long latencyMs
 ) {}

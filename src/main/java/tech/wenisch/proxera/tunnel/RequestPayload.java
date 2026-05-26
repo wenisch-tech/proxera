@@ -1,5 +1,6 @@
 package tech.wenisch.proxera.tunnel;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -10,7 +11,7 @@ public record RequestPayload(
         String method,
         String path,
         String queryString,
-        Map<String, String> headers,
+        Map<String, List<String>> headers,
         String body,          // Base64-encoded, nullable
         String localHost,
         int localPort,

@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -157,10 +159,13 @@ public class ProxyService {
         // Track Content-Type and Content-Encoding before writing headers
         String contentType = null;
         String contentEncoding = null;
-        for (Map.Entry<String, String> entry : resp.headers().entrySet()) {
+        for (Map.Entry<String, List<String>> entry : resp.headers().entrySet()) {
             String lower = entry.getKey().toLowerCase();
-            if (lower.equals("content-type")) contentType = entry.getValue();
-            if (lower.equals("content-encoding")) contentEncoding = entry.getValue();
+            List<String> vals = entry.getValue();
+            if (vals != null && !vals.isEmpty()) {
+                if (lower.equals("content-type")) contentType = vals.get(0);
+                if (lower.equals("content-encoding")) contentEncoding = vals.get(0);
+            }
         }
 
         final String effectivePrefix = prefix;
@@ -168,19 +173,21 @@ public class ProxyService {
         final boolean gzipped = rewriting && contentEncoding != null
                 && contentEncoding.toLowerCase().contains("gzip");
 
-        resp.headers().forEach((name, value) -> {
+        resp.headers().forEach((name, values) -> {
             String lower = name.toLowerCase();
             if (HOP_BY_HOP_HEADERS.contains(lower)) return;
             // Drop Content-Length when rewriting (body size will change)
             if (rewriting && lower.equals("content-length")) return;
             // Drop Content-Encoding when we decompress
             if (gzipped && lower.equals("content-encoding")) return;
-            // Rewrite Location header for redirects
-            if (rewriting && lower.equals("location") && value.startsWith("/")) {
-                response.setHeader(name, effectivePrefix + value);
-                return;
+            for (String value : values) {
+                // Rewrite Location header for redirects
+                if (rewriting && lower.equals("location") && value.startsWith("/")) {
+                    response.addHeader(name, effectivePrefix + value);
+                } else {
+                    response.addHeader(name, value);
+                }
             }
-            response.setHeader(name, value);
         });
 
         byte[] body = resp.body() != null ? Base64.getDecoder().decode(resp.body()) : new byte[0];
@@ -293,31 +300,31 @@ public class ProxyService {
 
     private RequestPayload buildPayload(RouteDomain routeDomain, HttpServletRequest request) throws IOException {
         Route route = routeDomain.getRoute();
-        Map<String, String> headers = new HashMap<>();
+        Map<String, List<String>> headers = new HashMap<>();
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String name = headerNames.nextElement().toLowerCase();
             if (!HOP_BY_HOP_HEADERS.contains(name)) {
-                headers.put(name, request.getHeader(name));
+                headers.put(name, Collections.list(request.getHeaders(name)));
             }
         }
 
         // X-Forwarded-For: append client IP to any existing chain (multi-hop proxy support).
         String clientIp = request.getRemoteAddr();
-        String existingXff = headers.get("x-forwarded-for");
-        headers.put("x-forwarded-for",
-                existingXff != null && !existingXff.isBlank()
-                        ? existingXff + ", " + clientIp
-                        : clientIp);
+        List<String> existingXffList = headers.get("x-forwarded-for");
+        String xffValue = (existingXffList != null && !existingXffList.isEmpty() && !existingXffList.get(0).isBlank())
+                ? existingXffList.get(0) + ", " + clientIp
+                : clientIp;
+        headers.put("x-forwarded-for", List.of(xffValue));
 
         // X-Forwarded-Host: use the full Host header including port.
         String hostHeader = request.getHeader("Host");
-        headers.put("x-forwarded-host", hostHeader != null ? hostHeader : request.getServerName());
+        headers.put("x-forwarded-host", List.of(hostHeader != null ? hostHeader : request.getServerName()));
 
-        headers.put("x-forwarded-proto", request.getScheme());
-        headers.put("x-forwarded-port", String.valueOf(request.getServerPort()));
+        headers.put("x-forwarded-proto", List.of(request.getScheme()));
+        headers.put("x-forwarded-port", List.of(String.valueOf(request.getServerPort())));
 
-        headers.put("x-real-ip", clientIp);
+        headers.put("x-real-ip", List.of(clientIp));
 
         byte[] bodyBytes = request.getInputStream().readAllBytes();
         String body = bodyBytes.length > 0 ? Base64.getEncoder().encodeToString(bodyBytes) : null;

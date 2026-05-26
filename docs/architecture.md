@@ -153,7 +153,7 @@ All communication over the tunnel WebSocket uses **text frames containing JSON**
   "method": "GET",
   "path": "/api/data",
   "queryString": "page=1&size=10",
-  "headers": { "Accept": "application/json" },
+  "headers": { "accept": ["application/json"] },
   "body": "<base64-encoded body or null>",
   "localHost": "192.168.1.10",
   "localPort": 8080,
@@ -166,7 +166,13 @@ All communication over the tunnel WebSocket uses **text frames containing JSON**
 ```json
 {
   "status": 200,
-  "headers": { "Content-Type": "application/json" },
+  "headers": {
+    "content-type": ["application/json"],
+    "set-cookie": [
+      "session=abc; Path=/; HttpOnly",
+      "session_expiry=1748...; Path=/"
+    ]
+  },
   "body": "<base64-encoded body or null>",
   "latencyMs": 42
 }
@@ -834,3 +840,63 @@ ci.yml (orchestrator, triggers on push/PR/workflow_dispatch)
 | **Multi-agent load balancing** | Low | A route pointing to multiple agents with round-robin or least-connections |
 | **Proxera Agent Helm chart** | Low | Helm chart for deploying the agent within a Kubernetes LAN |
 | **HTTP/2 proxying** | Low | Full HTTP/2 support in both the proxy engine and tunnel protocol |
+
+---
+
+## 17. Protocol Changelog
+
+### v0.3 — Multi-Value Header Support & Redirect Transparency
+
+**Released:** May 2026  
+**Affects:** `proxera` (server) and `proxera-agent` (agent) — must be deployed together.
+
+#### Background
+
+Two bugs were identified when proxying applications that rely on HTTP redirects carrying `Set-Cookie` response headers (e.g. Grafana, Authentik, most form-login flows):
+
+1. **Agent silently followed redirects.** Go's `http.Client` defaults to following up to 10 redirects automatically. When the backend returned a `302 Found` with session cookies after a login POST, the agent consumed the redirect internally and returned the final `200 OK` body. The browser never saw the `302`, never updated the URL, and never received the cookies — resulting in an authentication loop.
+
+2. **Protocol dropped duplicate headers.** Both the wire format (`map[string]string` / `Map<String, String>`) and the agent collection code (`values[0]`) could only represent a single value per header name. Applications commonly set multiple `Set-Cookie` headers in a single response (e.g. `grafana_session` + `grafana_session_expiry`); all but the first were silently discarded.
+
+#### Changes
+
+**Agent (`proxera-agent` / `proxera-client`)**
+
+| File | Change |
+|------|--------|
+| `internal/proxy/proxy.go` | Added `CheckRedirect: func(...) error { return http.ErrUseLastResponse }` to `http.Client` — agent now returns redirect responses as-is without following them. |
+| `internal/proxy/proxy.go` | Response header collection changed from `responseHeaders[k] = values[0]` to `responseHeaders[k] = values` — all values for each header name are now preserved. |
+| `internal/proxy/proxy.go` | Request header forwarding loop changed from `Header.Set` to `Header.Add` per value — all incoming header values are forwarded to the local service. |
+| `internal/protocol/frame.go` | `RequestPayload.Headers` and `ResponsePayload.Headers` changed from `map[string]string` to `map[string][]string`. |
+
+**Server (`proxera`)**
+
+| File | Change |
+|------|--------|
+| `tunnel/RequestPayload.java` | `headers` field changed from `Map<String, String>` to `Map<String, List<String>>`. |
+| `tunnel/ResponsePayload.java` | `headers` field changed from `Map<String, String>` to `Map<String, List<String>>`. |
+| `proxy/ProxyService.java` | `buildPayload()`: uses `Collections.list(request.getHeaders(name))` to collect all request header values; synthesised `X-Forwarded-*` headers wrapped in `List.of(...)`. |
+| `proxy/ProxyService.java` | `writeResponse()`: iterates over each value in the response header list and calls `response.addHeader(name, value)` — all `Set-Cookie` (and other multi-value) headers are now forwarded to the browser. |
+
+#### Wire Format
+
+The `headers` field in `REQUEST` and `RESPONSE` payloads changed from an object with string values to an object with array values:
+
+```jsonc
+// Before (v0.2 and earlier)
+"headers": {
+  "content-type": "text/html",
+  "set-cookie": "grafana_session=abc123; Path=/; HttpOnly"
+}
+
+// After (v0.3)
+"headers": {
+  "content-type": ["text/html"],
+  "set-cookie": [
+    "grafana_session=abc123; Path=/; HttpOnly",
+    "grafana_session_expiry=1748...; Path=/"
+  ]
+}
+```
+
+> **Deployment note:** The wire format change is not backward-compatible. A v0.3 server will fail to deserialise frames from a v0.2 agent and vice versa. Both components must be upgraded together.
