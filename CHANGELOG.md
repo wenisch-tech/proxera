@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.2 - 2026-05-27
+
+### [0.8.2](https://github.com/wenisch-tech/proxera/compare/v0.8.1...v0.8.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* ensure reserved paths such as /admin /login are properly proxied ([7181b29](https://github.com/wenisch-tech/proxera/commit/7181b299d7c43872ac303c1307c5db3f51b04076))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.8.2
+
+
 ## v0.8.1 - 2026-05-27
 
 ### [0.8.1](https://github.com/wenisch-tech/proxera/compare/v0.8.0...v0.8.1) (2026-05-27)

@@ -25,6 +25,9 @@
         "env": {
             "type": "object",
             "properties": {
+                "PROXERA_ADMIN_HOST": {
+                    "type": "string"
+                },
                 "PROXERA_LOG_RETENTION_DAYS": {
                     "type": "string"
                 }
