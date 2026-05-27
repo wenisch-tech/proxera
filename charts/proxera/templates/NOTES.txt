@@ -2,15 +2,8 @@ Proxera {{ .Chart.AppVersion }} has been deployed.
 
 Service port: {{ .Values.service.port }}
 
-{{- if .Values.ingress.proxy.enabled }}
-Proxy URL:
-{{- range .Values.ingress.proxy.hosts }}
-  http{{ if $.Values.ingress.proxy.tls }}s{{ end }}://{{ .host }}
-{{- end }}
-{{- else }}
-Access the proxy via port-forward:
+Access the proxy via port-forward (or configure the wildcard ingress via the Topology UI):
   kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "proxera.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
-{{- end }}
 
 {{- if .Values.ingress.admin.enabled }}
 Admin URL:
