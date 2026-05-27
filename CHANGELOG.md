@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.3 - 2026-05-27
+
+### [0.8.3](https://github.com/wenisch-tech/proxera/compare/v0.8.2...v0.8.3) (2026-05-27)
+
+
+### Bug Fixes
+
+* ensure PoroxyHandler uis used with Highest PRECEDENCE if domain is mapping to a configured route ([0079d5c](https://github.com/wenisch-tech/proxera/commit/0079d5c7c2257bd40367101950d84e6fd1bb724c))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.8.3
+
+
 ## v0.8.2 - 2026-05-27
 
 ### [0.8.2](https://github.com/wenisch-tech/proxera/compare/v0.8.1...v0.8.2) (2026-05-27)
