@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.1 - 2026-05-27
+
+### [0.8.1](https://github.com/wenisch-tech/proxera/compare/v0.8.0...v0.8.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* removed deprecrated ingress.proxy from notes.txt ([f2606ca](https://github.com/wenisch-tech/proxera/commit/f2606cabbb95a25a9eb1107a9a8007434a42d4b2))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.8.1
+
+
 ## v0.8.0 - 2026-05-26
 
 ## [0.8.0](https://github.com/wenisch-tech/proxera/compare/v0.7.2...v0.8.0) (2026-05-26)
