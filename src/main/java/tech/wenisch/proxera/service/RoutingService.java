@@ -55,6 +55,17 @@ public class RoutingService {
                         rd.getPathPrefix() == null ? 0 : rd.getPathPrefix().length()));
     }
 
+    /**
+     * Returns true if the given host (with optional port) is registered as a
+     * proxy route domain. Used by the security layer to bypass admin-chain
+     * matching for hosts that should always be proxied.
+     */
+    public boolean isKnownProxyDomain(String host) {
+        if (host == null) return false;
+        String cleanHost = host.contains(":") ? host.substring(0, host.indexOf(':')) : host;
+        return getCache().containsKey(cleanHost.toLowerCase());
+    }
+
     public void invalidateCache() {
         this.cache = null;
         log.debug("Route cache invalidated");

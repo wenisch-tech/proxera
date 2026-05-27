@@ -10,17 +10,23 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
 import tech.wenisch.proxera.security.ApiKeyAuthFilter;
+import tech.wenisch.proxera.security.ProxyHostRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final ApiKeyAuthFilter apiKeyAuthFilter;
+    private final ProxyHostRequestMatcher proxyHostRequestMatcher;
 
-    public SecurityConfig(ApiKeyAuthFilter apiKeyAuthFilter) {
+    public SecurityConfig(ApiKeyAuthFilter apiKeyAuthFilter, ProxyHostRequestMatcher proxyHostRequestMatcher) {
         this.apiKeyAuthFilter = apiKeyAuthFilter;
+        this.proxyHostRequestMatcher = proxyHostRequestMatcher;
     }
 
     /**
@@ -31,12 +37,22 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .securityMatcher(
-                        "/admin/**", "/login", "/logout",
-                        "/webjars/**", "/css/**", "/js/**",
-                        "/actuator/**", "/v3/api-docs/**", "/swagger-ui/**",
-                        "/api/**", "/h2-console/**"
-                )
+                .securityMatcher(new AndRequestMatcher(
+                        proxyHostRequestMatcher,
+                        new OrRequestMatcher(
+                                new AntPathRequestMatcher("/admin/**"),
+                                new AntPathRequestMatcher("/login"),
+                                new AntPathRequestMatcher("/logout"),
+                                new AntPathRequestMatcher("/webjars/**"),
+                                new AntPathRequestMatcher("/css/**"),
+                                new AntPathRequestMatcher("/js/**"),
+                                new AntPathRequestMatcher("/actuator/**"),
+                                new AntPathRequestMatcher("/v3/api-docs/**"),
+                                new AntPathRequestMatcher("/swagger-ui/**"),
+                                new AntPathRequestMatcher("/api/**"),
+                                new AntPathRequestMatcher("/h2-console/**")
+                        )
+                ))
                 .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/webjars/**", "/css/**", "/js/**",

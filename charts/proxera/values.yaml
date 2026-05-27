@@ -109,6 +109,9 @@ redis:
 # H2 file path is controlled by H2_DATA_PATH (auto-set from persistence.mountPath when persistence.enabled=true).
 env:
   PROXERA_LOG_RETENTION_DAYS: "7"
+  # Admin host restriction — only this hostname serves the Proxera admin UI/login.
+  # Leave empty to use dynamic mode (any configured proxy route domain is auto-excluded).
+  PROXERA_ADMIN_HOST: ""
   # DB_HOST: ""
 # DB_PORT: "5432"
 
