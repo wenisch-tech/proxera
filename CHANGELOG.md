@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.8 - 2026-05-31
+
+### [0.8.8](https://github.com/wenisch-tech/proxera/compare/v0.8.7...v0.8.8) (2026-05-31)
+
+
+### Bug Fixes
+
+* **deps:** update non-major dependencies ([10b9fa1](https://github.com/wenisch-tech/proxera/commit/10b9fa1c7f8fe3c327be1a641ca45a5a404cc412))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.8.8
+
+
 ## v0.8.7 - 2026-05-31
 
 ### [0.8.7](https://github.com/wenisch-tech/proxera/compare/v0.8.6...v0.8.7) (2026-05-31)
