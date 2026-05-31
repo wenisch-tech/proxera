@@ -27,7 +27,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <springdoc.version>2.8.0</springdoc.version>
+        <springdoc.version>2.8.17</springdoc.version>
         <!-- Security: pin versions to fix CVEs not yet included in Spring Boot BOM -->
         <tomcat.version>10.1.55</tomcat.version>
         <netty.version>4.1.133.Final</netty.version>
@@ -180,7 +180,7 @@
         <dependency>
             <groupId>org.webjars.npm</groupId>
             <artifactId>chart.js</artifactId>
-            <version>4.4.3</version>
+            <version>4.5.1</version>
         </dependency>
 
         <!-- Fabric8 Kubernetes Client — in-cluster Ingress management -->
