@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.7 - 2026-05-31
+
+### [0.8.7](https://github.com/wenisch-tech/proxera/compare/v0.8.6...v0.8.7) (2026-05-31)
+
+
+### Bug Fixes
+
+* **deps:** update dependency io.fabric8:kubernetes-client to v6.14.0 ([f2e0f66](https://github.com/wenisch-tech/proxera/commit/f2e0f6653ccdcb77bfebf85fa7da2b937b305fe1))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.8.7
+
+
 ## v0.8.4 - 2026-05-31
 
 ### [0.8.4](https://github.com/wenisch-tech/proxera/compare/v0.8.3...v0.8.4) (2026-05-31)
