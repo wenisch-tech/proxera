@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1.7
-FROM cgr.dev/chainguard/jre:latest
+# syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+FROM cgr.dev/chainguard/jre:latest@sha256:11ddb6ab37678eaf5fabeda23a9f50e2b338be0cf64fca5b0fc6d424a07366ba
 
 WORKDIR /app
 
