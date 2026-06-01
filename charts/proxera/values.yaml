@@ -105,7 +105,7 @@ redis:
   port: 6379
   image:
     repository: redis
-    tag: 7.4-alpine
+    tag: 8.8-alpine
     pullPolicy: IfNotPresent
   resources:
     requests:
