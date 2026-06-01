@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.9.0 - 2026-06-01
+
+## [0.9.0](https://github.com/wenisch-tech/proxera/compare/v0.8.13...v0.9.0) (2026-06-01)
+
+
+### Features
+
+* updated helm to chart to automatically setup redis deployment when no host is configured ([57d02c7](https://github.com/wenisch-tech/proxera/commit/57d02c763675b89e9c9f92084b5d31b5c7e31291))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.9.0
+
+
 ## v0.8.13 - 2026-06-01
 
 ### [0.8.13](https://github.com/wenisch-tech/proxera/compare/v0.8.12...v0.8.13) (2026-06-01)
