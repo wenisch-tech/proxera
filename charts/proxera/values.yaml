@@ -97,11 +97,23 @@ persistence:
   mountPath: /app/data
 # Redis (optional — enables multi-pod scaling via Pub/Sub)
 
-# When host is empty, in-memory message bus is used (single-pod default).
+# Set enabled=true to deploy a bundled in-cluster Redis and wire Proxera to it.
+# Leave enabled=false and set host to use an external Redis service instead.
 redis:
   enabled: false
   host: ""
   port: 6379
+  image:
+    repository: redis
+    tag: 7.4-alpine
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
 # Non-sensitive environment variables (mounted as ConfigMap)
 
 # PostgreSQL: set DB_HOST (and optionally DB_PORT, DB_NAME, DB_USER) to switch from H2.

@@ -2,9 +2,7 @@
 
 Proxera is a self-hosted reverse tunnel that lets HTTP services running in a private LAN be exposed to the internet without opening inbound firewall rules.
 
-This Helm chart deploys the Proxera Server to a Kubernetes cluster. The server exposes two ports:
-- **8080** — proxy port (public-facing, receives HTTP/WebSocket traffic)
-- **8080** — admin UI and REST API port
+This Helm chart deploys the Proxera Server to a Kubernetes cluster. The server exposes one application port, `8080`, which serves both proxied traffic and the admin UI/API.
 
 ## Prerequisites
 
@@ -38,19 +36,54 @@ helm install proxera ./charts/proxera -n proxera --create-namespace \
 
 ```bash
 helm install proxera ./charts/proxera -n proxera --create-namespace \
-  --set env.SPRING_DATASOURCE_URL="jdbc:postgresql://postgres:5432/proxera" \
-  --set env.SPRING_DATASOURCE_USERNAME="proxera" \
-  --set secrets.SPRING_DATASOURCE_PASSWORD="your-password"
+  --set env.DB_HOST="postgres" \
+  --set env.DB_NAME="proxera" \
+  --set env.DB_USER="proxera" \
+  --set secrets.DB_PASSWORD="your-password"
 ```
 
-### Multi-Pod with Redis
+### Multi-Pod with Bundled Redis
 
 ```bash
 helm install proxera ./charts/proxera -n proxera --create-namespace \
   --set replicaCount=3 \
-  --set env.REDIS_HOST="redis" \
-  --set env.REDIS_PORT="6379"
+  --set redis.enabled=true
 ```
+
+This deploys a single in-cluster Redis instance for convenience. It enables multi-pod Proxera routing, but the Redis tier itself is not highly available.
+
+### Multi-Pod with External Redis
+
+```bash
+helm install proxera ./charts/proxera -n proxera --create-namespace \
+  --set replicaCount=3 \
+  --set redis.host="redis" \
+  --set redis.port=6379
+```
+
+## HA Setup
+
+For actual high availability, configure all of the following:
+
+- Use PostgreSQL for the application database. The default embedded H2 mode is suitable for single-pod setups, not multiple Proxera replicas.
+- Run more than one Proxera replica, either with `replicaCount > 1` or with HPA plus `minReplicas > 1`.
+- Enable Redis Pub/Sub, either with `redis.enabled=true` for the bundled in-cluster Redis or with `redis.host` pointing at an external Redis service.
+- For production-grade HA, prefer an external Redis service with its own replication/failover. The bundled Redis is a single pod.
+- If the admin UI is load-balanced across multiple replicas, enable sticky sessions on the admin ingress or otherwise ensure session affinity. The admin login uses server-side form-login sessions.
+
+Recommended production pattern:
+
+```bash
+helm install proxera ./charts/proxera -n proxera --create-namespace \
+  --set replicaCount=3 \
+  --set env.DB_HOST="postgres" \
+  --set env.DB_NAME="proxera" \
+  --set env.DB_USER="proxera" \
+  --set secrets.DB_PASSWORD="your-password" \
+  --set redis.enabled=true
+```
+
+If you already operate Redis separately, keep `redis.enabled=false` and set `redis.host` instead.
 
 ## Configuration
 

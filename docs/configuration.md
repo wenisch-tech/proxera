@@ -44,7 +44,10 @@ docker run -d -p 8080:8080 \
 When `REDIS_HOST` is set, Proxera uses Redis Pub/Sub to route tunnel frames across multiple pods, enabling horizontal scaling.
 
 !!! note
-    Redis is not bundled in the Helm chart. Deploy Redis separately (e.g. Bitnami Redis chart) and point `REDIS_HOST` at the Redis service name.
+    The Helm chart can deploy a bundled Redis when `redis.enabled=true`. If you prefer to run Redis separately, leave `redis.enabled=false` and point `redis.host` at your existing Redis service.
+
+!!! warning
+    The bundled chart Redis is a single pod intended to make multi-replica Proxera setup easy. For end-to-end HA, use an external Redis service that provides replication and failover.
 
 ---
 
@@ -97,7 +100,7 @@ ingress:
             pathType: Prefix
     tls: []
 
-# Redis (leave host empty for single-pod in-memory mode)
+# Redis (`enabled=true` deploys bundled Redis; otherwise set `host` for external Redis)
 redis:
   enabled: false
   host: ""
@@ -140,7 +143,24 @@ helm install proxera wenisch-tech/proxera \
 helm install proxera wenisch-tech/proxera \
   -n proxera --create-namespace \
   --set replicaCount=3 \
-  --set redis.host="redis" \
-  --set redis.port="6379"
+  --set redis.enabled=true
 ```
+
+### Multi-pod with external Redis
+
+```bash
+helm install proxera wenisch-tech/proxera \
+  -n proxera --create-namespace \
+  --set replicaCount=3 \
+  --set redis.host="redis" \
+  --set redis.port=6379
+```
+
+### HA prerequisites
+
+- Use PostgreSQL for shared application state. Embedded H2 is not appropriate for multi-replica deployments.
+- Run at least two Proxera replicas.
+- Enable Redis Pub/Sub, either bundled or external.
+- Prefer external Redis if you need the Redis layer itself to be highly available.
+- If the admin UI is balanced across replicas, enable sticky sessions on the admin ingress because login state is session-based.
 

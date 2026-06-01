@@ -482,6 +482,8 @@ Kubernetes Namespace: proxera
 │
 ├── ConfigMap: proxera   (non-sensitive env vars)
 ├── Secret: proxera      (sensitive env vars, e.g. DB password)
+├── Deployment: proxera-redis  (optional, when redis.enabled=true)
+├── Service: proxera-redis     (optional, when redis.enabled=true)
 └── PersistentVolumeClaim: proxera-data  (optional, for H2 dev mode)
 ```
 
@@ -512,8 +514,8 @@ ingress:
     tls: []
 
 redis:
-  enabled: false   # true = Redis Pub/Sub mode (multi-pod)
-  host: ""
+  enabled: false   # true = deploy bundled Redis + enable Redis Pub/Sub
+  host: ""         # set only when using an external Redis service
   port: 6379
 
 persistence:

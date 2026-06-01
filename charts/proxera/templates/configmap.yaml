@@ -8,7 +8,10 @@ data:
   {{- range $key, $value := .Values.env }}
   {{ $key }}: {{ $value | quote }}
   {{- end }}
-  {{- if .Values.redis.host }}
+  {{- if .Values.redis.enabled }}
+  REDIS_HOST: {{ include "proxera.redis.fullname" . | quote }}
+  REDIS_PORT: {{ .Values.redis.port | quote }}
+  {{- else if .Values.redis.host }}
   REDIS_HOST: {{ .Values.redis.host | quote }}
   REDIS_PORT: {{ .Values.redis.port | quote }}
   {{- end }}

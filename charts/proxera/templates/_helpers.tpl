@@ -54,3 +54,10 @@ Image reference.
 {{- define "proxera.image" -}}
 {{- printf "%s/%s:%s" .Values.image.registry .Values.image.repository .Values.image.tag }}
 {{- end }}
+
+{{/*
+Bundled Redis resource name.
+*/}}
+{{- define "proxera.redis.fullname" -}}
+{{- printf "%s-redis" (include "proxera.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
