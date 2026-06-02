@@ -72,6 +72,8 @@ public class TopologyController {
             node.put("name", agent.getName());
             node.put("status", agent.getStatus().name());
             node.put("connected", connected);
+            node.put("databaseStatus", agent.getStatus().name());
+            node.put("localTunnelConnected", connected);
             if (agent.getRemoteIp() != null) node.put("remoteIp", agent.getRemoteIp());
             nodes.add(node);
 

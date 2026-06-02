@@ -5,6 +5,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.handler.AbstractHandlerMapping;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import tech.wenisch.proxera.service.RoutingService;
 
@@ -41,6 +42,9 @@ public class ProxyDomainHandlerMapping extends AbstractHandlerMapping {
 
     @Override
     protected Object getHandlerInternal(@NonNull HttpServletRequest request) {
+        if (request.getDispatcherType() != DispatcherType.REQUEST) {
+            return null;
+        }
         String host = request.getHeader("Host");
         if (routingService.isKnownProxyDomain(host)) {
             return proxyController;

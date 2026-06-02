@@ -72,12 +72,15 @@ public class ProxyService {
     public void proxy(HttpServletRequest request, HttpServletResponse response, AsyncContext asyncContext) {
         String host = request.getHeader("Host");
         String path = request.getRequestURI();
+        long startedAt = System.nanoTime();
 
         routingService.resolve(host, path).ifPresentOrElse(
                 routeDomain -> dispatchToAgent(routeDomain, request, response, asyncContext),
                 () -> {
                     try {
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                        accessLogService.logFailure(null, null, request, HttpServletResponse.SC_NOT_FOUND,
+                                elapsedMs(startedAt));
+                        writePlainError(response, HttpServletResponse.SC_NOT_FOUND, "Not Found");
                     } catch (IOException e) {
                         log.warn("Could not send 404", e);
                     } finally {
@@ -90,6 +93,7 @@ public class ProxyService {
     private void dispatchToAgent(RouteDomain routeDomain, HttpServletRequest request,
                                   HttpServletResponse response, AsyncContext asyncContext) {
         Route route = routeDomain.getRoute();
+        long startedAt = System.nanoTime();
         try {
             String correlationId = UUID.randomUUID().toString();
             RequestPayload payload = buildPayload(routeDomain, request);
@@ -103,9 +107,13 @@ public class ProxyService {
 
             future.orTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS).whenComplete((resp, ex) -> {
                 if (ex != null) {
-                    log.warn("Tunnel request timed out or failed: {}", ex.getMessage());
+                    log.warn("Tunnel request failed: method={} host={} path={} route={} agent={} correlationId={} reason={}",
+                            request.getMethod(), request.getHeader("Host"), request.getRequestURI(),
+                            route.getName(), agentId, correlationId, ex.toString());
                     try {
-                        response.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Bad Gateway");
+                        accessLogService.logFailure(route, agentId, request, HttpServletResponse.SC_BAD_GATEWAY,
+                                elapsedMs(startedAt));
+                        writePlainError(response, HttpServletResponse.SC_BAD_GATEWAY, "Bad Gateway");
                     } catch (IOException ioEx) {
                         log.error("Failed to write 502", ioEx);
                     } finally {
@@ -127,7 +135,10 @@ public class ProxyService {
         } catch (Exception e) {
             log.error("Error dispatching proxy request", e);
             try {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                UUID agentId = route.getAgent() != null ? route.getAgent().getId() : null;
+                accessLogService.logFailure(route, agentId, request, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        elapsedMs(startedAt));
+                writePlainError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
             } catch (IOException ioEx) {
                 log.error("Failed to write 500", ioEx);
             } finally {
@@ -340,5 +351,19 @@ public class ProxyService {
                 routeDomain.isStripPrefix() ? routeDomain.getPathPrefix() : null,
                 request.getRemoteAddr()
         );
+    }
+
+    private static long elapsedMs(long startedAt) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
+    }
+
+    private static void writePlainError(HttpServletResponse response, int status, String message) throws IOException {
+        if (response.isCommitted()) {
+            return;
+        }
+        response.resetBuffer();
+        response.setStatus(status);
+        response.setContentType("text/plain;charset=UTF-8");
+        response.getOutputStream().write(message.getBytes(StandardCharsets.UTF_8));
     }
 }

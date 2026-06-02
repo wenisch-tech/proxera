@@ -46,6 +46,23 @@ public class AccessLogService {
         return saved;
     }
 
+    @Transactional
+    public AccessLog logFailure(Route route, UUID agentId, HttpServletRequest request,
+                                int statusCode, long latencyMs) {
+        AccessLog entry = AccessLog.builder()
+                .routeId(route != null ? route.getId() : null)
+                .agentId(agentId)
+                .method(request.getMethod())
+                .path(request.getRequestURI())
+                .statusCode(statusCode)
+                .latencyMs(latencyMs)
+                .remoteIp(getClientAddress(request))
+                .build();
+        AccessLog saved = accessLogRepository.save(entry);
+        eventPublisher.publishEvent(saved);
+        return saved;
+    }
+
     public List<AccessLog> getRecentForRoute(UUID routeId, int limit) {
         return accessLogRepository.findByRouteIdOrderByTimestampDesc(
                 routeId, PageRequest.of(0, limit));

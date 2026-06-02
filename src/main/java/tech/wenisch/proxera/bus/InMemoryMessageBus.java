@@ -49,6 +49,7 @@ public class InMemoryMessageBus implements MessageBus {
     public CompletableFuture<ResponsePayload> dispatch(UUID agentId, String requestJson, String correlationId) {
         CompletableFuture<ResponsePayload> future = new CompletableFuture<>();
         pending.put(correlationId, future);
+        future.whenComplete((response, ex) -> pending.remove(correlationId));
 
         try {
             Map<String, Object> payload = objectMapper.readValue(requestJson, Map.class);

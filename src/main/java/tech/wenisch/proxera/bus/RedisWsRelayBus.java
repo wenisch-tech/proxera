@@ -1,10 +1,14 @@
 package tech.wenisch.proxera.bus;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,37 +42,41 @@ public class RedisWsRelayBus implements WsRelayBus {
     private static final String PATTERN = PREFIX + "*";
 
     private final StringRedisTemplate redisTemplate;
+    private final RedisMessageListenerContainer listenerContainer;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final ConcurrentHashMap<String, Consumer<WsRelayMessage>> a2cHandlers = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Consumer<WsRelayMessage>> c2aHandlers = new ConcurrentHashMap<>();
 
-    public RedisWsRelayBus(StringRedisTemplate redisTemplate) {
+    public RedisWsRelayBus(StringRedisTemplate redisTemplate,
+                           RedisMessageListenerContainer listenerContainer) {
         this.redisTemplate = redisTemplate;
+        this.listenerContainer = listenerContainer;
     }
 
     @PostConstruct
     private void startPatternSubscription() {
-        redisTemplate.getConnectionFactory().getConnection()
-                .pSubscribe((message, pattern) -> {
-                    String channel = new String(message.getChannel());
-                    try {
-                        WsRelayMessage msg = objectMapper.readValue(
-                                new String(message.getBody()), WsRelayMessage.class);
-                        if (channel.endsWith(SUFFIX_A2C)) {
-                            String id = channel.substring(PREFIX.length(), channel.length() - SUFFIX_A2C.length());
-                            Consumer<WsRelayMessage> h = a2cHandlers.get(id);
-                            if (h != null) h.accept(msg);
-                        } else if (channel.endsWith(SUFFIX_C2A)) {
-                            String id = channel.substring(PREFIX.length(), channel.length() - SUFFIX_C2A.length());
-                            Consumer<WsRelayMessage> h = c2aHandlers.get(id);
-                            if (h != null) h.accept(msg);
-                        }
-                    } catch (IOException e) {
-                        log.warn("Failed to deserialize WsRelayMessage on channel {}: {}", channel, e.getMessage());
-                    }
-                }, PATTERN.getBytes());
+        listenerContainer.addMessageListener(this::handleMessage, new PatternTopic(PATTERN));
         log.debug("Redis WsRelayBus pattern subscription started on {}", PATTERN);
+    }
+
+    private void handleMessage(Message message, byte[] pattern) {
+        String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
+        try {
+            WsRelayMessage msg = objectMapper.readValue(
+                    new String(message.getBody(), StandardCharsets.UTF_8), WsRelayMessage.class);
+            if (channel.endsWith(SUFFIX_A2C)) {
+                String id = channel.substring(PREFIX.length(), channel.length() - SUFFIX_A2C.length());
+                Consumer<WsRelayMessage> h = a2cHandlers.get(id);
+                if (h != null) h.accept(msg);
+            } else if (channel.endsWith(SUFFIX_C2A)) {
+                String id = channel.substring(PREFIX.length(), channel.length() - SUFFIX_C2A.length());
+                Consumer<WsRelayMessage> h = c2aHandlers.get(id);
+                if (h != null) h.accept(msg);
+            }
+        } catch (IOException e) {
+            log.warn("Failed to deserialize WsRelayMessage on channel {}: {}", channel, e.getMessage());
+        }
     }
 
     @Override

@@ -1,14 +1,19 @@
 package tech.wenisch.proxera.bus;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,29 +26,32 @@ import tech.wenisch.proxera.tunnel.TunnelManager;
 
 /**
  * Redis-backed MessageBus for multi-pod deployments.
- * Uses Redis Pub/Sub to route request frames and response frames across pods.
- *
- * Fix: onAgentConnected() sets up a dedicated per-agent Redis subscription so that
- * TunnelFrames published by any pod (via sendToAgent) reach the pod that actually
- * holds the agent's WebSocket session.
+ * Uses non-blocking Spring Redis listener containers for all Pub/Sub subscriptions.
  */
 @Slf4j
 public class RedisMessageBus implements MessageBus {
 
-    private static final String CHANNEL_AGENT_PREFIX = "proxera:agent:";
-    private static final String CHANNEL_CORR_PREFIX = "proxera:corr:";
-    private static final String CHANNEL_TOPOLOGY = "proxera:topology";
+    static final String CHANNEL_AGENT_PREFIX = "proxera:agent:";
+    static final String CHANNEL_CORR_PREFIX = "proxera:corr:";
+    static final String CHANNEL_TOPOLOGY = "proxera:topology";
+    static final String CHANNEL_CORR_PATTERN = CHANNEL_CORR_PREFIX + "*";
 
     private final StringRedisTemplate redisTemplate;
+    private final RedisMessageListenerContainer listenerContainer;
     private final ObjectMapper objectMapper;
     private final ConcurrentHashMap<String, CompletableFuture<ResponsePayload>> pending = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, RedisConnection> agentConnections = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, MessageListener> agentListeners = new ConcurrentHashMap<>();
 
     private TunnelManager tunnelManager;
 
-    public RedisMessageBus(StringRedisTemplate redisTemplate) {
+    public RedisMessageBus(StringRedisTemplate redisTemplate,
+                           RedisMessageListenerContainer listenerContainer,
+                           ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
-        this.objectMapper = new ObjectMapper();
+        this.listenerContainer = listenerContainer;
+        this.objectMapper = objectMapper;
+        this.listenerContainer.addMessageListener(this::handleCorrelationMessage,
+                new PatternTopic(CHANNEL_CORR_PATTERN));
     }
 
     public void setTunnelManager(TunnelManager tunnelManager) {
@@ -54,28 +62,13 @@ public class RedisMessageBus implements MessageBus {
     public CompletableFuture<ResponsePayload> dispatch(UUID agentId, String requestJson, String correlationId) {
         CompletableFuture<ResponsePayload> future = new CompletableFuture<>();
         pending.put(correlationId, future);
+        future.whenComplete((response, ex) -> pending.remove(correlationId));
 
-        // Subscribe to the response channel for this correlationId
-        String responseChannel = CHANNEL_CORR_PREFIX + correlationId;
-        redisTemplate.getConnectionFactory().getConnection()
-                .subscribe((message, pattern) -> {
-                    try {
-                        ResponsePayload response = objectMapper.readValue(
-                                new String(message.getBody()), ResponsePayload.class);
-                        complete(correlationId, response);
-                    } catch (IOException e) {
-                        log.error("Failed to deserialize response for correlationId {}", correlationId, e);
-                        future.completeExceptionally(e);
-                    }
-                }, responseChannel.getBytes());
-
-        // Build a REQUEST TunnelFrame and route it to the agent's pod via the agent channel
         try {
             Map<String, Object> payload = objectMapper.readValue(requestJson, Map.class);
             TunnelFrame frame = TunnelFrame.of(FrameType.REQUEST, correlationId, payload);
             sendToAgent(agentId, frame);
         } catch (IOException e) {
-            pending.remove(correlationId);
             future.completeExceptionally(e);
         }
 
@@ -84,17 +77,8 @@ public class RedisMessageBus implements MessageBus {
 
     @Override
     public void complete(String correlationId, ResponsePayload response) {
-        CompletableFuture<ResponsePayload> future = pending.remove(correlationId);
-        if (future != null) {
-            future.complete(response);
-        } else {
-            // This pod holds the WebSocket — publish the response so the requesting pod can pick it up
-            try {
-                String responseChannel = CHANNEL_CORR_PREFIX + correlationId;
-                redisTemplate.convertAndSend(responseChannel, objectMapper.writeValueAsString(response));
-            } catch (JsonProcessingException e) {
-                log.error("Failed to publish response for correlationId {}", correlationId, e);
-            }
+        if (!completeLocal(correlationId, response)) {
+            publishResponse(correlationId, response);
         }
     }
 
@@ -108,40 +92,30 @@ public class RedisMessageBus implements MessageBus {
         }
     }
 
-    /**
-     * Called when an agent's tunnel WebSocket connects to THIS pod.
-     * Sets up a dedicated Redis subscription to proxera:agent:{agentId} so that
-     * TunnelFrames published by any pod are forwarded to the agent via TunnelManager.
-     */
     @Override
     public void onAgentConnected(UUID agentId) {
+        onAgentDisconnected(agentId);
+
         String channel = CHANNEL_AGENT_PREFIX + agentId;
-        RedisConnection conn = redisTemplate.getConnectionFactory().getConnection();
-        agentConnections.put(agentId, conn);
-        conn.subscribe((message, pattern) -> {
+        MessageListener listener = (message, pattern) -> {
             try {
-                TunnelFrame frame = objectMapper.readValue(new String(message.getBody()), TunnelFrame.class);
+                TunnelFrame frame = objectMapper.readValue(body(message), TunnelFrame.class);
                 tunnelManager.sendFrame(agentId, frame);
             } catch (Exception e) {
                 log.error("Failed to relay frame to agent {}: {}", agentId, e.getMessage());
             }
-        }, channel.getBytes());
-        log.debug("Redis agent channel subscription established for agent {}", agentId);
+        };
+
+        agentListeners.put(agentId, listener);
+        listenerContainer.addMessageListener(listener, new ChannelTopic(channel));
+        log.debug("Redis agent channel listener registered for agent {}", agentId);
     }
 
-    /**
-     * Called when an agent's tunnel WebSocket disconnects from THIS pod.
-     * Closes the dedicated agent channel subscription.
-     */
     @Override
     public void onAgentDisconnected(UUID agentId) {
-        RedisConnection conn = agentConnections.remove(agentId);
-        if (conn != null) {
-            try {
-                conn.close();
-            } catch (Exception e) {
-                log.warn("Error closing Redis agent subscription for agent {}: {}", agentId, e.getMessage());
-            }
+        MessageListener listener = agentListeners.remove(agentId);
+        if (listener != null) {
+            listenerContainer.removeMessageListener(listener, new ChannelTopic(CHANNEL_AGENT_PREFIX + agentId));
         }
     }
 
@@ -156,15 +130,68 @@ public class RedisMessageBus implements MessageBus {
 
     @Override
     public void subscribeTopology(Consumer<TopologyEvent> handler) {
-        redisTemplate.getConnectionFactory().getConnection()
-                .subscribe((message, pattern) -> {
-                    try {
-                        TopologyEvent event = objectMapper.readValue(
-                                new String(message.getBody()), TopologyEvent.class);
-                        handler.accept(event);
-                    } catch (IOException e) {
-                        log.warn("Failed to deserialize topology event: {}", e.getMessage());
-                    }
-                }, CHANNEL_TOPOLOGY.getBytes());
+        MessageListener listener = (message, pattern) -> {
+            try {
+                TopologyEvent event = objectMapper.readValue(body(message), TopologyEvent.class);
+                handler.accept(event);
+            } catch (IOException e) {
+                log.warn("Failed to deserialize topology event: {}", e.getMessage());
+            }
+        };
+        listenerContainer.addMessageListener(listener, new ChannelTopic(CHANNEL_TOPOLOGY));
+    }
+
+    int pendingCount() {
+        return pending.size();
+    }
+
+    int agentListenerCount() {
+        return agentListeners.size();
+    }
+
+    private void handleCorrelationMessage(Message message, byte[] pattern) {
+        String channel = channel(message);
+        if (!channel.startsWith(CHANNEL_CORR_PREFIX)) {
+            return;
+        }
+
+        String correlationId = channel.substring(CHANNEL_CORR_PREFIX.length());
+        try {
+            ResponsePayload response = objectMapper.readValue(body(message), ResponsePayload.class);
+            completeLocal(correlationId, response);
+        } catch (IOException e) {
+            CompletableFuture<ResponsePayload> future = pending.remove(correlationId);
+            if (future != null) {
+                future.completeExceptionally(e);
+            }
+            log.error("Failed to deserialize response for correlationId {}", correlationId, e);
+        }
+    }
+
+    private boolean completeLocal(String correlationId, ResponsePayload response) {
+        CompletableFuture<ResponsePayload> future = pending.remove(correlationId);
+        if (future != null) {
+            future.complete(response);
+            return true;
+        }
+        log.debug("No local pending request for correlationId {}", correlationId);
+        return false;
+    }
+
+    private void publishResponse(String correlationId, ResponsePayload response) {
+        try {
+            redisTemplate.convertAndSend(CHANNEL_CORR_PREFIX + correlationId,
+                    objectMapper.writeValueAsString(response));
+        } catch (JsonProcessingException e) {
+            log.error("Failed to publish response for correlationId {}", correlationId, e);
+        }
+    }
+
+    private static String channel(Message message) {
+        return new String(message.getChannel(), StandardCharsets.UTF_8);
+    }
+
+    private static String body(Message message) {
+        return new String(message.getBody(), StandardCharsets.UTF_8);
     }
 }
