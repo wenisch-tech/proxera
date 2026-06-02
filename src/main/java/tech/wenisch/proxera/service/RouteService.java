@@ -74,6 +74,7 @@ public class RouteService {
             managed.setLocalHost(route.getLocalHost());
             managed.setLocalPort(route.getLocalPort());
             managed.setEnabled(route.isEnabled());
+            managed.setForwardClientIpHeaders(route.isForwardClientIpHeaders());
             // Use getReference so the FK column is set without a SELECT for the agent
             managed.setAgent(entityManager.getReference(Agent.class, route.getAgent().getId()));
 
