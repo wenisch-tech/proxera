@@ -9,6 +9,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -113,6 +115,12 @@ class ProxyServiceFailureTest {
         request.addHeader("X-Forwarded-For", "10.244.21.1");
         request.addHeader("X-Real-IP", "10.244.21.1");
         request.addHeader("Forwarded", "for=10.244.21.1");
+        request.addHeader("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryTest");
+        String multipartBody = "------WebKitFormBoundaryTest\r\n"
+                + "Content-Disposition: form-data; name=\"grant_type\"\r\n\r\n"
+                + "authorization_code\r\n"
+                + "------WebKitFormBoundaryTest--\r\n";
+        request.setContent(multipartBody.getBytes(StandardCharsets.UTF_8));
         MockHttpServletResponse response = new MockHttpServletResponse();
         AsyncContext asyncContext = mock(AsyncContext.class);
         CompletableFuture<ResponsePayload> completed = CompletableFuture.completedFuture(
@@ -129,9 +137,14 @@ class ProxyServiceFailureTest {
         assertThat(headers.has("x-forwarded-for")).isFalse();
         assertThat(headers.has("x-real-ip")).isFalse();
         assertThat(headers.has("forwarded")).isFalse();
+        assertThat(headers.get("content-type").get(0).asText())
+                .isEqualTo("multipart/form-data; boundary=----WebKitFormBoundaryTest");
         assertThat(headers.get("x-forwarded-host").get(0).asText()).isEqualTo("homeassistant.intranet.wenisch.tech");
         assertThat(headers.get("x-forwarded-proto").get(0).asText()).isEqualTo("https");
         assertThat(headers.get("x-forwarded-port").get(0).asText()).isEqualTo("443");
+        assertThat(new String(Base64.getDecoder()
+                .decode(objectMapper.readTree(requestJson.getValue()).get("body").asText()), StandardCharsets.UTF_8))
+                .isEqualTo(multipartBody);
     }
 
     private static MockHttpServletRequest request(String method, String path) {
