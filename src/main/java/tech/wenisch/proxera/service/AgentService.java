@@ -67,6 +67,7 @@ public class AgentService {
             agent.setStatus(AgentStatus.CONNECTED);
             agent.setLastSeenAt(LocalDateTime.now());
             agent.setRemoteIp(remoteIp);
+            agent.setConnectedPodId(System.getenv().getOrDefault("HOSTNAME", null));
             agentRepository.save(agent);
         });
     }

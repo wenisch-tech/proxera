@@ -21,6 +21,7 @@ spec:
         {{- end }}
       labels:
         {{- include "proxera.labels" . | nindent 8 }}
+        app.kubernetes.io/component: server
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import tech.wenisch.proxera.domain.Agent;
+import tech.wenisch.proxera.domain.AgentStatus;
 import tech.wenisch.proxera.domain.IngressSpec;
 import tech.wenisch.proxera.domain.Route;
 import tech.wenisch.proxera.service.AgentService;
@@ -65,19 +66,21 @@ public class TopologyController {
         nodes.add(serverNode);
 
         for (Agent agent : agentService.findAll()) {
-            boolean connected = tunnelManager.isConnected(agent.getId());
+            boolean localTunnelConnected = tunnelManager.isConnected(agent.getId());
+            boolean databaseConnected = agent.getStatus() == AgentStatus.CONNECTED;
             Map<String, Object> node = new HashMap<>();
             node.put("id", agent.getId().toString());
             node.put("type", "agent");
             node.put("name", agent.getName());
             node.put("status", agent.getStatus().name());
-            node.put("connected", connected);
+            node.put("connected", databaseConnected);
             node.put("databaseStatus", agent.getStatus().name());
-            node.put("localTunnelConnected", connected);
+            node.put("localTunnelConnected", localTunnelConnected);
+            if (agent.getConnectedPodId() != null) node.put("connectedPodId", agent.getConnectedPodId());
             if (agent.getRemoteIp() != null) node.put("remoteIp", agent.getRemoteIp());
             nodes.add(node);
 
-            if (connected) {
+            if (localTunnelConnected) {
                 links.add(Map.of("source", podId, "target", agent.getId().toString(), "type", "tunnel"));
             }
 
