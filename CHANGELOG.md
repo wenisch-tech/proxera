@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.10.2 - 2026-06-02
+
+### [0.10.2](https://github.com/wenisch-tech/proxera/compare/v0.10.1...v0.10.2) (2026-06-02)
+
+
+### Bug Fixes
+
+* remove automated multipart handling from spring ([9663792](https://github.com/wenisch-tech/proxera/commit/966379249bae5c5b2be9a654216359b760d27550))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.10.2
+
+
 ## v0.10.1 - 2026-06-02
 
 ### [0.10.1](https://github.com/wenisch-tech/proxera/compare/v0.10.0...v0.10.1) (2026-06-02)
