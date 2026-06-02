@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.10.0 - 2026-06-02
+
+## [0.10.0](https://github.com/wenisch-tech/proxera/compare/v0.9.1...v0.10.0) (2026-06-02)
+
+
+### Features
+
+* added option to disable the forwarding of client IP headers (as required for auth with homeassistant and forwarded_for headers) ([3f58da3](https://github.com/wenisch-tech/proxera/commit/3f58da3848d82b2c877a404da5821e54e46cf755))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.10.0
+
+
 ## v0.9.1 - 2026-06-02
 
 ### [0.9.1](https://github.com/wenisch-tech/proxera/compare/v0.9.0...v0.9.1) (2026-06-02)
