@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.9.1 - 2026-06-02
+
+### [0.9.1](https://github.com/wenisch-tech/proxera/compare/v0.9.0...v0.9.1) (2026-06-02)
+
+
+### Bug Fixes
+
+* roxy domains now only claim normal REQUEST dispatches, so servlet /error dispatches no longer recurse through the proxy. ([25bf4f0](https://github.com/wenisch-tech/proxera/commit/25bf4f0af8316651158d05207509f9180931b0c4))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.9.1
+
+
 ## v0.9.0 - 2026-06-01
 
 ## [0.9.0](https://github.com/wenisch-tech/proxera/compare/v0.8.13...v0.9.0) (2026-06-01)
