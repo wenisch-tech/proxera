@@ -246,6 +246,7 @@ A **Route** is the core configuration entity that maps one or more public domain
 | `localPort` | int | LAN port |
 | `pathPrefix` | String | Optional path prefix to match (e.g. `/api`) |
 | `stripPrefix` | boolean | If true, `pathPrefix` is stripped before forwarding |
+| `forwardClientIpHeaders` | boolean | If true, Proxera forwards/synthesizes client IP headers such as `X-Forwarded-For` and `X-Real-IP`. If false, those client identity headers are stripped for this route while proxy context headers are still forwarded. |
 | `enabled` | boolean | Allows disabling a route without deleting it |
 | `domains` | `route_domains` | One or more external hostnames (unique constraint) |
 
@@ -442,15 +443,24 @@ A `@Scheduled` task runs daily and deletes `access_log` rows older than `proxera
 
 ## 11. Proxy Header Handling
 
-The Proxy Engine adds the following headers to every forwarded request before sending the `REQUEST` frame to the agent:
+The Proxy Engine strips hop-by-hop headers and then forwards the remaining request headers in the `REQUEST` frame to the agent. It also adds reverse-proxy context headers so the local service can build correct absolute URLs and redirects.
+
+| Header | Value |
+|--------|-------|
+| `X-Forwarded-Proto` | `https` or `http` (scheme as seen by Proxera, honoring upstream `X-Forwarded-Proto` via Tomcat RemoteIpValve) |
+| `X-Forwarded-Host` | Full `Host` header including port (e.g. `ha.example.com:8123`) |
+| `X-Forwarded-Port` | Server port number (required by HA OIDC/OAuth to construct redirect URIs) |
+
+When `route.forwardClientIpHeaders=true` (the default), Proxera also forwards or synthesizes client identity headers:
 
 | Header | Value |
 |--------|-------|
 | `X-Forwarded-For` | Client IP appended to any existing chain (multi-hop safe) |
-| `X-Forwarded-Proto` | `https` or `http` (scheme as seen by Proxera, honoring upstream `X-Forwarded-Proto` via Tomcat RemoteIpValve) |
-| `X-Forwarded-Host` | Full `Host` header including port (e.g. `ha.example.com:8123`) |
-| `X-Forwarded-Port` | Server port number (required by HA OIDC/OAuth to construct redirect URIs) |
 | `X-Real-IP` | Original client IP (first value only) |
+
+When `route.forwardClientIpHeaders=false`, Proxera removes inbound client IP headers before dispatching the request and does not synthesize replacement values. The stripped headers are `Forwarded`, `X-Forwarded`, `X-Forwarded-For`, `X-Real-IP`, `X-Client-IP`, and `X-Cluster-Client-IP`.
+
+This option is route-specific. Disable it for applications that perform strict login-flow checks against the immediate client address and can reject authentication when the external client IP or upstream proxy chain changes between requests. Disabling it does not remove `X-Forwarded-Host`, `X-Forwarded-Proto`, or `X-Forwarded-Port`.
 
 **Hop-by-hop headers** are stripped before forwarding (`Connection`, `Transfer-Encoding`, `Upgrade`, `Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `TE`, `Trailers`).
 

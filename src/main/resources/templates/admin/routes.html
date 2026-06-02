@@ -64,6 +64,7 @@
                                     data-local-host=${route.localHost},
                                     data-local-port=${route.localPort},
                                     data-enabled=${route.enabled},
+                                    data-forward-client-ip-headers=${route.forwardClientIpHeaders},
                                     data-domain-hosts=${#strings.listJoin(route.domains.![domain], ',')},
                                     data-domain-paths=${#strings.listJoin(route.domains.![pathPrefix ?: ''], ',')},
                                     data-domain-strips=${#strings.listJoin(route.domains.![stripPrefix ? 'true' : 'false'], ',')}">
@@ -137,6 +138,12 @@
                             <input type="checkbox" id="edit-enabled" name="enabled" class="form-check-input" value="true"/>
                             <label for="edit-enabled" class="form-check-label">Enabled</label>
                         </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" id="edit-forwardClientIpHeaders" name="forwardClientIpHeaders"
+                                   class="form-check-input" value="true"/>
+                            <label for="edit-forwardClientIpHeaders" class="form-check-label">Forward client IP headers</label>
+                            <small class="d-block text-muted">Disable for apps that reject login when forwarded client IPs change.</small>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -159,6 +166,7 @@
         const localHost   = btn.dataset.localHost;
         const localPort   = btn.dataset.localPort;
         const enabled     = btn.dataset.enabled === 'true';
+        const forwardClientIpHeaders = btn.dataset.forwardClientIpHeaders !== 'false';
         const hosts  = btn.dataset.domainHosts  ? btn.dataset.domainHosts.split(',')  : [];
         const paths  = btn.dataset.domainPaths  ? btn.dataset.domainPaths.split(',')  : [];
         const strips = btn.dataset.domainStrips ? btn.dataset.domainStrips.split(',') : [];
@@ -168,6 +176,7 @@
         document.getElementById('edit-localHost').value = localHost;
         document.getElementById('edit-localPort').value = localPort;
         document.getElementById('edit-enabled').checked = enabled;
+        document.getElementById('edit-forwardClientIpHeaders').checked = forwardClientIpHeaders;
 
         const agentSelect = document.getElementById('edit-agentId');
         for (const opt of agentSelect.options) {

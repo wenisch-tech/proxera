@@ -1,0 +1,2 @@
+ALTER TABLE routes
+    ADD COLUMN IF NOT EXISTS forward_client_ip_headers BOOLEAN NOT NULL DEFAULT TRUE;

@@ -50,6 +50,10 @@ public class ProxyService {
             "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
             "te", "trailers", "transfer-encoding", "upgrade"
     );
+    private static final Set<String> CLIENT_IP_HEADERS = Set.of(
+            "forwarded", "x-forwarded", "x-forwarded-for", "x-real-ip",
+            "x-client-ip", "x-cluster-client-ip"
+    );
 
     private final RoutingService routingService;
     private final MessageBus messageBus;
@@ -315,18 +319,22 @@ public class ProxyService {
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String name = headerNames.nextElement().toLowerCase();
-            if (!HOP_BY_HOP_HEADERS.contains(name)) {
+            if (!HOP_BY_HOP_HEADERS.contains(name)
+                    && (route.isForwardClientIpHeaders() || !CLIENT_IP_HEADERS.contains(name))) {
                 headers.put(name, Collections.list(request.getHeaders(name)));
             }
         }
 
-        // X-Forwarded-For: append client IP to any existing chain (multi-hop proxy support).
         String clientIp = request.getRemoteAddr();
-        List<String> existingXffList = headers.get("x-forwarded-for");
-        String xffValue = (existingXffList != null && !existingXffList.isEmpty() && !existingXffList.get(0).isBlank())
-                ? existingXffList.get(0) + ", " + clientIp
-                : clientIp;
-        headers.put("x-forwarded-for", List.of(xffValue));
+        if (route.isForwardClientIpHeaders()) {
+            // X-Forwarded-For: append client IP to any existing chain (multi-hop proxy support).
+            List<String> existingXffList = headers.get("x-forwarded-for");
+            String xffValue = (existingXffList != null && !existingXffList.isEmpty() && !existingXffList.get(0).isBlank())
+                    ? existingXffList.get(0) + ", " + clientIp
+                    : clientIp;
+            headers.put("x-forwarded-for", List.of(xffValue));
+            headers.put("x-real-ip", List.of(clientIp));
+        }
 
         // X-Forwarded-Host: use the full Host header including port.
         String hostHeader = request.getHeader("Host");
@@ -334,8 +342,6 @@ public class ProxyService {
 
         headers.put("x-forwarded-proto", List.of(request.getScheme()));
         headers.put("x-forwarded-port", List.of(String.valueOf(request.getServerPort())));
-
-        headers.put("x-real-ip", List.of(clientIp));
 
         byte[] bodyBytes = request.getInputStream().readAllBytes();
         String body = bodyBytes.length > 0 ? Base64.getEncoder().encodeToString(bodyBytes) : null;

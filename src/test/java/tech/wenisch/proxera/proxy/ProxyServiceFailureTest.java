@@ -14,10 +14,12 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.AsyncContext;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -36,8 +38,9 @@ class ProxyServiceFailureTest {
     private final MessageBus messageBus = mock(MessageBus.class);
     private final AccessLogService accessLogService = mock(AccessLogService.class);
     private final SettingsService settingsService = mock(SettingsService.class);
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final ProxyService proxyService = new ProxyService(
-            routingService, messageBus, accessLogService, new ObjectMapper(), settingsService);
+            routingService, messageBus, accessLogService, objectMapper, settingsService);
 
     @Test
     void missingRouteReturnsPlain404AndLogsFailure() throws Exception {
@@ -88,6 +91,47 @@ class ProxyServiceFailureTest {
         assertThat(response.getContentAsString()).isEqualTo("Bad Gateway");
         verify(accessLogService).logFailure(eq(route), eq(agent.getId()), eq(request), eq(502), anyLong());
         verify(asyncContext).complete();
+    }
+
+    @Test
+    void disabledClientIpForwardingStripsClientIpHeadersButKeepsProxyContext() throws Exception {
+        Agent agent = Agent.builder().id(UUID.randomUUID()).name("k8s@home").build();
+        Route route = Route.builder()
+                .id(UUID.randomUUID())
+                .name("homeassistant")
+                .agent(agent)
+                .localHost("192.168.1.199")
+                .localPort(8123)
+                .forwardClientIpHeaders(false)
+                .build();
+        RouteDomain routeDomain = RouteDomain.builder()
+                .route(route)
+                .domain("homeassistant.intranet.wenisch.tech")
+                .build();
+
+        MockHttpServletRequest request = request("GET", "/auth/login_flow");
+        request.addHeader("X-Forwarded-For", "10.244.21.1");
+        request.addHeader("X-Real-IP", "10.244.21.1");
+        request.addHeader("Forwarded", "for=10.244.21.1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        AsyncContext asyncContext = mock(AsyncContext.class);
+        CompletableFuture<ResponsePayload> completed = CompletableFuture.completedFuture(
+                new ResponsePayload(200, java.util.Map.of(), null, 4));
+        ArgumentCaptor<String> requestJson = ArgumentCaptor.forClass(String.class);
+
+        when(routingService.resolve("homeassistant.intranet.wenisch.tech", "/auth/login_flow"))
+                .thenReturn(Optional.of(routeDomain));
+        when(messageBus.dispatch(eq(agent.getId()), requestJson.capture(), any(String.class))).thenReturn(completed);
+
+        proxyService.proxy(request, response, asyncContext);
+
+        JsonNode headers = objectMapper.readTree(requestJson.getValue()).get("headers");
+        assertThat(headers.has("x-forwarded-for")).isFalse();
+        assertThat(headers.has("x-real-ip")).isFalse();
+        assertThat(headers.has("forwarded")).isFalse();
+        assertThat(headers.get("x-forwarded-host").get(0).asText()).isEqualTo("homeassistant.intranet.wenisch.tech");
+        assertThat(headers.get("x-forwarded-proto").get(0).asText()).isEqualTo("https");
+        assertThat(headers.get("x-forwarded-port").get(0).asText()).isEqualTo("443");
     }
 
     private static MockHttpServletRequest request(String method, String path) {

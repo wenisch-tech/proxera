@@ -94,6 +94,13 @@
                     <label for="enabled" class="form-check-label">Enabled</label>
                 </div>
 
+                <div class="mb-4 form-check">
+                    <input type="checkbox" id="forwardClientIpHeaders" name="forwardClientIpHeaders"
+                           class="form-check-input" value="true" checked/>
+                    <label for="forwardClientIpHeaders" class="form-check-label">Forward client IP headers</label>
+                    <small class="d-block text-muted">Disable for apps that reject login when forwarded client IPs change.</small>
+                </div>
+
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-lg me-1"></i> Create Route

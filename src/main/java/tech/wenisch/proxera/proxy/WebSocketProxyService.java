@@ -45,6 +45,10 @@ public class WebSocketProxyService {
             "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
             "te", "trailers", "transfer-encoding", "upgrade"
     );
+    private static final Set<String> CLIENT_IP_HEADERS = Set.of(
+            "forwarded", "x-forwarded", "x-forwarded-for", "x-real-ip",
+            "x-client-ip", "x-cluster-client-ip"
+    );
 
     private final RoutingService routingService;
     private final MessageBus messageBus;
@@ -106,22 +110,25 @@ public class WebSocketProxyService {
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String name = headerNames.nextElement().toLowerCase();
-            if (!HOP_BY_HOP_HEADERS.contains(name)) {
+            if (!HOP_BY_HOP_HEADERS.contains(name)
+                    && (route.isForwardClientIpHeaders() || !CLIENT_IP_HEADERS.contains(name))) {
                 headers.put(name, request.getHeader(name));
             }
         }
 
-        // Apply the same X-Forwarded-* header logic as ProxyService.buildPayload()
         String clientIp = request.getRemoteAddr();
-        String existingXff = headers.get("x-forwarded-for");
-        headers.put("x-forwarded-for",
-                existingXff != null && !existingXff.isBlank()
-                        ? existingXff + ", " + clientIp : clientIp);
+        if (route.isForwardClientIpHeaders()) {
+            // Apply the same X-Forwarded-* header logic as ProxyService.buildPayload()
+            String existingXff = headers.get("x-forwarded-for");
+            headers.put("x-forwarded-for",
+                    existingXff != null && !existingXff.isBlank()
+                            ? existingXff + ", " + clientIp : clientIp);
+            headers.put("x-real-ip", clientIp);
+        }
         String hostHeader = request.getHeader("Host");
         headers.put("x-forwarded-host", hostHeader != null ? hostHeader : request.getServerName());
         headers.put("x-forwarded-proto", request.getScheme());
         headers.put("x-forwarded-port", String.valueOf(request.getServerPort()));
-        headers.put("x-real-ip", clientIp);
 
         // Determine the effective path after optional prefix stripping
         String effectivePath = request.getRequestURI();

@@ -38,6 +38,10 @@ public class Route {
     @Builder.Default
     private boolean enabled = true;
 
+    @Column(name = "forward_client_ip_headers", nullable = false)
+    @Builder.Default
+    private boolean forwardClientIpHeaders = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

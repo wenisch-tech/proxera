@@ -85,6 +85,11 @@ Once running, the agent's status changes to **Connected** in the Proxera Admin U
 !!! tip "Exposing the Home Assistant UI"
     To expose the Home Assistant frontend itself, create a route in Proxera pointing to `http://homeassistant.local:8123` (or `http://localhost:8123` if the agent runs directly on the HA host). Make sure to also configure an Ingress in the Topology view for the public hostname.
 
+!!! warning "Forwarded client IP headers"
+    For the route that exposes Home Assistant itself, disable **Forward client IP headers** in the Proxera route settings. Home Assistant can reject login flows with an `IP address changed` error when it receives changing `X-Forwarded-For` / `X-Real-IP` values during authentication.
+
+    Keep Home Assistant's `http.use_x_forwarded_for` unset or set it to `false` unless you explicitly need Home Assistant to use the original public client IP. If you set `use_x_forwarded_for: true`, Home Assistant also requires a correct `trusted_proxies` entry for the immediate proxy source, and changing forwarded client IP chains can still break strict login checks.
+
 ---
 
 ## Troubleshooting
@@ -94,6 +99,9 @@ Check the **Log** tab. The most common causes are a missing `server_url` or `api
 
 **Tunnel connects but requests time out**
 Ensure the local service your Proxera server is routing to is actually running on the Home Assistant host and accessible on the expected host and port.
+
+**Home Assistant login redirects back but token exchange fails**
+Disable **Forward client IP headers** on the Home Assistant route in Proxera. Also keep Home Assistant's `http.use_x_forwarded_for` unset or set to `false` unless you have a specific need for forwarded public client IPs. A typical symptom is that `/auth/login_flow` accepts the credentials locally, but the proxied login flow fails with `IP address changed` or the browser cannot complete `/auth/token`.
 
 **Frequent disconnections**
 Try lowering `heartbeat_interval` (e.g. `15s`) or increasing `heartbeat_timeout` (e.g. `20s`) if you have a high-latency connection to your Proxera server.
