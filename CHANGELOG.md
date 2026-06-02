@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.10.1 - 2026-06-02
+
+### [0.10.1](https://github.com/wenisch-tech/proxera/compare/v0.10.0...v0.10.1) (2026-06-02)
+
+
+### Bug Fixes
+
+* fixed a problem that lead to clientIP Headers setting not being properly saved ([c211669](https://github.com/wenisch-tech/proxera/commit/c21166991611789ee937ed818e592698ff68a380))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.10.1
+
+
 ## v0.10.0 - 2026-06-02
 
 ## [0.10.0](https://github.com/wenisch-tech/proxera/compare/v0.9.1...v0.10.0) (2026-06-02)
