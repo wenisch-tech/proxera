@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.10.4 - 2026-06-02
+
+### [0.10.4](https://github.com/wenisch-tech/proxera/compare/v0.10.3...v0.10.4) (2026-06-02)
+
+
+### Bug Fixes
+
+* update memory limits to 2Gi ([c47047e](https://github.com/wenisch-tech/proxera/commit/c47047e7589efc1a97305cdcf2267f034bfba07a))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.10.4
+
+
 ## v0.10.3 - 2026-06-02
 
 ### [0.10.3](https://github.com/wenisch-tech/proxera/compare/v0.10.2...v0.10.3) (2026-06-02)
