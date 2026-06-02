@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.10.3 - 2026-06-02
+
+### [0.10.3](https://github.com/wenisch-tech/proxera/compare/v0.10.2...v0.10.3) (2026-06-02)
+
+
+### Bug Fixes
+
+* fixed a problem that lead to traffic being proxied to wrong container ([fe38376](https://github.com/wenisch-tech/proxera/commit/fe383765b3fae7f523b1ef376002b67032650b37))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.10.3
+
+
 ## v0.10.2 - 2026-06-02
 
 ### [0.10.2](https://github.com/wenisch-tech/proxera/compare/v0.10.1...v0.10.2) (2026-06-02)
