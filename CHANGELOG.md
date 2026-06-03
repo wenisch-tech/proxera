@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.10.5 - 2026-06-03
+
+### [0.10.5](https://github.com/wenisch-tech/proxera/compare/v0.10.4...v0.10.5) (2026-06-03)
+
+
+### Bug Fixes
+
+* allow unmatched entries in access log and improved concurrency for websockets ([4c5a7a2](https://github.com/wenisch-tech/proxera/commit/4c5a7a222d09a7715bd507b4c8a82fcdb7933061))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.10.5
+
+
 ## v0.10.4 - 2026-06-02
 
 ### [0.10.4](https://github.com/wenisch-tech/proxera/compare/v0.10.3...v0.10.4) (2026-06-02)
