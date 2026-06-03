@@ -1,6 +1,7 @@
 package tech.wenisch.proxera.proxy;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,6 +15,7 @@ import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
 import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.bus.WsRelayBus;
@@ -39,6 +41,9 @@ import tech.wenisch.proxera.tunnel.TunnelManager;
 @Component
 @Slf4j
 public class WsProxyRegistry {
+
+    private static final int CLIENT_SEND_TIME_LIMIT_MS = 10_000;
+    private static final int CLIENT_SEND_BUFFER_SIZE_LIMIT_BYTES = 512 * 1024;
 
     private final WsRelayBus relayBus;
     private final TunnelManager tunnelManager;
@@ -69,7 +74,11 @@ public class WsProxyRegistry {
      */
     public CompletableFuture<Boolean> registerClientSession(String wsSessionId, WebSocketSession clientSession) {
         CompletableFuture<Boolean> openFuture = new CompletableFuture<>();
-        clientSessions.put(wsSessionId, clientSession);
+        WebSocketSession safeClientSession = new ConcurrentWebSocketSessionDecorator(
+                clientSession,
+                CLIENT_SEND_TIME_LIMIT_MS,
+                CLIENT_SEND_BUFFER_SIZE_LIMIT_BYTES);
+        clientSessions.put(wsSessionId, safeClientSession);
         openFutures.put(wsSessionId, openFuture);
 
         relayBus.subscribeA2C(wsSessionId, msg -> {
@@ -79,10 +88,10 @@ public class WsProxyRegistry {
                 case "DATA" -> {
                     try {
                         byte[] raw = Base64.getDecoder().decode(msg.data());
-                        if (clientSession.isOpen()) {
-                            clientSession.sendMessage(msg.binary()
+                        if (safeClientSession.isOpen()) {
+                            safeClientSession.sendMessage(msg.binary()
                                     ? new BinaryMessage(raw)
-                                    : new TextMessage(new String(raw)));
+                                    : new TextMessage(new String(raw, StandardCharsets.UTF_8)));
                         }
                     } catch (Exception e) {
                         log.warn("Failed to deliver WS_DATA to client session {}: {}", wsSessionId, e.getMessage());
@@ -90,8 +99,8 @@ public class WsProxyRegistry {
                 }
                 case "CLOSE" -> {
                     try {
-                        if (clientSession.isOpen()) {
-                            clientSession.close(new CloseStatus(msg.code(),
+                        if (safeClientSession.isOpen()) {
+                            safeClientSession.close(new CloseStatus(msg.code(),
                                     msg.reason() != null ? msg.reason() : ""));
                         }
                     } catch (Exception e) {
