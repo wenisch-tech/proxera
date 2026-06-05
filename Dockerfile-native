@@ -16,6 +16,15 @@ COPY src /workspace/src
 
 RUN --mount=type=cache,target=/root/.m2 mvn -Pnative -DskipTests package
 
+# Bundle zlib runtime needed by the native executable.
+RUN set -eux; \
+	zlib_path="$(ldd /workspace/target/proxera | sed -n 's/.*=> \(\/[^ ]*libz\.so\.1[^ ]*\).*/\1/p; s/^\(\/[^ ]*libz\.so\.1[^ ]*\).*/\1/p' | head -n 1)"; \
+	[ -n "$zlib_path" ]; \
+	cp -v "$(readlink -f "$zlib_path")" /workspace/target/libz.so.1
+
+# Prepare writable app data directory for non-root runtime user.
+RUN mkdir -p /workspace/runtime-data && touch /workspace/runtime-data/.keep
+
 # Alpine is not used here because the default native binary is glibc-linked.
 # Distroless base includes additional runtime libraries (for example zlib)
 # while remaining small and production-oriented.
@@ -25,7 +34,10 @@ WORKDIR /app
 
 # Copy the executable and all sidecar native libraries emitted by native-image.
 # This is resilient to future GraalVM outputs (additional .so files).
-COPY --from=native-builder /workspace/target/ /app/
+COPY --from=native-builder --chown=65532:65532 /workspace/target/ /app/
+
+# Ensure embedded database path is writable for UID 65532 (nonroot).
+COPY --from=native-builder --chown=65532:65532 /workspace/runtime-data/ /app/data/
 
 # Ensure the dynamic loader can resolve bundled Graal sidecar libraries in /app.
 ENV LD_LIBRARY_PATH=/app

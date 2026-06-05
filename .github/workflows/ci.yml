@@ -121,6 +121,7 @@ jobs:
       - versioning
       - test
       - docker
+      - docker-native
     permissions:
       contents: write
       packages: read
