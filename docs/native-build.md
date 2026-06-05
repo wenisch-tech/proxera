@@ -48,6 +48,7 @@ The build may also emit required runtime DLLs beside the executable.
 
 Native container builds are defined in `Dockerfile-native` and target Linux `amd64` in CI.
 The runtime stage copies all artifacts emitted in `target/` (binary and shared libraries) and bundles required system libraries discovered via `ldd` into `/app/system-libs` (for example `libz.so.1`) to remain compatible with future GraalVM outputs.
+The container runs as non-root and pre-creates a writable `/app/data` directory so embedded H2 can start in development mode.
 
 ```bash
 docker build -f Dockerfile-native -t proxera:native .

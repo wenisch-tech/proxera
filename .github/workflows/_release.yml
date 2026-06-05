@@ -158,6 +158,13 @@ jobs:
           name: docker-attestation-bundle
           path: ./release
 
+      - name: Download native-distroless app archive artifact
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: proxera-native-distroless-app-linux-amd64
+          path: ./release
+
       - name: Read attestation URL
         id: read_attestation_url
         shell: bash
@@ -173,6 +180,7 @@ jobs:
           name: ${{ inputs.tag }}
           files: |
             ./release/docker-image-attestation.bundle.json
+            ./release/proxera-native-distroless-app-linux-amd64.tar.gz
             ./release/*.tgz
             ./release/*.cosign.bundle
             ./release/*-sbom.json
