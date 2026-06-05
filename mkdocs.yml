@@ -34,6 +34,7 @@ nav:
   - Home: index.md
   - Architecture: architecture.md
   - Configuration: configuration.md
+  - Native Build: native-build.md
   - API Reference: api.md
   - Home Assistant: homeassistant.md
 

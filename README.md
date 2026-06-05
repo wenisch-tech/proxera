@@ -342,6 +342,36 @@ Proxy port: http://localhost:8080
 java -jar target/proxera.jar
 ```
 
+### Run with production profile
+
+Use the `prod` profile for production defaults.
+
+```bash
+SPRING_PROFILES_ACTIVE=prod java -jar target/proxera.jar
+```
+
+### Build native image (optional)
+
+Native build instructions were moved to dedicated docs:
+
+- [docs/native-build.md](docs/native-build.md)
+
+### Build Docker images
+
+Default Docker build remains JVM-based.
+
+```bash
+docker build -t proxera:jvm .
+docker run --rm -p 8080:8080 proxera:jvm
+```
+
+Optional native container image:
+
+```bash
+docker build -f Dockerfile-native -t proxera:native .
+docker run --rm -p 8080:8080 proxera:native
+```
+
 ## Documentation
 
 Full documentation is available at [proxera.wenisch.tech](https://proxera.wenisch.tech) (generated from [docs/](docs/)).
