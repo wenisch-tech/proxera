@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.11.0 - 2026-06-05
+
+## [0.11.0](https://github.com/wenisch-tech/proxera/compare/v0.10.5...v0.11.0) (2026-06-05)
+
+
+### Features
+
+* initial commit native distroless image ([da5928e](https://github.com/wenisch-tech/proxera/commit/da5928ed3f761771dc2b7c8708ba97379af8b674))
+
+
+### Bug Fixes
+
+* added required system libs ([5c6f065](https://github.com/wenisch-tech/proxera/commit/5c6f065050a7dcf0a00abab3845ac1b93228ba03))
+* enasure required libs are also packaged to docker ([e40ad3e](https://github.com/wenisch-tech/proxera/commit/e40ad3e6cdaa10485a2f8f6a37f04dd3fc660fc8))
+* ensure maven is available during native build ([16fb78a](https://github.com/wenisch-tech/proxera/commit/16fb78a97c0bf0169c048dbebe1431894e97644d))
+* switched to distroless base image and removed copy of system libs ([e3761e8](https://github.com/wenisch-tech/proxera/commit/e3761e89e22b0621cddd53af7f6db5d44a82e39b))
+* updated collection of libs during build ([61431d0](https://github.com/wenisch-tech/proxera/commit/61431d074c1ef7abe56e43ec4c564a4e900b661d))
+* updated copy of missing libz ([084c6fe](https://github.com/wenisch-tech/proxera/commit/084c6fef336d4c54b00d258335850ad281b36017))
+* updated library path ([d7c9ab8](https://github.com/wenisch-tech/proxera/commit/d7c9ab8db5e4f4ca23324327679015d13d907b40))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.11.0
+
+
 ## v0.10.5 - 2026-06-03
 
 ### [0.10.5](https://github.com/wenisch-tech/proxera/compare/v0.10.4...v0.10.5) (2026-06-03)
