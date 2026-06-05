@@ -76,6 +76,11 @@ $ADMIN_UI"
   echo '```'
   docker logs --tail 50 "$CONTAINER_ID" 2>&1 || true
   echo '```'
+  echo
+  echo "Container state:"
+  echo '```json'
+  docker inspect "$CONTAINER_ID" --format '{{json .State}}' 2>&1 || true
+  echo '```'
 } > "$REPORT_FILE"
 
 echo "Report written to $REPORT_FILE"
