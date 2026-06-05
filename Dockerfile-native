@@ -20,9 +20,14 @@ RUN --mount=type=cache,target=/root/.m2 mvn -Pnative -DskipTests package
 RUN set -eux; \
 		mkdir -p /workspace/target/system-libs; \
 		ldd /workspace/target/proxera \
-			| awk '/=> \\// { print $3 } /^\\// { print $1 }' \
+			| sed -n 's/.*=> \(\/[^ ]*\).*/\1/p; s/^\(\/[^ ]*\).*/\1/p' \
 			| sort -u \
-			| xargs -r -I '{}' cp -v --parents '{}' /workspace/target/system-libs
+			| while IFS= read -r lib; do \
+					[ -n "$lib" ] || continue; \
+					dir="${lib%/*}"; \
+					mkdir -p "/workspace/target/system-libs${dir}"; \
+					cp -v "$lib" "/workspace/target/system-libs${lib}"; \
+				done
 
 # Alpine is not used here because the default native binary is glibc-linked.
 # Distroless keeps the runtime minimal while remaining glibc-compatible.
