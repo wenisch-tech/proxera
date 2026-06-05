@@ -47,6 +47,7 @@ The build may also emit required runtime DLLs beside the executable.
 ## Native Container Image
 
 Native container builds are defined in `Dockerfile-native` and target Linux `amd64` in CI.
+The runtime stage copies all artifacts emitted in `target/` (binary and shared libraries) to remain compatible with future GraalVM outputs.
 
 ```bash
 docker build -f Dockerfile-native -t proxera:native .

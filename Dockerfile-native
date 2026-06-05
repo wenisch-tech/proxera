@@ -22,7 +22,12 @@ FROM gcr.io/distroless/cc-debian12:nonroot
 
 WORKDIR /app
 
-COPY --from=native-builder /workspace/target/proxera /app/proxera
+# Copy the executable and all sidecar native libraries emitted by native-image.
+# This is resilient to future GraalVM outputs (additional .so files).
+COPY --from=native-builder /workspace/target/ /app/
+
+# Ensure the dynamic loader can resolve bundled shared libraries in /app.
+ENV LD_LIBRARY_PATH=/app
 
 EXPOSE 8080
 
