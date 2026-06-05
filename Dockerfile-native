@@ -1,0 +1,21 @@
+# syntax=docker/dockerfile:1.24@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
+FROM ghcr.io/graalvm/native-image-community:17 AS native-builder
+
+WORKDIR /workspace
+
+COPY pom.xml /workspace/pom.xml
+COPY src /workspace/src
+
+RUN --mount=type=cache,target=/root/.m2 mvn -Pnative -DskipTests package
+
+# Alpine is not used here because the default native binary is glibc-linked.
+# Distroless keeps the runtime minimal while remaining glibc-compatible.
+FROM gcr.io/distroless/cc-debian12:nonroot
+
+WORKDIR /app
+
+COPY --from=native-builder /workspace/target/proxera /app/proxera
+
+EXPOSE 8080
+
+ENTRYPOINT ["/app/proxera"]

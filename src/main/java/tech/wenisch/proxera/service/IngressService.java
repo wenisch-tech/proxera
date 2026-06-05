@@ -34,27 +34,57 @@ public class IngressService {
 
     private final boolean available;
     private final String namespace;
-    private final KubernetesClient client;
+    private volatile KubernetesClient client;
+    private volatile boolean clientInitAttempted;
+    private final Object clientInitLock = new Object();
 
     public IngressService() {
         boolean avail = false;
         String ns = null;
-        KubernetesClient k8s = null;
         if (Files.exists(SA_TOKEN)) {
             try {
-                k8s = new KubernetesClientBuilder().build();
                 ns = Files.readString(SA_NAMESPACE).trim();
                 avail = true;
-                log.info("Kubernetes in-cluster client initialized, namespace={}", ns);
+                log.info("Kubernetes service account detected, namespace={}", ns);
             } catch (Exception e) {
-                log.warn("Kubernetes client init failed: {}", e.getMessage());
+                log.warn("Kubernetes environment detection failed: {}", e.getMessage());
             }
         } else {
             log.debug("Not running in Kubernetes — ingress management unavailable");
         }
         this.available = avail;
         this.namespace = ns;
-        this.client = k8s;
+        this.client = null;
+        this.clientInitAttempted = false;
+    }
+
+    private KubernetesClient getClient() {
+        if (!available) {
+            return null;
+        }
+        KubernetesClient k8s = client;
+        if (k8s != null) {
+            return k8s;
+        }
+        if (clientInitAttempted) {
+            return null;
+        }
+        synchronized (clientInitLock) {
+            if (client != null) {
+                return client;
+            }
+            if (clientInitAttempted) {
+                return null;
+            }
+            clientInitAttempted = true;
+            try {
+                client = new KubernetesClientBuilder().build();
+                log.info("Kubernetes in-cluster client initialized, namespace={}", namespace);
+            } catch (Exception e) {
+                log.warn("Kubernetes client init failed: {}", e.getMessage());
+            }
+            return client;
+        }
     }
 
     public boolean isAvailable() {
@@ -66,9 +96,10 @@ public class IngressService {
     }
 
     public List<IngressSpec> listIngresses() {
-        if (!available || client == null) return Collections.emptyList();
+        KubernetesClient k8s = getClient();
+        if (!available || k8s == null) return Collections.emptyList();
         try {
-            return client.network().v1().ingresses().inNamespace(namespace).list().getItems()
+            return k8s.network().v1().ingresses().inNamespace(namespace).list().getItems()
                     .stream().map(this::toSpec).collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("Failed to list ingresses: {}", e.getMessage());
@@ -77,23 +108,26 @@ public class IngressService {
     }
 
     public void createIngress(IngressSpec spec) {
-        if (!available || client == null) throw new IllegalStateException("Kubernetes not available");
-        client.network().v1().ingresses().inNamespace(namespace).resource(buildIngress(spec)).create();
+        KubernetesClient k8s = getClient();
+        if (!available || k8s == null) throw new IllegalStateException("Kubernetes not available");
+        k8s.network().v1().ingresses().inNamespace(namespace).resource(buildIngress(spec)).create();
     }
 
     public void replaceIngress(String name, IngressSpec spec) {
-        if (!available || client == null) throw new IllegalStateException("Kubernetes not available");
-        Ingress existing = client.network().v1().ingresses().inNamespace(namespace).withName(name).get();
+        KubernetesClient k8s = getClient();
+        if (!available || k8s == null) throw new IllegalStateException("Kubernetes not available");
+        Ingress existing = k8s.network().v1().ingresses().inNamespace(namespace).withName(name).get();
         Ingress updated = buildIngress(spec);
         if (existing != null && existing.getMetadata() != null) {
             updated.getMetadata().setResourceVersion(existing.getMetadata().getResourceVersion());
         }
-        client.network().v1().ingresses().inNamespace(namespace).resource(updated).update();
+        k8s.network().v1().ingresses().inNamespace(namespace).resource(updated).update();
     }
 
     public void deleteIngress(String name) {
-        if (!available || client == null) throw new IllegalStateException("Kubernetes not available");
-        client.network().v1().ingresses().inNamespace(namespace).withName(name).delete();
+        KubernetesClient k8s = getClient();
+        if (!available || k8s == null) throw new IllegalStateException("Kubernetes not available");
+        k8s.network().v1().ingresses().inNamespace(namespace).withName(name).delete();
     }
 
     private Ingress buildIngress(IngressSpec spec) {

@@ -6,6 +6,12 @@
 
 Welcome to the official documentation for Proxera.
 
+## Native Build
+
+Native image build and runtime instructions are documented here:
+
+- [Native Build (GraalVM)](native-build.md)
+
 ---
 
 ## What is Proxera?

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.24@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
-FROM cgr.dev/chainguard/jre:latest@sha256:11ddb6ab37678eaf5fabeda23a9f50e2b338be0cf64fca5b0fc6d424a07366ba
+FROM cgr.dev/chainguard/jre:latest AS jvm-runtime
 
 WORKDIR /app
 
@@ -19,8 +19,8 @@ LABEL org.opencontainers.image.title="Proxera" \
       org.opencontainers.image.revision="${BUILD_REVISION}" \
       org.opencontainers.image.created="${BUILD_DATE}"
 
-ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 \
-    -XX:InitialRAMPercentage=20.0 -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom"
+ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=50.0 \
+    -XX:InitialRAMPercentage=5.0 -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom"
 
 COPY target/proxera.jar /app/app.jar
 
