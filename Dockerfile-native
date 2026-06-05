@@ -24,9 +24,9 @@ RUN set -eux; \
 			| sort -u \
 			| while IFS= read -r lib; do \
 					[ -n "$lib" ] || continue; \
-					dir="${lib%/*}"; \
-					mkdir -p "/workspace/target/system-libs${dir}"; \
-					cp -v "$lib" "/workspace/target/system-libs${lib}"; \
+					soname="$(basename "$lib")"; \
+					resolved="$(readlink -f "$lib" || printf '%s' "$lib")"; \
+					cp -v "$resolved" "/workspace/target/system-libs/$soname"; \
 				done
 
 # Alpine is not used here because the default native binary is glibc-linked.
@@ -40,10 +40,10 @@ WORKDIR /app
 COPY --from=native-builder /workspace/target/ /app/
 
 # Copy system shared libraries required by the generated binary (for example libz.so.1).
-COPY --from=native-builder /workspace/target/system-libs/ /
+COPY --from=native-builder /workspace/target/system-libs/ /app/system-libs/
 
-# Ensure the dynamic loader can resolve bundled shared libraries in /app.
-ENV LD_LIBRARY_PATH=/app
+# Ensure the dynamic loader can resolve bundled shared libraries.
+ENV LD_LIBRARY_PATH=/app:/app/system-libs
 
 EXPOSE 8080
 
