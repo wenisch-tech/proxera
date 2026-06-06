@@ -42,6 +42,10 @@ public class Route {
     @Builder.Default
     private boolean forwardClientIpHeaders = true;
 
+    @Column(name = "preserve_host_header", nullable = false)
+    @Builder.Default
+    private boolean preserveHostHeader = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

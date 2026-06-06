@@ -355,7 +355,8 @@ public class ProxyService {
                 route.getLocalHost(),
                 route.getLocalPort(),
                 routeDomain.isStripPrefix() ? routeDomain.getPathPrefix() : null,
-                request.getRemoteAddr()
+                request.getRemoteAddr(),
+                route.isPreserveHostHeader()
         );
     }
 

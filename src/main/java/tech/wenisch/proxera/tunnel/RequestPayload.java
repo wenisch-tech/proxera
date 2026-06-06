@@ -16,5 +16,6 @@ public record RequestPayload(
         String localHost,
         int localPort,
         String stripPrefix,   // path prefix to strip before forwarding, nullable
-        String remoteAddress
+        String remoteAddress,
+        boolean preserveHostHeader
 ) {}

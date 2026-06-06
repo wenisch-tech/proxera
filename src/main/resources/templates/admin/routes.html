@@ -44,6 +44,9 @@
                             <span class="badge bg-secondary"
                                   th:text="${d.domain + (d.pathPrefix != null ? d.pathPrefix : '')}"></span>
                         </div>
+                        <div th:if="${route.preserveHostHeader}" class="small text-muted mt-1">
+                            Preserve public host
+                        </div>
                     </td>
                     <td>
                         <span th:if="${route.enabled}" class="badge bg-success">Enabled</span>
@@ -65,6 +68,7 @@
                                     data-local-port=${route.localPort},
                                     data-enabled=${route.enabled},
                                     data-forward-client-ip-headers=${route.forwardClientIpHeaders},
+                                    data-preserve-host-header=${route.preserveHostHeader},
                                     data-domain-hosts=${#strings.listJoin(route.domains.![domain], ',')},
                                     data-domain-paths=${#strings.listJoin(route.domains.![pathPrefix ?: ''], ',')},
                                     data-domain-strips=${#strings.listJoin(route.domains.![stripPrefix ? 'true' : 'false'], ',')}">
@@ -144,6 +148,12 @@
                             <label for="edit-forwardClientIpHeaders" class="form-check-label">Forward client IP headers</label>
                             <small class="d-block text-muted">Disable for apps that reject login when forwarded client IPs change.</small>
                         </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" id="edit-preserveHostHeader" name="preserveHostHeader"
+                                   class="form-check-input" value="true"/>
+                            <label for="edit-preserveHostHeader" class="form-check-label">Preserve public Host header</label>
+                            <small class="d-block text-muted">Enable for S3/MinIO-style backends that verify signatures against the original public host.</small>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -167,6 +177,7 @@
         const localPort   = btn.dataset.localPort;
         const enabled     = btn.dataset.enabled === 'true';
         const forwardClientIpHeaders = btn.dataset.forwardClientIpHeaders !== 'false';
+        const preserveHostHeader = btn.dataset.preserveHostHeader === 'true';
         const hosts  = btn.dataset.domainHosts  ? btn.dataset.domainHosts.split(',')  : [];
         const paths  = btn.dataset.domainPaths  ? btn.dataset.domainPaths.split(',')  : [];
         const strips = btn.dataset.domainStrips ? btn.dataset.domainStrips.split(',') : [];
@@ -177,6 +188,7 @@
         document.getElementById('edit-localPort').value = localPort;
         document.getElementById('edit-enabled').checked = enabled;
         document.getElementById('edit-forwardClientIpHeaders').checked = forwardClientIpHeaders;
+        document.getElementById('edit-preserveHostHeader').checked = preserveHostHeader;
 
         const agentSelect = document.getElementById('edit-agentId');
         for (const opt of agentSelect.options) {

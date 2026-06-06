@@ -38,6 +38,8 @@
                         <dd class="col-sm-8 font-monospace" th:text="${route.localHost + ':' + route.localPort}"></dd>
                         <dt class="col-sm-4">Client IP headers</dt>
                         <dd class="col-sm-8" th:text="${route.forwardClientIpHeaders ? 'Forwarded' : 'Stripped'}"></dd>
+                        <dt class="col-sm-4">Public Host</dt>
+                        <dd class="col-sm-8" th:text="${route.preserveHostHeader ? 'Preserved' : 'Rewritten to local target'}"></dd>
                         <dt class="col-sm-4">Domain Entries</dt>
                         <dd class="col-sm-8">
                             <table class="table table-sm table-borderless mb-0 small">

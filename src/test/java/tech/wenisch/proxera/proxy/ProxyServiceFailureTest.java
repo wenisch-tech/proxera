@@ -145,6 +145,45 @@ class ProxyServiceFailureTest {
         assertThat(new String(Base64.getDecoder()
                 .decode(objectMapper.readTree(requestJson.getValue()).get("body").asText()), StandardCharsets.UTF_8))
                 .isEqualTo(multipartBody);
+        assertThat(objectMapper.readTree(requestJson.getValue()).get("preserveHostHeader").asBoolean()).isFalse();
+    }
+
+    @Test
+    void preserveHostHeaderFlagIsIncludedInRequestPayload() throws Exception {
+        Agent agent = Agent.builder().id(UUID.randomUUID()).name("minio").build();
+        Route route = Route.builder()
+                .id(UUID.randomUUID())
+                .name("s3")
+                .agent(agent)
+                .localHost("192.168.1.248")
+                .localPort(80)
+                .preserveHostHeader(true)
+                .build();
+        RouteDomain routeDomain = RouteDomain.builder()
+                .route(route)
+                .domain("s3.intranet.wenisch.tech")
+                .build();
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/backups");
+        request.addHeader("Host", "s3.intranet.wenisch.tech");
+        request.setRemoteAddr("10.244.7.1");
+        request.setServerPort(443);
+        request.setScheme("https");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        AsyncContext asyncContext = mock(AsyncContext.class);
+        CompletableFuture<ResponsePayload> completed = CompletableFuture.completedFuture(
+                new ResponsePayload(200, java.util.Map.of(), null, 2));
+        ArgumentCaptor<String> requestJson = ArgumentCaptor.forClass(String.class);
+
+        when(routingService.resolve("s3.intranet.wenisch.tech", "/backups"))
+                .thenReturn(Optional.of(routeDomain));
+        when(messageBus.dispatch(eq(agent.getId()), requestJson.capture(), any(String.class))).thenReturn(completed);
+
+        proxyService.proxy(request, response, asyncContext);
+
+        JsonNode payload = objectMapper.readTree(requestJson.getValue());
+        assertThat(payload.get("preserveHostHeader").asBoolean()).isTrue();
+        assertThat(payload.get("headers").get("host").get(0).asText()).isEqualTo("s3.intranet.wenisch.tech");
     }
 
     private static MockHttpServletRequest request(String method, String path) {

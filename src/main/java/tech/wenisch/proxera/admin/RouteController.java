@@ -65,6 +65,7 @@ public class RouteController {
                        @RequestParam int localPort,
                        @RequestParam(required = false) boolean enabled,
                        @RequestParam(required = false) boolean forwardClientIpHeaders,
+                       @RequestParam(required = false) boolean preserveHostHeader,
                        @RequestParam(required = false) List<String> domainHosts,
                        @RequestParam(required = false) List<String> domainPaths,
                        @RequestParam(required = false) List<String> domainStrips,
@@ -79,6 +80,7 @@ public class RouteController {
                     .localPort(localPort)
                     .enabled(enabled)
                     .forwardClientIpHeaders(forwardClientIpHeaders)
+                    .preserveHostHeader(preserveHostHeader)
                     .build();
             addDomainEntries(route, domainHosts, domainPaths, domainStrips);
             routeService.save(route);
@@ -104,6 +106,7 @@ public class RouteController {
                          @RequestParam int localPort,
                          @RequestParam(required = false) boolean enabled,
                          @RequestParam(required = false) boolean forwardClientIpHeaders,
+                         @RequestParam(required = false) boolean preserveHostHeader,
                          @RequestParam(required = false) List<String> domainHosts,
                          @RequestParam(required = false) List<String> domainPaths,
                          @RequestParam(required = false) List<String> domainStrips,
@@ -119,6 +122,7 @@ public class RouteController {
             route.setLocalPort(localPort);
             route.setEnabled(enabled);
             route.setForwardClientIpHeaders(forwardClientIpHeaders);
+            route.setPreserveHostHeader(preserveHostHeader);
             route.getDomains().clear();
             addDomainEntries(route, domainHosts, domainPaths, domainStrips);
             routeService.save(route);

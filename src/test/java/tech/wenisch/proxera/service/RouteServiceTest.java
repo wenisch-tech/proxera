@@ -29,7 +29,7 @@ class RouteServiceTest {
     private final RouteService routeService = new RouteService(routeRepository, routeDomainRepository, routingService);
 
     @Test
-    void updateCopiesForwardClientIpHeadersFlagToManagedRoute() {
+    void updateCopiesRouteFlagsToManagedRoute() {
         ReflectionTestUtils.setField(routeService, "entityManager", entityManager);
 
         UUID routeId = UUID.randomUUID();
@@ -42,6 +42,7 @@ class RouteServiceTest {
                 .localHost("192.168.1.199")
                 .localPort(8123)
                 .forwardClientIpHeaders(true)
+                .preserveHostHeader(false)
                 .build();
         managed.getDomains().add(RouteDomain.builder()
                 .route(managed)
@@ -56,6 +57,7 @@ class RouteServiceTest {
                 .localPort(8123)
                 .enabled(true)
                 .forwardClientIpHeaders(false)
+                .preserveHostHeader(true)
                 .build();
         update.getDomains().add(RouteDomain.builder()
                 .domain("homeassistant.intranet.wenisch.tech")
@@ -67,6 +69,7 @@ class RouteServiceTest {
         routeService.save(update);
 
         assertThat(managed.isForwardClientIpHeaders()).isFalse();
+        assertThat(managed.isPreserveHostHeader()).isTrue();
         verify(routingService).invalidateCache();
     }
 }
