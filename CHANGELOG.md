@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.0 - 2026-06-06
+
+## [0.12.0](https://github.com/wenisch-tech/proxera/compare/v0.11.0...v0.12.0) (2026-06-06)
+
+
+### Features
+
+* Added optional per-Route Host Preservation for S3 Compatibility ([1214eae](https://github.com/wenisch-tech/proxera/commit/1214eaeba016ebfe0ee7997ff3738e2fb071e30f))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.0
+
+
 ## v0.11.0 - 2026-06-05
 
 ## [0.11.0](https://github.com/wenisch-tech/proxera/compare/v0.10.5...v0.11.0) (2026-06-05)
