@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.1 - 2026-06-07
+
+### [0.12.1](https://github.com/wenisch-tech/proxera/compare/v0.12.0...v0.12.1) (2026-06-07)
+
+
+### Documentation
+
+* updated docs regarding proxera usage with s3 ([d76c03f](https://github.com/wenisch-tech/proxera/commit/d76c03ff83bf5fbd61b9cba9742d8c55aba7ec99))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.1
+
+
 ## v0.12.0 - 2026-06-06
 
 ## [0.12.0](https://github.com/wenisch-tech/proxera/compare/v0.11.0...v0.12.0) (2026-06-06)
