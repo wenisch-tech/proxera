@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.2 - 2026-06-07
+
+### [0.12.2](https://github.com/wenisch-tech/proxera/compare/v0.12.1...v0.12.2) (2026-06-07)
+
+
+### Bug Fixes
+
+* removed direct java method calls from templates ensuring better compatibility for native image ([cb53198](https://github.com/wenisch-tech/proxera/commit/cb531983da747e9e36097052b754a3081ff64d8d))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.2
+
+
 ## v0.12.1 - 2026-06-07
 
 ### [0.12.1](https://github.com/wenisch-tech/proxera/compare/v0.12.0...v0.12.1) (2026-06-07)
