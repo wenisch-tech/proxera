@@ -139,7 +139,7 @@ helm upgrade --install proxera-agent wenisch-tech/proxera-agent \
 
 [![Add repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fwenisch-tech%2Fproxera-agent)
 
-Click the button above, or go to **Settings → Add-ons → Add-on Store → Repositories** and add `https://github.com/wenisch-tech/proxera-agent`. Then find **Proxera Agent** and install it. Set `server_url` and `api_key` in the Configuration tab. See the [Home Assistant integration guide](docs/homeassistant.md) for details.
+Click the button above, or go to **Settings → Add-ons → Add-on Store → Repositories** and add `https://github.com/wenisch-tech/proxera-agent`. Then find **Proxera Agent** and install it. Set `server_url` and `api_key` in the Configuration tab. See the [Home Assistant integration guide](docs/usage/homeassistant.md) for details.
 **Docker:**
 ```bash
 docker run -d --name proxera-agent \

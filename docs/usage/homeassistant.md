@@ -19,7 +19,7 @@ No inbound ports need to be opened on your Home Assistant host. All connectivity
 ## Prerequisites
 
 - A running Proxera server reachable over `wss://` (or `ws://` for local testing)
-- A registration token generated for an agent slot on your Proxera server (see [Quick Start](index.md#step-4-generate-a-registration-token))
+- A registration token generated for an agent slot on your Proxera server (see [Quick Start](../index.md#step-4-generate-a-registration-token))
 
 ---
 

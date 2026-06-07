@@ -36,7 +36,9 @@ nav:
   - Configuration: configuration.md
   - Native Build: native-build.md
   - API Reference: api.md
-  - Home Assistant: homeassistant.md
+  - Usage:
+      - Home Assistant: usage/homeassistant.md
+      - S3 / MinIO: usage/s3.md
 
 markdown_extensions:
   - admonition

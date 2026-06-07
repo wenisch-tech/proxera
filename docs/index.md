@@ -149,7 +149,7 @@ The Proxera Agent runs inside your LAN. Get it from [wenisch-tech/proxera-agent]
 
 [![Add repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fwenisch-tech%2Fproxera-agent)
 
-Add the repository `https://github.com/wenisch-tech/proxera-agent` in **Settings → Add-ons → Add-on Store → Repositories**, then install **Proxera Agent** and set `server_url` and `api_key` in the Configuration tab. See the [Home Assistant guide](homeassistant.md) for full details.
+Add the repository `https://github.com/wenisch-tech/proxera-agent` in **Settings → Add-ons → Add-on Store → Repositories**, then install **Proxera Agent** and set `server_url` and `api_key` in the Configuration tab. See the [Home Assistant guide](usage/homeassistant.md) for full details.
 
 ---
 
@@ -270,7 +270,9 @@ Monitor live traffic under **Routes → (route name) → Logs** or watch the **T
 - [Architecture](architecture.md) — System design, tunnel protocol, scaling model, data model
 - [Configuration](configuration.md) — Environment variables and Helm values reference
 - [API Reference](api.md) — REST API endpoints and examples
-- [Home Assistant](homeassistant.md) — Installing and configuring the Proxera Agent as a Home Assistant add-on
+- Usage guides:
+  - [Home Assistant](usage/homeassistant.md) — Installing and configuring the Proxera Agent as a Home Assistant add-on
+  - [S3 / MinIO](usage/s3.md) — Exposing S3-compatible services, required route settings, and ingress upload limits
 
 ---
 
