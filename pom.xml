@@ -261,6 +261,7 @@
                             <imageName>${project.build.finalName}</imageName>
                             <quickBuild>true</quickBuild>
                             <buildArgs>
+                                <buildArg>--initialize-at-run-time=sun.security.util.Password$ConsoleHolder</buildArg>
                                 <buildArg>--enable-url-protocols=http,https</buildArg>
                             </buildArgs>
                         </configuration>

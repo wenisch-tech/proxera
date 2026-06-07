@@ -16,7 +16,7 @@
     <div class="d-flex align-items-center gap-2 mb-4">
         <h2 class="mb-0 fw-bold" style="font-size:1.45rem;" th:text="${agent.name}">Agent</h2>
         <span class="badge ms-2"
-              th:classappend="${agent.status.name() == 'CONNECTED' ? 'bg-success' : (agent.status.name() == 'REGISTERED' ? 'bg-info' : 'bg-secondary')}"
+              th:classappend="${agent.status.badgeClass}"
               th:text="${agent.status}"></span>
     </div>
 
@@ -86,7 +86,7 @@
                                 <span th:unless="${route.enabled}" class="badge bg-secondary">Disabled</span>
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(routes)}">
+                        <tr th:unless="${hasRoutes}">
                             <td colspan="3" class="text-muted text-center py-3">No routes configured.</td>
                         </tr>
                         </tbody>

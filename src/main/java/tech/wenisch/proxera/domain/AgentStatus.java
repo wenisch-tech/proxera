@@ -4,5 +4,13 @@ public enum AgentStatus {
     PENDING,
     REGISTERED,
     CONNECTED,
-    DISCONNECTED
+    DISCONNECTED;
+
+    public String getBadgeClass() {
+        return switch (this) {
+            case CONNECTED -> "bg-success";
+            case REGISTERED -> "bg-info";
+            default -> "bg-secondary";
+        };
+    }
 }

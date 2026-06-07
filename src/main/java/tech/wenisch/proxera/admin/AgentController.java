@@ -34,15 +34,19 @@ public class AgentController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("agents", agentService.findAll());
+        var agents = agentService.findAll();
+        model.addAttribute("agents", agents);
+        model.addAttribute("hasAgents", !agents.isEmpty());
         return "admin/agents";
     }
 
     @GetMapping("/{id}")
     public String detail(@PathVariable UUID id, Model model) {
         return agentService.findById(id).map(agent -> {
+            var routes = routeService.findByAgentId(id);
             model.addAttribute("agent", agent);
-            model.addAttribute("routes", routeService.findByAgentId(id));
+            model.addAttribute("routes", routes);
+            model.addAttribute("hasRoutes", !routes.isEmpty());
             return "admin/agent-detail";
         }).orElse("redirect:/admin/agents");
     }

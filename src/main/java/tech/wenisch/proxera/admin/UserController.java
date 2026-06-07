@@ -20,7 +20,9 @@ public class UserController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("users", userService.findAll());
+        var users = userService.findAll();
+        model.addAttribute("users", users);
+        model.addAttribute("hasUsers", !users.isEmpty());
         return "admin/users";
     }
 

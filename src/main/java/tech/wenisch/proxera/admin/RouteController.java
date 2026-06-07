@@ -37,7 +37,9 @@ public class RouteController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("routes", routeService.findAll());
+        var routes = routeService.findAll();
+        model.addAttribute("routes", routes);
+        model.addAttribute("hasRoutes", !routes.isEmpty());
         model.addAttribute("agents", agentService.findAll());
         return "admin/routes";
     }

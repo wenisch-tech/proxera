@@ -60,7 +60,7 @@
                     <td th:text="${log.latencyMs != null ? log.latencyMs + ' ms' : '—'}"></td>
                     <td class="text-muted small" th:text="${log.remoteIp}"></td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(logs)}">
+                <tr th:unless="${hasLogs}">
                     <td colspan="7" class="text-center text-muted py-4">No log entries yet.</td>
                 </tr>
                 </tbody>

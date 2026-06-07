@@ -1,6 +1,6 @@
 # Native Build (GraalVM)
 
-This page describes how to build and run Proxera as a native executable.
+This page describes the supported native-image path for Proxera and the Thymeleaf-related constraints that came up while aligning it with the Kairos native work.
 
 ## Why Native
 
@@ -27,6 +27,12 @@ This repository includes a helper script that prepares the Windows toolchain env
 ```bash
 mvn -Pnative -DskipTests package
 ```
+
+The `native` Maven profile runs Spring AOT processing and then `native-maven-plugin` `compile-no-fork`.
+It also keeps the native-image runtime initialization workaround for `sun.security.util.Password$ConsoleHolder`.
+
+If `JAVA_HOME` points to a regular Temurin/OpenJDK installation, this command will fail because `native-image` is not present.
+In that case use the Docker-based native build path below.
 
 ### Windows (recommended)
 
@@ -55,7 +61,7 @@ docker build -f Dockerfile-native -t proxera:native .
 docker run --rm -p 8080:8080 proxera:native
 ```
 
-In GitHub Actions, the native image pipeline is intentionally non-blocking while production validation is in progress.
+In GitHub Actions, the native image pipeline is intentionally non-blocking while production validation is in progress, and the published experimental tags use the `native-distroless-*` naming already used by CI.
 
 ## Run Native Executable
 
@@ -77,5 +83,6 @@ Default endpoints:
 
 ## Notes
 
+- Native-safe Thymeleaf matters here. Avoid direct Java method calls from templates, and keep any Thymeleaf helper objects used by templates registered in [src/main/java/tech/wenisch/proxera/config/NativeRuntimeHintsConfig.java](../src/main/java/tech/wenisch/proxera/config/NativeRuntimeHintsConfig.java).
 - Native build logs can include many reachability warnings from optional dependency metadata. Warnings are not fatal if the executable is produced.
 - For production behavior, use profile/environment settings documented in [configuration](configuration.md).

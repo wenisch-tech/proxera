@@ -35,7 +35,7 @@
                         <dt class="col-sm-4">Agent</dt>
                         <dd class="col-sm-8" th:text="${route.agent?.name}"></dd>
                         <dt class="col-sm-4">Target</dt>
-                        <dd class="col-sm-8 font-monospace" th:text="${route.localHost + ':' + route.localPort}"></dd>
+                        <dd class="col-sm-8 font-monospace" th:text="${route.targetDisplay}"></dd>
                         <dt class="col-sm-4">Client IP headers</dt>
                         <dd class="col-sm-8" th:text="${route.forwardClientIpHeaders ? 'Forwarded' : 'Stripped'}"></dd>
                         <dt class="col-sm-4">Public Host</dt>
@@ -53,8 +53,8 @@
                                 <tbody>
                                 <tr th:each="d : ${route.domains}">
                                     <td class="font-monospace" th:text="${d.domain}"></td>
-                                    <td class="font-monospace" th:text="${d.pathPrefix ?: '/'}"></td>
-                                    <td th:text="${d.stripPrefix ? 'Yes' : 'No'}"></td>
+                                    <td class="font-monospace" th:text="${d.pathPrefixDisplay}"></td>
+                                    <td th:text="${d.stripPrefixDisplay}"></td>
                                 </tr>
                                 </tbody>
                             </table>

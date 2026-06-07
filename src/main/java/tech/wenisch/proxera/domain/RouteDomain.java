@@ -30,4 +30,19 @@ public class RouteDomain {
 
     @Column(name = "strip_prefix", nullable = false)
     private boolean stripPrefix;
+
+    @Transient
+    public String getBadgeLabel() {
+        return domain + (pathPrefix == null ? "" : pathPrefix);
+    }
+
+    @Transient
+    public String getPathPrefixDisplay() {
+        return pathPrefix == null || pathPrefix.isBlank() ? "/" : pathPrefix;
+    }
+
+    @Transient
+    public String getStripPrefixDisplay() {
+        return stripPrefix ? "Yes" : "No";
+    }
 }

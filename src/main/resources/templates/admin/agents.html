@@ -38,7 +38,7 @@
                     </td>
                     <td>
                         <span class="badge"
-                              th:classappend="${agent.status.name() == 'CONNECTED' ? 'bg-success' : (agent.status.name() == 'REGISTERED' ? 'bg-info' : 'bg-secondary')}"
+                              th:classappend="${agent.status.badgeClass}"
                               th:text="${agent.status}"></span>
                     </td>
                     <td th:text="${agent.lastSeenAt != null ? #temporals.format(agent.lastSeenAt, 'yyyy-MM-dd HH:mm') : '—'}"></td>
@@ -54,7 +54,7 @@
                         </form>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(agents)}">
+                <tr th:unless="${hasAgents}">
                     <td colspan="4" class="text-center text-muted py-4">No agents registered yet.</td>
                 </tr>
                 </tbody>

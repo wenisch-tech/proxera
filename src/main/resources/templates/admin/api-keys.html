@@ -53,7 +53,7 @@
                         </form>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(apiKeys)}">
+                <tr th:unless="${hasApiKeys}">
                     <td colspan="4" class="text-center text-muted py-4">No API keys.</td>
                 </tr>
                 </tbody>

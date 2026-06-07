@@ -20,7 +20,9 @@ public class ApiKeyController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("apiKeys", apiKeyService.findAll());
+        var apiKeys = apiKeyService.findAll();
+        model.addAttribute("apiKeys", apiKeys);
+        model.addAttribute("hasApiKeys", !apiKeys.isEmpty());
         return "admin/api-keys";
     }
 

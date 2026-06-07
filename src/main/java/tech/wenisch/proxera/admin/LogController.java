@@ -24,7 +24,9 @@ public class LogController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("logs", accessLogService.getRecentGlobal(200));
+        var logs = accessLogService.getRecentGlobal(200);
+        model.addAttribute("logs", logs);
+        model.addAttribute("hasLogs", !logs.isEmpty());
         return "admin/logs";
     }
 

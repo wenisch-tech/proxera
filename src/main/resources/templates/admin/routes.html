@@ -38,11 +38,11 @@
                         <span th:text="${route.name}" class="fw-semibold"></span>
                     </td>
                     <td th:text="${route.agent?.name}"></td>
-                    <td class="small text-muted" th:text="${route.localHost + ':' + route.localPort}"></td>
+                    <td class="small text-muted" th:text="${route.targetDisplay}"></td>
                     <td>
                         <div th:each="d : ${route.domains}" class="mb-1">
                             <span class="badge bg-secondary"
-                                  th:text="${d.domain + (d.pathPrefix != null ? d.pathPrefix : '')}"></span>
+                                  th:text="${d.badgeLabel}"></span>
                         </div>
                         <div th:if="${route.preserveHostHeader}" class="small text-muted mt-1">
                             Preserve public host
@@ -69,9 +69,9 @@
                                     data-enabled=${route.enabled},
                                     data-forward-client-ip-headers=${route.forwardClientIpHeaders},
                                     data-preserve-host-header=${route.preserveHostHeader},
-                                    data-domain-hosts=${#strings.listJoin(route.domains.![domain], ',')},
-                                    data-domain-paths=${#strings.listJoin(route.domains.![pathPrefix ?: ''], ',')},
-                                    data-domain-strips=${#strings.listJoin(route.domains.![stripPrefix ? 'true' : 'false'], ',')}">
+                                    data-domain-hosts=${route.domainHostsCsv},
+                                    data-domain-paths=${route.domainPathsCsv},
+                                    data-domain-strips=${route.domainStripsCsv}">
                             <i class="bi bi-pencil"></i>
                         </button>
                         <!-- Delete -->
@@ -83,7 +83,7 @@
                         </form>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(routes)}">
+                <tr th:unless="${hasRoutes}">
                     <td colspan="6" class="text-center text-muted py-4">No routes configured.</td>
                 </tr>
                 </tbody>

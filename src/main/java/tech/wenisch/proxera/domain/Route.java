@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "routes")
@@ -61,5 +62,31 @@ public class Route {
     @PreUpdate
     void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    @Transient
+    public String getTargetDisplay() {
+        return localHost + ":" + localPort;
+    }
+
+    @Transient
+    public String getDomainHostsCsv() {
+        return domains.stream()
+                .map(RouteDomain::getDomain)
+                .collect(Collectors.joining(","));
+    }
+
+    @Transient
+    public String getDomainPathsCsv() {
+        return domains.stream()
+                .map(domain -> domain.getPathPrefix() == null ? "" : domain.getPathPrefix())
+                .collect(Collectors.joining(","));
+    }
+
+    @Transient
+    public String getDomainStripsCsv() {
+        return domains.stream()
+                .map(domain -> Boolean.toString(domain.isStripPrefix()))
+                .collect(Collectors.joining(","));
     }
 }
