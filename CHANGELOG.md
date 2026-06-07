@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.3 - 2026-06-07
+
+### [0.12.3](https://github.com/wenisch-tech/proxera/compare/v0.12.2...v0.12.3) (2026-06-07)
+
+
+### Bug Fixes
+
+* added FlywayMigrationConfig ([6ff4936](https://github.com/wenisch-tech/proxera/commit/6ff49361bf41ae728d7a45f7bce3f50f8660c80c))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.3
+
+
 ## v0.12.2 - 2026-06-07
 
 ### [0.12.2](https://github.com/wenisch-tech/proxera/compare/v0.12.1...v0.12.2) (2026-06-07)
