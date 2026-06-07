@@ -1,6 +1,6 @@
 # Native Build (GraalVM)
 
-This page describes the supported native-image path for Proxera and the Thymeleaf-related constraints that came up while aligning it with the Kairos native work.
+This page describes the supported native-image path for Proxera and the native-specific constraints found while aligning it with the Kairos native work.
 
 ## Why Native
 
@@ -80,6 +80,37 @@ Default endpoints:
 2. Verify health endpoint returns HTTP 200.
 3. Verify admin login page is reachable.
 4. Stop process gracefully.
+
+## Flyway And Persistence Guidance
+
+Another native-specific failure mode in Kairos only showed up when starting against an existing persisted database, not on first boot.
+
+The problem pattern was:
+
+- the native image could open the database successfully
+- Flyway then failed validation because Java-based migrations already recorded in `flyway_schema_history` were not being discovered by native classpath scanning
+- startup aborted even though the same database worked in the JVM build
+
+Proxera currently ships SQL migrations only under `src/main/resources/db/migration`, so this specific runtime bug is not active here today.
+The repository is still hardened against it:
+
+- any future Java-based Flyway migration must be added explicitly in [src/main/java/tech/wenisch/proxera/config/FlywayMigrationConfig.java](../src/main/java/tech/wenisch/proxera/config/FlywayMigrationConfig.java)
+- [src/test/java/tech/wenisch/proxera/config/FlywayMigrationConfigTest.java](../src/test/java/tech/wenisch/proxera/config/FlywayMigrationConfigTest.java) fails if a Java migration is added without registration
+- migration changes must be validated against both empty and already-initialized databases
+
+Recommended validation flow after Flyway changes:
+
+```bash
+mvn -B -DskipTests package
+docker build -f Dockerfile-native -t proxera:native .
+```
+
+Then verify:
+
+1. Native startup on a clean database.
+2. Native startup against an existing database directory or PostgreSQL schema initialized by the JVM build or a previous release.
+
+This matters for persisted H2 data directories and for Helm/PostgreSQL deployments because `flyway_schema_history` survives restarts and upgrades.
 
 ## Notes
 
