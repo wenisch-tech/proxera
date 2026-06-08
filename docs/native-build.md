@@ -109,6 +109,10 @@ Default endpoints:
 3. Verify admin login page is reachable.
 4. Stop process gracefully.
 
+For Kubernetes deployments, keep health probe groups enabled explicitly with
+`management.endpoint.health.probes.enabled=true`.
+Native images can otherwise start successfully while `/actuator/health/readiness` returns 404, which leaves the Helm deployment stuck in `Progressing`.
+
 ## Flyway And Persistence Guidance
 
 Another native-specific failure mode in Kairos only showed up when starting against an existing persisted database, not on first boot.
