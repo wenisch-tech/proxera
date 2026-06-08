@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.6 - 2026-06-08
+
+### [0.12.6](https://github.com/wenisch-tech/proxera/compare/v0.12.5...v0.12.6) (2026-06-08)
+
+
+### Bug Fixes
+
+* use native-safe kubernetes ingress client ([827aadb](https://github.com/wenisch-tech/proxera/commit/827aadb4972227070a0d0edaf711b797721c9afa))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.6
+
+
 ## v0.12.5 - 2026-06-08
 
 ### [0.12.5](https://github.com/wenisch-tech/proxera/compare/v0.12.4...v0.12.5) (2026-06-08)
