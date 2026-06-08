@@ -63,6 +63,34 @@ docker run --rm -p 8080:8080 proxera:native
 
 In GitHub Actions, the native image pipeline is intentionally non-blocking while production validation is in progress, and the published experimental tags use the `native-distroless-*` naming already used by CI.
 
+## Hibernate Enhancement
+
+The native Maven profile runs Hibernate bytecode enhancement during `process-classes`.
+This matches the Kairos native hardening and avoids native-only lazy-loading/proxy failures around JPA associations such as `Route.agent`, `Route.domains`, and `RegistrationToken.agent`.
+
+Keep these settings in the native profile:
+
+- `enableLazyInitialization=true`
+- `enableDirtyTracking=true`
+- `enableAssociationManagement=true`
+- `failOnError=true`
+
+If a future Hibernate upgrade changes the enhancer behavior, validate both admin route/detail pages and tunnel registration against PostgreSQL before promoting a native image.
+
+## Thymeleaf And SpEL Findings
+
+The admin templates were reviewed for native-sensitive SpEL patterns.
+Current server-side templates use property-style access for model data and Thymeleaf helper objects for list/date formatting; no direct Java calls such as `.isBlank()`, `.contains(...)`, `.name()`, or collection projection checks are required in the templates.
+
+Native still needs explicit reflection hints because Thymeleaf resolves template model properties at runtime.
+[NativeRuntimeHintsConfig](../src/main/java/tech/wenisch/proxera/config/NativeRuntimeHintsConfig.java) registers the model types used by the admin/detail panels:
+
+- JPA/template models: `Agent`, `AgentStatus`, `Route`, `RouteDomain`, `AccessLog`, `ApiKey`, `Settings`, `User`, `IngressSpec`, `RegistrationToken`
+- Tunnel/message payload records used through Jackson: `TunnelFrame`, `RequestPayload`, `ResponsePayload`, `TopologyEvent`, `WsRelayMessage`, `ValidationResult`
+- Thymeleaf helper objects: `#lists`, `#numbers`, `#strings`, `#temporals`
+
+When adding templates, prefer property access (`${route.targetDisplay}`) over Java method calls (`${route.getTargetDisplay()}`), and prefer helper expressions (`#lists.isEmpty(items)`, `#strings.contains(value, part)`) over invoking methods on application objects.
+
 ## Run Native Executable
 
 ```powershell
