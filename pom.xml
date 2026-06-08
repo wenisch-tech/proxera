@@ -34,29 +34,6 @@
         <jackson-bom.version>2.21.1</jackson-bom.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <!--
-                CVE-2021-0341 (HIGH): okhttp hostname-verification bypass — fixed in 4.9.2+.
-                Transitive from io.fabric8:kubernetes-client; overriding to 4.x here so Maven
-                uses the fixed version regardless of what fabric8 declares.
-                okhttp 4.x also pulls okio 3.x, which fixes CVE-2023-3635 (okio GzipSource).
-            -->
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
-                <version>4.12.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp-bom</artifactId>
-                <version>4.12.0</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <!-- Spring Boot Web (Spring MVC + Tomcat) -->
         <dependency>
@@ -181,13 +158,6 @@
             <groupId>org.webjars.npm</groupId>
             <artifactId>chart.js</artifactId>
             <version>4.5.1</version>
-        </dependency>
-
-        <!-- Fabric8 Kubernetes Client — in-cluster Ingress management -->
-        <dependency>
-            <groupId>io.fabric8</groupId>
-            <artifactId>kubernetes-client</artifactId>
-            <version>6.14.0</version>
         </dependency>
 
         <!-- Test -->

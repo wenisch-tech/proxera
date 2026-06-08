@@ -91,6 +91,13 @@ Native still needs explicit reflection hints because Thymeleaf resolves template
 
 When adding templates, prefer property access (`${route.targetDisplay}`) over Java method calls (`${route.getTargetDisplay()}`), and prefer helper expressions (`#lists.isEmpty(items)`, `#strings.contains(value, part)`) over invoking methods on application objects.
 
+## Kubernetes Ingress Management
+
+Native deployments use a small in-cluster Kubernetes REST client for ingress management instead of the Fabric8 client.
+The client reads the mounted service account token, namespace, and CA certificate from `/var/run/secrets/kubernetes.io/serviceaccount`, then calls the `networking.k8s.io/v1` Ingress API directly.
+
+This avoids Fabric8 native-image initialization failures where the pod can detect Kubernetes, but the admin topology cannot list or create ingresses because the Kubernetes client fails during runtime initialization.
+
 ## Run Native Executable
 
 ```powershell
