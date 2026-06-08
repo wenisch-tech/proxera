@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.5 - 2026-06-08
+
+### [0.12.5](https://github.com/wenisch-tech/proxera/compare/v0.12.4...v0.12.5) (2026-06-08)
+
+
+### Bug Fixes
+
+* enable health probes for native image ([c7072bc](https://github.com/wenisch-tech/proxera/commit/c7072bcff95c8a99069926f53543feb06350548f))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.5
+
+
 ## v0.12.4 - 2026-06-08
 
 ### [0.12.4](https://github.com/wenisch-tech/proxera/compare/v0.12.3...v0.12.4) (2026-06-08)
