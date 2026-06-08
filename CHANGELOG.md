@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.4 - 2026-06-08
+
+### [0.12.4](https://github.com/wenisch-tech/proxera/compare/v0.12.3...v0.12.4) (2026-06-08)
+
+
+### Bug Fixes
+
+* harden native image support ([cbca14c](https://github.com/wenisch-tech/proxera/commit/cbca14c172352d8d85f0226045dc69ea5b0779c2))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.4
+
+
 ## v0.12.3 - 2026-06-07
 
 ### [0.12.3](https://github.com/wenisch-tech/proxera/compare/v0.12.2...v0.12.3) (2026-06-07)
