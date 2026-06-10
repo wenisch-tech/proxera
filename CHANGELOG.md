@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.12.7 - 2026-06-10
+
+### [0.12.7](https://github.com/wenisch-tech/proxera/compare/v0.12.6...v0.12.7) (2026-06-10)
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.7
+
+
 ## v0.12.6 - 2026-06-08
 
 ### [0.12.6](https://github.com/wenisch-tech/proxera/compare/v0.12.5...v0.12.6) (2026-06-08)
