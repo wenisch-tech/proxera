@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.10 - 2026-06-21
+
+### [0.12.10](https://github.com/wenisch-tech/proxera/compare/v0.12.9...v0.12.10) (2026-06-21)
+
+
+### Bug Fixes
+
+* fixed multi-replica proxy dispatch leading to 502 errors ([ee23652](https://github.com/wenisch-tech/proxera/commit/ee23652d1841810b53d4232cf8c6695cb638ddc5))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.10
+
+
 ## v0.12.9 - 2026-06-21
 
 ### [0.12.9](https://github.com/wenisch-tech/proxera/compare/v0.12.8...v0.12.9) (2026-06-21)
