@@ -37,6 +37,10 @@ public class AgentService {
         return agentRepository.findById(id);
     }
 
+    public boolean existsById(UUID id) {
+        return agentRepository.existsById(id);
+    }
+
     @Transactional
     public Agent create(String name) {
         if (agentRepository.existsByName(name)) {

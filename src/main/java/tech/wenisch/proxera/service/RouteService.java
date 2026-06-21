@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.domain.Agent;
 import tech.wenisch.proxera.domain.Route;
 import tech.wenisch.proxera.domain.RouteDomain;
+import tech.wenisch.proxera.repository.AgentRepository;
 import tech.wenisch.proxera.repository.RouteDomainRepository;
 import tech.wenisch.proxera.repository.RouteRepository;
 
@@ -23,13 +24,16 @@ public class RouteService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    private final AgentRepository agentRepository;
     private final RouteRepository routeRepository;
     private final RouteDomainRepository routeDomainRepository;
     private final RoutingService routingService;
 
-    public RouteService(RouteRepository routeRepository,
+    public RouteService(AgentRepository agentRepository,
+                        RouteRepository routeRepository,
                         RouteDomainRepository routeDomainRepository,
                         RoutingService routingService) {
+        this.agentRepository = agentRepository;
         this.routeRepository = routeRepository;
         this.routeDomainRepository = routeDomainRepository;
         this.routingService = routingService;
@@ -53,6 +57,8 @@ public class RouteService {
 
     @Transactional
     public Route save(Route route) {
+        Agent managedAgent = resolveManagedAgent(route);
+
         if (route.getId() != null) {
             // UPDATE: load a fresh managed entity in this transaction so we never
             // merge a detached object whose stale domain IDs confuse Hibernate.
@@ -76,8 +82,7 @@ public class RouteService {
             managed.setEnabled(route.isEnabled());
             managed.setForwardClientIpHeaders(route.isForwardClientIpHeaders());
             managed.setPreserveHostHeader(route.isPreserveHostHeader());
-            // Use getReference so the FK column is set without a SELECT for the agent
-            managed.setAgent(entityManager.getReference(Agent.class, route.getAgent().getId()));
+            managed.setAgent(managedAgent);
 
             // Phase 1: clear old domains → orphanRemoval marks them for DELETE
             managed.getDomains().clear();
@@ -103,6 +108,7 @@ public class RouteService {
                         "Domain + path already in use: " + entry.getDomain() + path);
             }
         }
+        route.setAgent(managedAgent);
         Route saved = routeRepository.save(route);
         routingService.invalidateCache();
         return saved;
@@ -116,5 +122,16 @@ public class RouteService {
 
     public long countEnabled() {
         return routeRepository.findAll().stream().filter(Route::isEnabled).count();
+    }
+
+    private Agent resolveManagedAgent(Route route) {
+        if (route.getAgent() == null || route.getAgent().getId() == null) {
+            throw new IllegalArgumentException("Agent not found");
+        }
+        UUID agentId = route.getAgent().getId();
+        if (!agentRepository.existsById(agentId)) {
+            throw new IllegalArgumentException("Agent not found");
+        }
+        return entityManager.getReference(Agent.class, agentId);
     }
 }

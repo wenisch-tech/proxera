@@ -73,11 +73,12 @@ public class RouteController {
                        @RequestParam(required = false) List<String> domainStrips,
                        RedirectAttributes ra) {
         try {
-            Agent agent = agentService.findById(agentId)
-                    .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
+            if (!agentService.existsById(agentId)) {
+                throw new IllegalArgumentException("Agent not found");
+            }
             Route route = Route.builder()
                     .name(name)
-                    .agent(agent)
+                    .agent(Agent.builder().id(agentId).build())
                     .localHost(localHost)
                     .localPort(localPort)
                     .enabled(enabled)
@@ -114,18 +115,19 @@ public class RouteController {
                          @RequestParam(required = false) List<String> domainStrips,
                          RedirectAttributes ra) {
         try {
-            Route route = routeService.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("Route not found"));
-            Agent agent = agentService.findById(agentId)
-                    .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
-            route.setName(name);
-            route.setAgent(agent);
-            route.setLocalHost(localHost);
-            route.setLocalPort(localPort);
-            route.setEnabled(enabled);
-            route.setForwardClientIpHeaders(forwardClientIpHeaders);
-            route.setPreserveHostHeader(preserveHostHeader);
-            route.getDomains().clear();
+            if (!agentService.existsById(agentId)) {
+                throw new IllegalArgumentException("Agent not found");
+            }
+            Route route = Route.builder()
+                    .id(id)
+                    .name(name)
+                    .agent(Agent.builder().id(agentId).build())
+                    .localHost(localHost)
+                    .localPort(localPort)
+                    .enabled(enabled)
+                    .forwardClientIpHeaders(forwardClientIpHeaders)
+                    .preserveHostHeader(preserveHostHeader)
+                    .build();
             addDomainEntries(route, domainHosts, domainPaths, domainStrips);
             routeService.save(route);
             ra.addFlashAttribute("success", "Route updated successfully.");
