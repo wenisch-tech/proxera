@@ -68,6 +68,7 @@ public class TopologyController {
         for (Agent agent : agentService.findAll()) {
             boolean localTunnelConnected = tunnelManager.isConnected(agent.getId());
             boolean databaseConnected = agent.getStatus() == AgentStatus.CONNECTED;
+            boolean topologyConnected = databaseConnected || localTunnelConnected;
             Map<String, Object> node = new HashMap<>();
             node.put("id", agent.getId().toString());
             node.put("type", "agent");
@@ -80,7 +81,9 @@ public class TopologyController {
             if (agent.getRemoteIp() != null) node.put("remoteIp", agent.getRemoteIp());
             nodes.add(node);
 
-            if (localTunnelConnected) {
+            // Render cluster-level tunnel ownership, not only the session attached
+            // to this exact JVM, so multi-pod deployments show all connected agents.
+            if (topologyConnected) {
                 links.add(Map.of("source", podId, "target", agent.getId().toString(), "type", "tunnel"));
             }
 

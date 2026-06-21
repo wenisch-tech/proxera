@@ -723,6 +723,10 @@ function buildAgentPanel(d, routes, csrf, csrfParam) {
                 <span style="color:var(--px-muted);">Source IP</span>&nbsp;
                 <code style="font-size:.72rem; color:var(--px-text);">${escHtml(d.remoteIp)}</code>
             </div>` : ''}
+            ${d.connectedPodId ? `<div class="px-panel-meta mt-1">
+                <span style="color:var(--px-muted);">Connected via</span>&nbsp;
+                <code style="font-size:.72rem; color:var(--px-text);">${escHtml(d.connectedPodId)}</code>
+            </div>` : ''}
         </div>
 
         <div class="px-panel-section">

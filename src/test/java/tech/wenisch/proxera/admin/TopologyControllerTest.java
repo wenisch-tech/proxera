@@ -28,7 +28,7 @@ class TopologyControllerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void connectedReflectsDatabaseStatusNotOnlyThisPodTunnelOwnership() {
+    void connectedAgentsKeepTunnelLinkAcrossPods() {
         UUID agentId = UUID.randomUUID();
         Agent agent = Agent.builder()
                 .id(agentId)
@@ -44,8 +44,14 @@ class TopologyControllerTest {
 
         Map<String, Object> body = controller.topologyData().getBody();
         List<Map<String, Object>> nodes = (List<Map<String, Object>>) body.get("nodes");
+        List<Map<String, Object>> links = (List<Map<String, Object>>) body.get("links");
         Map<String, Object> agentNode = nodes.stream()
                 .filter(node -> agentId.toString().equals(node.get("id")))
+                .findFirst()
+                .orElseThrow();
+        Map<String, Object> tunnelLink = links.stream()
+                .filter(link -> agentId.toString().equals(link.get("target")))
+                .filter(link -> "tunnel".equals(link.get("type")))
                 .findFirst()
                 .orElseThrow();
 
@@ -53,5 +59,6 @@ class TopologyControllerTest {
         assertThat(agentNode.get("databaseStatus")).isEqualTo("CONNECTED");
         assertThat(agentNode.get("localTunnelConnected")).isEqualTo(false);
         assertThat(agentNode.get("connectedPodId")).isEqualTo("proxera-other-pod");
+        assertThat(tunnelLink.get("target")).isEqualTo(agentId.toString());
     }
 }
