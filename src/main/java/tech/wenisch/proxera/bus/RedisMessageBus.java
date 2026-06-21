@@ -15,8 +15,8 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.tunnel.FrameType;
@@ -87,7 +87,7 @@ public class RedisMessageBus implements MessageBus {
         try {
             String json = objectMapper.writeValueAsString(frame);
             redisTemplate.convertAndSend(CHANNEL_AGENT_PREFIX + agentId, json);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IOException("Failed to serialize TunnelFrame for agent " + agentId, e);
         }
     }
@@ -123,7 +123,7 @@ public class RedisMessageBus implements MessageBus {
     public void publishTopology(TopologyEvent event) {
         try {
             redisTemplate.convertAndSend(CHANNEL_TOPOLOGY, objectMapper.writeValueAsString(event));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to publish topology event", e);
         }
     }
@@ -134,7 +134,7 @@ public class RedisMessageBus implements MessageBus {
             try {
                 TopologyEvent event = objectMapper.readValue(body(message), TopologyEvent.class);
                 handler.accept(event);
-            } catch (IOException e) {
+            } catch (JacksonException e) {
                 log.warn("Failed to deserialize topology event: {}", e.getMessage());
             }
         };
@@ -159,7 +159,7 @@ public class RedisMessageBus implements MessageBus {
         try {
             ResponsePayload response = objectMapper.readValue(body(message), ResponsePayload.class);
             completeLocal(correlationId, response);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             CompletableFuture<ResponsePayload> future = pending.remove(correlationId);
             if (future != null) {
                 future.completeExceptionally(e);
@@ -182,7 +182,7 @@ public class RedisMessageBus implements MessageBus {
         try {
             redisTemplate.convertAndSend(CHANNEL_CORR_PREFIX + correlationId,
                     objectMapper.writeValueAsString(response));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to publish response for correlationId {}", correlationId, e);
         }
     }

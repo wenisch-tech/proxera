@@ -10,8 +10,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -74,7 +74,7 @@ public class RedisWsRelayBus implements WsRelayBus {
                 Consumer<WsRelayMessage> h = c2aHandlers.get(id);
                 if (h != null) h.accept(msg);
             }
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             log.warn("Failed to deserialize WsRelayMessage on channel {}: {}", channel, e.getMessage());
         }
     }
@@ -102,7 +102,7 @@ public class RedisWsRelayBus implements WsRelayBus {
     private void publish(String channel, WsRelayMessage message) {
         try {
             redisTemplate.convertAndSend(channel, objectMapper.writeValueAsString(message));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("Failed to publish WsRelayMessage to {}: {}", channel, e.getMessage());
         }
     }

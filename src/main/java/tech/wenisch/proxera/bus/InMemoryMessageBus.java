@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 import org.springframework.context.ApplicationEventPublisher;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.tunnel.FrameType;

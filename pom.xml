@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.14</version>
+        <version>4.0.7</version>
         <relativePath/>
     </parent>
 
@@ -26,12 +26,9 @@
     </licenses>
 
     <properties>
-        <java.version>17</java.version>
-        <springdoc.version>2.8.17</springdoc.version>
-        <!-- Security: pin versions to fix CVEs not yet included in Spring Boot BOM -->
-        <tomcat.version>10.1.55</tomcat.version>
-        <netty.version>4.1.133.Final</netty.version>
-        <jackson-bom.version>2.21.1</jackson-bom.version>
+        <java.version>25</java.version>
+        <lombok.version>1.18.46</lombok.version>
+        <springdoc.version>3.0.1</springdoc.version>
     </properties>
 
     <dependencies>
@@ -91,8 +88,8 @@
 
         <!-- Flyway migrations -->
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -112,6 +109,10 @@
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-h2console</artifactId>
+        </dependency>
 
         <!-- OpenAPI / Swagger UI -->
         <dependency>
@@ -124,7 +125,8 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Jsoup — HTML parsing for path-prefix response rewriting -->
@@ -190,6 +192,19 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
@@ -204,8 +219,8 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.hibernate.orm.tooling</groupId>
-                        <artifactId>hibernate-enhance-maven-plugin</artifactId>
+                        <groupId>org.hibernate.orm</groupId>
+                        <artifactId>hibernate-maven-plugin</artifactId>
                         <version>${hibernate.version}</version>
                         <executions>
                             <execution>
@@ -218,7 +233,7 @@
                                     <failOnError>true</failOnError>
                                     <enableLazyInitialization>true</enableLazyInitialization>
                                     <enableDirtyTracking>true</enableDirtyTracking>
-                                    <enableAssociationManagement>true</enableAssociationManagement>
+                                    <enableAssociationManagement>false</enableAssociationManagement>
                                     <enableExtendedEnhancement>false</enableExtendedEnhancement>
                                 </configuration>
                             </execution>

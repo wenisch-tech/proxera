@@ -10,8 +10,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
 import tech.wenisch.proxera.security.ApiKeyAuthFilter;
@@ -36,21 +36,23 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
+        PathPatternRequestMatcher.Builder path = PathPatternRequestMatcher.withDefaults();
+
         return http
                 .securityMatcher(new AndRequestMatcher(
                         proxyHostRequestMatcher,
                         new OrRequestMatcher(
-                                new AntPathRequestMatcher("/admin/**"),
-                                new AntPathRequestMatcher("/login"),
-                                new AntPathRequestMatcher("/logout"),
-                                new AntPathRequestMatcher("/webjars/**"),
-                                new AntPathRequestMatcher("/css/**"),
-                                new AntPathRequestMatcher("/js/**"),
-                                new AntPathRequestMatcher("/actuator/**"),
-                                new AntPathRequestMatcher("/v3/api-docs/**"),
-                                new AntPathRequestMatcher("/swagger-ui/**"),
-                                new AntPathRequestMatcher("/api/**"),
-                                new AntPathRequestMatcher("/h2-console/**")
+                                path.matcher("/admin/**"),
+                                path.matcher("/login"),
+                                path.matcher("/logout"),
+                                path.matcher("/webjars/**"),
+                                path.matcher("/css/**"),
+                                path.matcher("/js/**"),
+                                path.matcher("/actuator/**"),
+                                path.matcher("/v3/api-docs/**"),
+                                path.matcher("/swagger-ui/**"),
+                                path.matcher("/api/**"),
+                                path.matcher("/h2-console/**")
                         )
                 ))
                 .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)

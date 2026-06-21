@@ -25,9 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import tech.wenisch.proxera.domain.IngressSpec;
 
@@ -257,7 +257,7 @@ public class IngressService {
     private Map<String, String> toStringMap(JsonNode node) {
         Map<String, String> result = new LinkedHashMap<>();
         if (node != null && node.isObject()) {
-            node.fields().forEachRemaining(entry -> result.put(entry.getKey(), entry.getValue().asText()));
+            node.properties().forEach(entry -> result.put(entry.getKey(), entry.getValue().asText()));
         }
         return result;
     }
