@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.9 - 2026-06-21
+
+### [0.12.9](https://github.com/wenisch-tech/proxera/compare/v0.12.8...v0.12.9) (2026-06-21)
+
+
+### Bug Fixes
+
+* updated display to properly show connected agents when running with multiple replicas ([e05410c](https://github.com/wenisch-tech/proxera/commit/e05410cfde807c84a170176ff2831fa5696fe7d4))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.9
+
+
 ## v0.12.7 - 2026-06-10
 
 ### [0.12.7](https://github.com/wenisch-tech/proxera/compare/v0.12.6...v0.12.7) (2026-06-10)
