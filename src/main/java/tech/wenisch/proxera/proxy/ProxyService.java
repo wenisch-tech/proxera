@@ -3,6 +3,7 @@ package tech.wenisch.proxera.proxy;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -14,7 +15,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
@@ -23,6 +27,7 @@ import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.ObjectMapper;
@@ -40,12 +45,11 @@ import tech.wenisch.proxera.service.RoutingService;
 import tech.wenisch.proxera.service.SettingsService;
 import tech.wenisch.proxera.tunnel.RequestPayload;
 import tech.wenisch.proxera.tunnel.ResponsePayload;
+import tech.wenisch.proxera.tunnel.TunnelErrorException;
 
 @Service
 @Slf4j
 public class ProxyService {
-
-    private static final long TIMEOUT_MS = 30_000;
     private static final Set<String> HOP_BY_HOP_HEADERS = Set.of(
             "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
             "te", "trailers", "transfer-encoding", "upgrade"
@@ -60,17 +64,19 @@ public class ProxyService {
     private final AccessLogService accessLogService;
     private final ObjectMapper objectMapper;
     private final SettingsService settingsService;
-
+    private final Duration requestTimeout;
     public ProxyService(RoutingService routingService,
                         MessageBus messageBus,
                         AccessLogService accessLogService,
                         ObjectMapper objectMapper,
-                        SettingsService settingsService) {
+                        SettingsService settingsService,
+                        @Value("${proxera.proxy.request-timeout}") Duration requestTimeout) {
         this.routingService = routingService;
         this.messageBus = messageBus;
         this.accessLogService = accessLogService;
         this.objectMapper = objectMapper;
         this.settingsService = settingsService;
+        this.requestTimeout = requestTimeout;
     }
 
     public void proxy(HttpServletRequest request, HttpServletResponse response, AsyncContext asyncContext) {
@@ -109,11 +115,12 @@ public class ProxyService {
 
             CompletableFuture<ResponsePayload> future = messageBus.dispatch(agentId, requestJson, correlationId);
 
-            future.orTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS).whenComplete((resp, ex) -> {
+            future.orTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS).whenComplete((resp, ex) -> {
                 if (ex != null) {
+                    ProxyFailureDetails failure = classifyFailure(ex);
                     log.warn("Tunnel request failed: method={} host={} path={} route={} agent={} correlationId={} reason={}",
                             request.getMethod(), request.getHeader("Host"), request.getRequestURI(),
-                            route.getName(), agentId, correlationId, ex.toString());
+                            route.getName(), agentId, correlationId, failure);
                     try {
                         accessLogService.logFailure(route, agentId, request, HttpServletResponse.SC_BAD_GATEWAY,
                                 elapsedMs(startedAt));
@@ -364,6 +371,33 @@ public class ProxyService {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
     }
 
+    static ProxyFailureDetails classifyFailure(Throwable throwable) {
+        Throwable root = unwrap(throwable);
+        if (root instanceof TimeoutException) {
+            return new ProxyFailureDetails("timeout", null, "Request timed out while waiting for agent response");
+        }
+        if (root instanceof TunnelErrorException errorException) {
+            String code = errorException.error() != null ? errorException.error().code() : null;
+            String detail = errorException.error() != null ? errorException.error().message() : errorException.getMessage();
+            return new ProxyFailureDetails("agent_error", code, detail);
+        }
+        if (root instanceof IOException ioException
+                && ioException.getMessage() != null
+                && ioException.getMessage().startsWith("No open session for agent:")) {
+            return new ProxyFailureDetails("agent_unavailable", null, ioException.getMessage());
+        }
+        return new ProxyFailureDetails("exception", root.getClass().getName(), root.getMessage());
+    }
+
+    private static Throwable unwrap(Throwable throwable) {
+        Throwable current = throwable;
+        while ((current instanceof CompletionException || current instanceof ExecutionException)
+                && current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current;
+    }
+
     private static void writePlainError(HttpServletResponse response, int status, String message) throws IOException {
         if (response.isCommitted()) {
             return;
@@ -373,4 +407,6 @@ public class ProxyService {
         response.setContentType("text/plain;charset=UTF-8");
         response.getOutputStream().write(message.getBytes(StandardCharsets.UTF_8));
     }
+
+    static record ProxyFailureDetails(String type, String code, String detail) {}
 }

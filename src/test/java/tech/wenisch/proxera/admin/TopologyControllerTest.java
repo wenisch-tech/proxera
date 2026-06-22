@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import tech.wenisch.proxera.config.PodIdentityResolver;
 import tech.wenisch.proxera.domain.Agent;
 import tech.wenisch.proxera.domain.AgentStatus;
 import tech.wenisch.proxera.service.AgentService;
@@ -23,8 +24,9 @@ class TopologyControllerTest {
     private final RouteService routeService = mock(RouteService.class);
     private final TunnelManager tunnelManager = mock(TunnelManager.class);
     private final IngressService ingressService = mock(IngressService.class);
+    private final PodIdentityResolver podIdentityResolver = new PodIdentityResolver("proxera-current-pod", "hostname");
     private final TopologyController controller = new TopologyController(
-            agentService, routeService, tunnelManager, ingressService);
+            agentService, routeService, tunnelManager, ingressService, podIdentityResolver);
 
     @Test
     @SuppressWarnings("unchecked")

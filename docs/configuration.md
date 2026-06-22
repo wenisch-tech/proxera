@@ -69,6 +69,7 @@ When `REDIS_HOST` is set, Proxera uses Redis Pub/Sub to route tunnel frames acro
 | `PROXERA_LOG_RETENTION_DAYS` | `7` | Days to retain access log entries |
 | `PROXERA_TUNNEL_HEARTBEAT_INTERVAL` | `30` | Seconds between agent heartbeat pings |
 | `PROXERA_TUNNEL_HEARTBEAT_TIMEOUT` | `10` | Seconds to wait for pong before disconnecting |
+| `PROXERA_PROXY_REQUEST_TIMEOUT` | `120s` | Maximum time one proxied HTTP request waits for an agent response |
 | `PROXERA_POD_ID` | *(hostname)* | Identifier for this pod in multi-pod topology display |
 
 ---

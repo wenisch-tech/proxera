@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import tech.wenisch.proxera.config.PodIdentityResolver;
 import tech.wenisch.proxera.domain.Settings;
 import tech.wenisch.proxera.service.SettingsService;
 
@@ -16,15 +17,18 @@ import tech.wenisch.proxera.service.SettingsService;
 public class SettingsController {
 
     private final SettingsService settingsService;
+    private final PodIdentityResolver podIdentityResolver;
 
-    public SettingsController(SettingsService settingsService) {
+    public SettingsController(SettingsService settingsService,
+                              PodIdentityResolver podIdentityResolver) {
         this.settingsService = settingsService;
+        this.podIdentityResolver = podIdentityResolver;
     }
 
     @GetMapping
     public String settings(Model model) {
         model.addAttribute("javaVersion", System.getProperty("java.version"));
-        model.addAttribute("hostname", System.getenv().getOrDefault("HOSTNAME", "localhost"));
+        model.addAttribute("hostname", podIdentityResolver.currentPodId().orElse("localhost"));
         model.addAttribute("settings", settingsService.get());
         return "admin/settings";
     }

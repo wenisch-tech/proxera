@@ -177,6 +177,14 @@
         "podLabels": {
             "type": "object"
         },
+        "proxy": {
+            "type": "object",
+            "properties": {
+                "requestTimeout": {
+                    "type": "string"
+                }
+            }
+        },
         "podSecurityContext": {
             "type": "object",
             "properties": {

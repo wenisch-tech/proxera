@@ -89,6 +89,10 @@ If you already operate Redis separately, keep `redis.enabled=false` and set `red
 
 See [values.yaml](values.yaml) for all available options.
 
+Notable values:
+
+- `proxy.requestTimeout`: server-side timeout for one proxied HTTP request waiting on an agent response. Defaults to `120s`.
+
 ## License
 
 [GNU AGPL v3.0](https://github.com/wenisch-tech/proxera/blob/main/LICENSE)

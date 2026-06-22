@@ -28,10 +28,10 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
     private final WsProxyRegistry wsProxyRegistry;
 
     public TunnelWebSocketHandler(TunnelManager tunnelManager,
-                                   MessageBus messageBus,
-                                   AgentService agentService,
-                                   ObjectMapper objectMapper,
-                                   WsProxyRegistry wsProxyRegistry) {
+                                  MessageBus messageBus,
+                                  AgentService agentService,
+                                  ObjectMapper objectMapper,
+                                  WsProxyRegistry wsProxyRegistry) {
         this.tunnelManager = tunnelManager;
         this.messageBus = messageBus;
         this.agentService = agentService;
@@ -52,15 +52,16 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
         messageBus.onAgentConnected(agentId);
         session.setTextMessageSizeLimit(64 * 1024 * 1024);
         String remoteIp = null;
-        java.net.InetSocketAddress ra = session.getRemoteAddress();
-        if (ra != null) {
-            java.net.InetAddress addr = ra.getAddress();
-            if (addr != null) remoteIp = addr.getHostAddress();
+        java.net.InetSocketAddress remoteAddress = session.getRemoteAddress();
+        if (remoteAddress != null) {
+            java.net.InetAddress address = remoteAddress.getAddress();
+            if (address != null) {
+                remoteIp = address.getHostAddress();
+            }
         }
         agentService.markConnected(agentId, remoteIp);
         messageBus.publishTopology(new TopologyEvent("AGENT_CONNECTED", agentId.toString(), agentName));
 
-        // Send REGISTER_ACK
         TunnelFrame ack = TunnelFrame.of(FrameType.REGISTER_ACK, UUID.randomUUID().toString(),
                 Map.of("agentId", agentId.toString(), "name", agentName));
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(ack)));
@@ -78,6 +79,15 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
                 ResponsePayload response = objectMapper.convertValue(frame.payload(), ResponsePayload.class);
                 messageBus.complete(frame.correlationId(), response);
             }
+            case ERROR -> {
+                TunnelErrorPayload error = objectMapper.convertValue(frame.payload(), TunnelErrorPayload.class);
+                if (frame.correlationId() == null || frame.correlationId().isBlank()) {
+                    log.warn("Agent {} sent tunnel ERROR without correlationId: code={} message={}",
+                            agentId, error.code(), error.message());
+                } else {
+                    messageBus.fail(frame.correlationId(), error);
+                }
+            }
             case PING -> {
                 TunnelFrame pong = TunnelFrame.pong(frame.correlationId());
                 synchronized (session) {
@@ -87,7 +97,6 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
             case PONG -> tunnelManager.recordPong(agentId);
             case WS_OPEN_ACK -> {
                 String wsSessionId = frame.correlationId();
-                // Subscribe to c2a on this pod, then notify the client's pod via a2c
                 wsProxyRegistry.registerAgentSession(wsSessionId, agentId);
                 wsProxyRegistry.publishAgentOpenAck(wsSessionId);
             }
@@ -125,7 +134,8 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
             tunnelManager.unregister(agentId);
             agentService.markDisconnected(agentId);
             messageBus.publishTopology(new TopologyEvent("AGENT_DISCONNECTED", agentId.toString(), agentName));
-            log.info("Agent disconnected: {} ({}) — {}", agentName, agentId, status);
+            log.info("Agent disconnected: name={} id={} remote={} status={}",
+                    agentName, agentId, remoteAddress(session), status);
         }
     }
 
@@ -139,7 +149,16 @@ public class TunnelWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        log.warn("Transport error for session {}: {}", session.getId(), exception.getMessage());
+        UUID agentId = (UUID) session.getAttributes().get("agentId");
+        String agentName = (String) session.getAttributes().getOrDefault("agentName", "unknown");
+        String exceptionType = exception != null ? exception.getClass().getName() : "unknown";
+        String exceptionMessage = exception != null ? exception.getMessage() : null;
+        log.warn("Tunnel transport error: sessionId={} agentName={} agentId={} remote={} exceptionType={} exceptionMessage={}",
+                session.getId(), agentName, agentId, remoteAddress(session), exceptionType, exceptionMessage);
         session.close(CloseStatus.SERVER_ERROR);
+    }
+
+    private static String remoteAddress(WebSocketSession session) {
+        return session.getRemoteAddress() != null ? session.getRemoteAddress().toString() : "unknown";
     }
 }

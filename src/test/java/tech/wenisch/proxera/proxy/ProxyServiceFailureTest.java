@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,6 +34,8 @@ import tech.wenisch.proxera.service.AccessLogService;
 import tech.wenisch.proxera.service.RoutingService;
 import tech.wenisch.proxera.service.SettingsService;
 import tech.wenisch.proxera.tunnel.ResponsePayload;
+import tech.wenisch.proxera.tunnel.TunnelErrorException;
+import tech.wenisch.proxera.tunnel.TunnelErrorPayload;
 
 class ProxyServiceFailureTest {
 
@@ -42,7 +45,7 @@ class ProxyServiceFailureTest {
     private final SettingsService settingsService = mock(SettingsService.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ProxyService proxyService = new ProxyService(
-            routingService, messageBus, accessLogService, objectMapper, settingsService);
+            routingService, messageBus, accessLogService, objectMapper, settingsService, Duration.ofSeconds(120));
 
     @Test
     void missingRouteReturnsPlain404AndLogsFailure() throws Exception {
@@ -88,6 +91,86 @@ class ProxyServiceFailureTest {
         when(messageBus.dispatch(eq(agent.getId()), any(String.class), any(String.class))).thenReturn(failed);
 
         proxyService.proxy(request, response, asyncContext);
+
+        assertThat(response.getStatus()).isEqualTo(502);
+        assertThat(response.getContentAsString()).isEqualTo("Bad Gateway");
+        verify(accessLogService).logFailure(eq(route), eq(agent.getId()), eq(request), eq(502), anyLong());
+        verify(asyncContext).complete();
+    }
+
+    @Test
+    void tunnelErrorFailureReturnsPlain502AndClassifiesAgentError() throws Exception {
+        Agent agent = Agent.builder().id(UUID.randomUUID()).name("forgejo").build();
+        Route route = Route.builder()
+                .id(UUID.randomUUID())
+                .name("forgejo")
+                .agent(agent)
+                .localHost("192.168.1.10")
+                .localPort(3000)
+                .build();
+        RouteDomain routeDomain = RouteDomain.builder()
+                .route(route)
+                .domain("git.intranet.wenisch.tech")
+                .build();
+
+        MockHttpServletRequest request = request("GET", "/user/events");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        AsyncContext asyncContext = mock(AsyncContext.class);
+        CompletableFuture<ResponsePayload> failed = new CompletableFuture<>();
+        TunnelErrorPayload error = new TunnelErrorPayload("UPSTREAM_TIMEOUT", "Backend did not answer");
+        failed.completeExceptionally(new TunnelErrorException(error));
+
+        when(routingService.resolve("homeassistant.intranet.wenisch.tech", "/user/events"))
+                .thenReturn(Optional.of(routeDomain));
+        when(messageBus.dispatch(eq(agent.getId()), any(String.class), any(String.class))).thenReturn(failed);
+
+        proxyService.proxy(request, response, asyncContext);
+
+        assertThat(response.getStatus()).isEqualTo(502);
+        assertThat(response.getContentAsString()).isEqualTo("Bad Gateway");
+        assertThat(ProxyService.classifyFailure(new TunnelErrorException(error)))
+                .isEqualTo(new ProxyService.ProxyFailureDetails("agent_error", "UPSTREAM_TIMEOUT", "Backend did not answer"));
+        verify(accessLogService).logFailure(eq(route), eq(agent.getId()), eq(request), eq(502), anyLong());
+        verify(asyncContext).complete();
+    }
+
+    @Test
+    void classifyFailureMarksAgentUnavailableSeparately() {
+        ProxyService.ProxyFailureDetails failure = ProxyService.classifyFailure(
+                new java.io.IOException("No open session for agent: " + UUID.randomUUID()));
+
+        assertThat(failure.type()).isEqualTo("agent_unavailable");
+        assertThat(failure.code()).isNull();
+    }
+
+    @Test
+    void injectedTimeoutControlsWhenPendingRequestBecomes502() throws Exception {
+        Agent agent = Agent.builder().id(UUID.randomUUID()).name("k8s@home").build();
+        Route route = Route.builder()
+                .id(UUID.randomUUID())
+                .name("homeassistant")
+                .agent(agent)
+                .localHost("192.168.1.199")
+                .localPort(8123)
+                .build();
+        RouteDomain routeDomain = RouteDomain.builder()
+                .route(route)
+                .domain("homeassistant.intranet.wenisch.tech")
+                .build();
+        ProxyService shortTimeoutProxyService = new ProxyService(
+                routingService, messageBus, accessLogService, objectMapper, settingsService, Duration.ofMillis(10));
+
+        MockHttpServletRequest request = request("GET", "/");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        AsyncContext asyncContext = mock(AsyncContext.class);
+        CompletableFuture<ResponsePayload> pending = new CompletableFuture<>();
+
+        when(routingService.resolve("homeassistant.intranet.wenisch.tech", "/"))
+                .thenReturn(Optional.of(routeDomain));
+        when(messageBus.dispatch(eq(agent.getId()), any(String.class), any(String.class))).thenReturn(pending);
+
+        shortTimeoutProxyService.proxy(request, response, asyncContext);
+        Thread.sleep(100);
 
         assertThat(response.getStatus()).isEqualTo(502);
         assertThat(response.getContentAsString()).isEqualTo("Bad Gateway");

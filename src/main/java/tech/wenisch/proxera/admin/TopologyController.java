@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import tech.wenisch.proxera.config.PodIdentityResolver;
 import tech.wenisch.proxera.domain.Agent;
 import tech.wenisch.proxera.domain.AgentStatus;
 import tech.wenisch.proxera.domain.IngressSpec;
@@ -29,15 +30,18 @@ public class TopologyController {
     private final RouteService routeService;
     private final TunnelManager tunnelManager;
     private final IngressService ingressService;
+    private final PodIdentityResolver podIdentityResolver;
 
     public TopologyController(AgentService agentService,
                               RouteService routeService,
                               TunnelManager tunnelManager,
-                              IngressService ingressService) {
+                              IngressService ingressService,
+                              PodIdentityResolver podIdentityResolver) {
         this.agentService = agentService;
         this.routeService = routeService;
         this.tunnelManager = tunnelManager;
         this.ingressService = ingressService;
+        this.podIdentityResolver = podIdentityResolver;
     }
 
     @GetMapping
@@ -55,7 +59,7 @@ public class TopologyController {
         List<Map<String, Object>> links = new ArrayList<>();
 
         // Add server (this pod) as a node
-        String podId = System.getenv().getOrDefault("HOSTNAME", "server");
+        String podId = podIdentityResolver.currentPodId().orElse("server");
         Map<String, Object> serverNode = new HashMap<>();
         serverNode.put("id", podId);
         serverNode.put("type", "server");

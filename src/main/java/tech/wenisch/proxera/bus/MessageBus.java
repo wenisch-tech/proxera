@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import tech.wenisch.proxera.tunnel.ResponsePayload;
+import tech.wenisch.proxera.tunnel.TunnelErrorPayload;
 import tech.wenisch.proxera.tunnel.TunnelFrame;
 
 /**
@@ -33,6 +34,12 @@ public interface MessageBus {
      * Completes the pending future for this correlationId.
      */
     void complete(String correlationId, ResponsePayload response);
+
+    /**
+     * Called by TunnelWebSocketHandler when an ERROR frame is received for a
+     * correlated request. Completes the pending future exceptionally.
+     */
+    void fail(String correlationId, TunnelErrorPayload error);
 
     /**
      * Publish a topology change event (agent connected/disconnected, route updated).

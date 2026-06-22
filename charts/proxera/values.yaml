@@ -29,6 +29,8 @@ securityContext:
 service:
   type: ClusterIP
   port: 8080
+proxy:
+  requestTimeout: 120s
 ingress:
   # Proxy ingress (the wildcard ingress that routes public traffic into Proxera)
   # is managed at runtime by Proxera itself via the Topology UI when running in-cluster.

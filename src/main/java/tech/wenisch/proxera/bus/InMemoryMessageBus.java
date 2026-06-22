@@ -14,6 +14,8 @@ import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.tunnel.FrameType;
 import tech.wenisch.proxera.tunnel.ResponsePayload;
+import tech.wenisch.proxera.tunnel.TunnelErrorException;
+import tech.wenisch.proxera.tunnel.TunnelErrorPayload;
 import tech.wenisch.proxera.tunnel.TunnelFrame;
 import tech.wenisch.proxera.tunnel.TunnelManager;
 
@@ -68,6 +70,16 @@ public class InMemoryMessageBus implements MessageBus {
         CompletableFuture<ResponsePayload> future = pending.remove(correlationId);
         if (future != null) {
             future.complete(response);
+        } else {
+            log.warn("No pending request for correlationId: {}", correlationId);
+        }
+    }
+
+    @Override
+    public void fail(String correlationId, TunnelErrorPayload error) {
+        CompletableFuture<ResponsePayload> future = pending.remove(correlationId);
+        if (future != null) {
+            future.completeExceptionally(new TunnelErrorException(error));
         } else {
             log.warn("No pending request for correlationId: {}", correlationId);
         }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
+import tech.wenisch.proxera.config.PodIdentityResolver;
 import tech.wenisch.proxera.domain.Agent;
 import tech.wenisch.proxera.domain.AgentStatus;
 import tech.wenisch.proxera.repository.AgentRepository;
@@ -21,12 +22,15 @@ public class AgentService {
 
     private final AgentRepository agentRepository;
     private final RegistrationTokenRepository tokenRepository;
+    private final PodIdentityResolver podIdentityResolver;
     private final BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
 
     public AgentService(AgentRepository agentRepository,
-                        RegistrationTokenRepository tokenRepository) {
+                        RegistrationTokenRepository tokenRepository,
+                        PodIdentityResolver podIdentityResolver) {
         this.agentRepository = agentRepository;
         this.tokenRepository = tokenRepository;
+        this.podIdentityResolver = podIdentityResolver;
     }
 
     public List<Agent> findAll() {
@@ -71,7 +75,7 @@ public class AgentService {
             agent.setStatus(AgentStatus.CONNECTED);
             agent.setLastSeenAt(LocalDateTime.now());
             agent.setRemoteIp(remoteIp);
-            agent.setConnectedPodId(System.getenv().getOrDefault("HOSTNAME", null));
+            agent.setConnectedPodId(podIdentityResolver.currentPodId().orElse(null));
             agentRepository.save(agent);
         });
     }

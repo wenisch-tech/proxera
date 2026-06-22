@@ -5,6 +5,7 @@ metadata:
   labels:
     {{- include "proxera.labels" . | nindent 4 }}
 data:
+  PROXERA_PROXY_REQUEST_TIMEOUT: {{ .Values.proxy.requestTimeout | quote }}
   {{- range $key, $value := .Values.env }}
   {{ $key }}: {{ $value | quote }}
   {{- end }}
@@ -18,4 +19,3 @@ data:
   {{- if .Values.persistence.enabled }}
   H2_DATA_PATH: {{ .Values.persistence.mountPath | quote }}
   {{- end }}
-  PROXERA_POD_ID: "$(POD_NAME)"

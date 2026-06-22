@@ -21,6 +21,8 @@ import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import tech.wenisch.proxera.tunnel.FrameType;
 import tech.wenisch.proxera.tunnel.ResponsePayload;
+import tech.wenisch.proxera.tunnel.TunnelErrorException;
+import tech.wenisch.proxera.tunnel.TunnelErrorPayload;
 import tech.wenisch.proxera.tunnel.TunnelFrame;
 import tech.wenisch.proxera.tunnel.TunnelManager;
 
@@ -78,7 +80,14 @@ public class RedisMessageBus implements MessageBus {
     @Override
     public void complete(String correlationId, ResponsePayload response) {
         if (!completeLocal(correlationId, response)) {
-            publishResponse(correlationId, response);
+            publishResult(correlationId, CorrelationResultMessage.response(response));
+        }
+    }
+
+    @Override
+    public void fail(String correlationId, TunnelErrorPayload error) {
+        if (!failLocal(correlationId, error)) {
+            publishResult(correlationId, CorrelationResultMessage.error(error));
         }
     }
 
@@ -157,9 +166,15 @@ public class RedisMessageBus implements MessageBus {
 
         String correlationId = channel.substring(CHANNEL_CORR_PREFIX.length());
         try {
-            ResponsePayload response = objectMapper.readValue(body(message), ResponsePayload.class);
-            completeLocal(correlationId, response);
-        } catch (JacksonException e) {
+            CorrelationResultMessage result = objectMapper.readValue(body(message), CorrelationResultMessage.class);
+            if (CorrelationResultMessage.TYPE_RESPONSE.equals(result.type()) && result.response() != null) {
+                completeLocal(correlationId, result.response());
+            } else if (CorrelationResultMessage.TYPE_ERROR.equals(result.type()) && result.error() != null) {
+                failLocal(correlationId, result.error());
+            } else {
+                throw new IllegalArgumentException("Unsupported correlation result type: " + result.type());
+            }
+        } catch (Exception e) {
             CompletableFuture<ResponsePayload> future = pending.remove(correlationId);
             if (future != null) {
                 future.completeExceptionally(e);
@@ -178,12 +193,22 @@ public class RedisMessageBus implements MessageBus {
         return false;
     }
 
-    private void publishResponse(String correlationId, ResponsePayload response) {
+    private boolean failLocal(String correlationId, TunnelErrorPayload error) {
+        CompletableFuture<ResponsePayload> future = pending.remove(correlationId);
+        if (future != null) {
+            future.completeExceptionally(new TunnelErrorException(error));
+            return true;
+        }
+        log.debug("No local pending request for correlationId {}", correlationId);
+        return false;
+    }
+
+    private void publishResult(String correlationId, CorrelationResultMessage result) {
         try {
             redisTemplate.convertAndSend(CHANNEL_CORR_PREFIX + correlationId,
-                    objectMapper.writeValueAsString(response));
+                    objectMapper.writeValueAsString(result));
         } catch (JacksonException e) {
-            log.error("Failed to publish response for correlationId {}", correlationId, e);
+            log.error("Failed to publish correlation result for correlationId {}", correlationId, e);
         }
     }
 

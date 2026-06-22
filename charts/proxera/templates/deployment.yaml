@@ -59,6 +59,10 @@ spec:
           env:
             - name: PROXERA_K8S_SERVICE_NAME
               value: {{ include "proxera.fullname" . | quote }}
+            - name: PROXERA_POD_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
