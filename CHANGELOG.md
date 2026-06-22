@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.14 - 2026-06-22
+
+### [0.12.14](https://github.com/wenisch-tech/proxera/compare/v0.12.13...v0.12.14) (2026-06-22)
+
+
+### Bug Fixes
+
+* update java version in workflows to v25 ([9e11b86](https://github.com/wenisch-tech/proxera/commit/9e11b86203788417b5edb2097964720c9a082c7e))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.14
+
+
 ## v0.12.10 - 2026-06-21
 
 ### [0.12.10](https://github.com/wenisch-tech/proxera/compare/v0.12.9...v0.12.10) (2026-06-21)
