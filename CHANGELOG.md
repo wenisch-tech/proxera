@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.15 - 2026-06-22
+
+### [0.12.15](https://github.com/wenisch-tech/proxera/compare/v0.12.14...v0.12.15) (2026-06-22)
+
+
+### Bug Fixes
+
+* updated errorhandling and pod association ([b4af54a](https://github.com/wenisch-tech/proxera/commit/b4af54a6d1062405c51498a544ac174d6d7b7c7b))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.15
+
+
 ## v0.12.14 - 2026-06-22
 
 ### [0.12.14](https://github.com/wenisch-tech/proxera/compare/v0.12.13...v0.12.14) (2026-06-22)
