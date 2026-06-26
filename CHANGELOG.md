@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.12.17 - 2026-06-26
+
+### [0.12.17](https://github.com/wenisch-tech/proxera/compare/v0.12.16...v0.12.17) (2026-06-26)
+
+
+### Bug Fixes
+
+* **deps:** update non-major dependencies ([501e510](https://github.com/wenisch-tech/proxera/commit/501e510f05424cd1ef182177ac6f96ab00072dfe))
+
+
+
+Docker image: ghcr.io/wenisch-tech/proxera:0.12.17
+
+
 ## v0.12.15 - 2026-06-22
 
 ### [0.12.15](https://github.com/wenisch-tech/proxera/compare/v0.12.14...v0.12.15) (2026-06-22)
